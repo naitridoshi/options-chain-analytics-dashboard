@@ -1,0 +1,59 @@
+repos:
+  # Repository containing general-purpose pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      # Removes trailing whitespace characters from all lines
+      - id: trailing-whitespace
+      # Ensures files end with a single newline character
+      - id: end-of-file-fixer
+      # Prevents commits to specified branches to protect them from direct changes
+      - id: no-commit-to-branch
+        args: [
+          '--branch', 'master',
+          '--branch', 'main'
+        ]
+
+  # Repository for 'isort', a Python utility to sort imports
+  - repo: https://github.com/pycqa/isort
+    rev: 6.0.1
+    hooks:
+      # Sorts and organizes import statements in Python files
+      - id: isort
+        language_version: python3
+        args: [
+          '--profile=black',        # Aligns isort's style with Black's formatting
+          '--line-length=80'        # Sets maximum line length to 80 characters
+        ]
+        files: \.py$                # Applies only to files with a .py extension
+
+  # Repository for 'autoflake', a tool to remove unused imports and variables
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      # Removes unused imports and variables from Python code
+      - id: autoflake
+        language_version: python3
+        args: [
+          --remove-all-unused-imports,     # Eliminates all unused import statements
+          --remove-unused-variables,       # Eliminates unused variables
+          --ignore-init-module-imports,    # Ignores unused imports in __init__.py files
+          --in-place                       # Modifies files in place without creating backups
+        ]
+        files: \.py$                       # Applies only to files with a .py extension
+
+  # Repository for 'commitlint', a tool to enforce commit message conventions
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.22.0
+    hooks:
+      # Validates commit messages against defined conventions
+      - id: commitlint
+        stages: [commit-msg]               # Executes during the commit message stage
+        additional_dependencies: ['@commitlint/config-conventional']  # Uses conventional commit config
+
+  # Ruff (format + lint)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.8   # pin; update with `pre-commit autoupdate` later
+    hooks:
+      - id: ruff-format        # code formatter
+      - id: ruff               # linter (no --fix here to avoid overlap with autoflake/isort)

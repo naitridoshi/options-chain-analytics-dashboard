@@ -1,0 +1,8 @@
+uvicorn==0.41.0
+python-dotenv==1.2.2
+fastapi==0.135.1
+requests==2.32.5
+starlette_context==0.5.1
+python-dateutil==2.9.0.post0
+pre-commit==4.5.1
+gunicorn==25.1.0
