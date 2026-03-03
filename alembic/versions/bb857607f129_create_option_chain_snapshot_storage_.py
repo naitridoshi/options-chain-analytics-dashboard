@@ -1,8 +1,8 @@
 """create_option_chain_snapshot_storage_related_tables
 
-Revision ID: 0a6fc4fbff01
+Revision ID: bb857607f129
 Revises:
-Create Date: 2026-03-03 18:14:13.298070
+Create Date: 2026-03-03 20:03:02.360785
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "0a6fc4fbff01"
+revision: str = "bb857607f129"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -47,6 +47,7 @@ def upgrade() -> None:
         "instruments",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("symbol", sa.String(), nullable=False),
+        sa.Column("fyers_symbol", sa.String(), nullable=True),
         sa.Column("exchange", sa.String(), nullable=False),
         sa.Column("instrument_type", sa.String(), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),

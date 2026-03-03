@@ -6,6 +6,9 @@ from fastapi import FastAPI
 
 from apps.fastapi.auth.src import middlewares
 from apps.fastapi.platform.modules.core.src import core_route
+from apps.fastapi.platform.modules.option_chain_snapshot.src import (
+    snapshot_route,
+)
 from libs.utils.common.custom_logger.src import (
     Colors,
     CustomLogger,
@@ -32,6 +35,7 @@ app = FastAPI(
 
 
 app.include_router(core_route)
+app.include_router(snapshot_route)
 
 
 def start_server(
