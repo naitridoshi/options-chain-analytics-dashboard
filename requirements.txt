@@ -6,3 +6,5 @@ starlette_context==0.5.1
 python-dateutil==2.9.0.post0
 pre-commit==4.5.1
 gunicorn==25.1.0
+sqlalchemy==2.0.48
+alembic==1.18.4

@@ -32,10 +32,12 @@ class RequestDetailsFilter(logging.Filter):
     def filter(self, record):
         record.requestId = getattr(record, "requestId", "rid-None")
         record.userId = getattr(record, "userId", "uid-None")
+        record.sessionId = f"sid-{context.get('sessionId', 'None')}"
         if self.is_request:
             try:
                 record.requestId = f"rid-{context.get('X-Request-ID', 'None')}"
                 record.userId = f"uid-{context.get('userId', 'NEW_USER')}"
+                record.sessionId = f"sid-{context.get('sessionId', 'None')}"
             except Exception:
                 pass
 
@@ -115,7 +117,7 @@ class ColoredFormatter(logging.Formatter):
             "logType": COLORS_DICT.get(record.logType, COLORS_DICT["RESET"]),
             "auditAt": COLORS_DICT.get("AUDIT_AT", COLORS_DICT["RESET"]),
             "requestId": COLORS_DICT.get("REQUEST_ID"),
-            "callSid": COLORS_DICT.get("CALL_SID"),
+            "sessionId": COLORS_DICT.get("SESSION_ID"),
             "userId": COLORS_DICT.get("USER_ID"),
             "qualname": COLORS_DICT.get("QUAL_NAME"),
         }
@@ -235,6 +237,7 @@ console_format = ColoredFormatter(
             "%(logLevel)s |",
             "%(userId)s |",
             "%(requestId)s |",
+            "%(sessionId)s |",
             "%(logType)s |",
             "%(qualname)s |",
             "%(message)s |",

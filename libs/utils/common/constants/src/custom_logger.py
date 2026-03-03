@@ -74,7 +74,7 @@ COLORS_DICT = {
     "AUDIT_AT": Colors.BRIGHT_MAGENTA.value,
     "USER_ID": Colors.BRIGHT_YELLOW.value,
     "REQUEST_ID": Colors.BRIGHT_BLUE.value,
-    "CALL_SID": Colors.BRIGHT_ORANGE.value,
+    "SESSION_ID": Colors.BRIGHT_ORANGE.value,
     "RESET": Colors.DEFAULT_WHITE.value,
 }
 
