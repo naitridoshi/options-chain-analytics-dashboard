@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from time import sleep
 
-
 from starlette.responses import JSONResponse
 from starlette_context import context
 
@@ -94,9 +93,7 @@ class TeamsHandler(logging.Handler):
                 sleep(MS_TEAMS_MESSAGE_RETRY_TIMEOUT_IN_SECONDS)
 
     @staticmethod
-    def _format_log(
-        process_name: str, message: str, full_path: str, lineno: str
-    ):
+    def _format_log(process_name: str, message: str, full_path: str, lineno: str):
         log_obj = {
             "process": process_name,
             "message": message,
@@ -186,7 +183,7 @@ class DynamicFileHandler(RotatingFileHandler):
                 return
             except PermissionError:
                 if attempt < 4:
-                    sleep(0.05 * (2 ** attempt))  # 50 ms, 100 ms, 200 ms, 400 ms
+                    sleep(0.05 * (2**attempt))  # 50 ms, 100 ms, 200 ms, 400 ms
                 # On the final attempt, give up silently rather than crashing
                 # the logging system and printing a traceback to stderr.
 
@@ -250,15 +247,17 @@ console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(console_format)
 
 dynamic_file_handler = DynamicFileHandler(
-    maxBytes=10 * 1024 * 1024, backupCount=10, encoding="utf-8"  # 10 MB per file
+    maxBytes=10 * 1024 * 1024,
+    backupCount=10,
+    encoding="utf-8",  # 10 MB per file
 )
 json_formatter = CustomJsonFormatter()
 dynamic_file_handler.setFormatter(json_formatter)
 
 
-
 if MS_TEAMS_WEBHOOK_ENABLED:
-    from pymsteams import connectorcard # noqa: E402
+    from pymsteams import connectorcard  # noqa: E402
+
     teams_handler = TeamsHandler()
     teams_handler.setLevel(logging.DEBUG)
 else:

@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from libs.utils.config.src.auth import AUTH_USERNAME, AUTH_PASSWORD
+from libs.utils.config.src.auth import AUTH_PASSWORD, AUTH_USERNAME
 
 security = HTTPBasic()
 
@@ -9,13 +9,13 @@ security = HTTPBasic()
 def verify_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -> bool:
     """
     Verify basic authentication credentials against environment variables.
-    
+
     Args:
         credentials: HTTPBasicCredentials from the request
-        
+
     Returns:
         bool: True if credentials are valid
-        
+
     Raises:
         HTTPException: If credentials are invalid
     """
@@ -35,13 +35,13 @@ def verify_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -> 
 def get_current_user(credentials: HTTPBasicCredentials = Depends(security)) -> str:
     """
     Get the current authenticated user.
-    
+
     Args:
         credentials: HTTPBasicCredentials from the request
-        
+
     Returns:
         str: The authenticated username
-        
+
     Raises:
         HTTPException: If credentials are invalid
     """

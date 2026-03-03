@@ -1,13 +1,8 @@
-import os
 import subprocess
-from contextlib import asynccontextmanager
 from typing import Literal
 
 import uvicorn
-from dotenv import load_dotenv
 from fastapi import FastAPI
-from requests import Request
-from starlette.responses import RedirectResponse
 
 from apps.fastapi.auth.src import middlewares
 from apps.fastapi.platform.modules.core.src import core_route
@@ -20,7 +15,9 @@ from libs.utils.common.custom_logger.src import (
 from libs.utils.common.os_helpers.src import BASE_DIR
 from libs.utils.config.src.fastapi import GUNICORN_CONFIG_PATH
 
-log = CustomLogger("Options Chain Analytics Dashboard Backend", queue_logger=True, is_request=False)
+log = CustomLogger(
+    "Options Chain Analytics Dashboard Backend", queue_logger=True, is_request=False
+)
 logger, listener = log.get_logger()
 listener.start()
 
@@ -44,10 +41,9 @@ def start_server(
     workers: int = 8,
     threads: int = 10,
     environment: str = "development",
-    mode:Literal["cli", "api"] = "api",
+    mode: Literal["cli", "api"] = "api",
 ):
-
-    if mode=="cli":
+    if mode == "cli":
         logger.info(
             color_string(
                 f"Starting server on http://{host}:{port}/docs with "

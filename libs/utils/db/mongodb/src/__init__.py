@@ -25,8 +25,7 @@ def connect_db(db_name: str):
         return client[db_name]
     except PyMongoError as error:
         raise Exception(
-            f'Failed to connect to database: "{db_name}",'
-            f"ERROR: {str(error)}"
+            f'Failed to connect to database: "{db_name}",ERROR: {str(error)}'
         )
 
 

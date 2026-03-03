@@ -328,9 +328,7 @@ def _to_json_safe(obj, *, _seen=None, _path="$", _depth=0):
         out_list = []
         for idx, item in enumerate(obj):
             if idx >= _MAX_ITEMS_PER_CONTAINER:
-                out_list.append(
-                    f"<truncated: first {_MAX_ITEMS_PER_CONTAINER} items>"
-                )
+                out_list.append(f"<truncated: first {_MAX_ITEMS_PER_CONTAINER} items>")
                 break
             # if the list looks like ORM rows, produce a summarized list
             if _is_sa_model(item):
@@ -406,9 +404,7 @@ def serialize_value(value):
     if hasattr(value, "dict"):
         return value.dict()
     if isinstance(value, dict):
-        return {
-            k: (v.value if isinstance(v, Enum) else v) for k, v in value.items()
-        }
+        return {k: (v.value if isinstance(v, Enum) else v) for k, v in value.items()}
     try:
         dumps({value})
         return value

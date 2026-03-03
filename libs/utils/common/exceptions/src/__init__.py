@@ -1,7 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel
 
 from libs.utils.common.dto.src import ErrorResponseDTO
 

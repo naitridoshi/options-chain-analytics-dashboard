@@ -25,9 +25,7 @@ logger, listener = log.get_logger()
 listener.start()
 
 
-async def logging_iterator(
-    response, iterator, class_name: str, start_time: datetime
-):
+async def logging_iterator(response, iterator, class_name: str, start_time: datetime):
     response_body = dict()
     async for chunk in iterator:
         if loads(chunk.decode("utf-8")).get("is_final"):
@@ -44,9 +42,7 @@ async def logging_iterator(
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         excluded_paths = ["/"]
 
         if request.url.path in excluded_paths:
@@ -93,9 +89,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 body_text = ""
                 if chunks:
                     try:
-                        body_text = b"".join(chunks).decode(
-                            "utf-8", errors="replace"
-                        )
+                        body_text = b"".join(chunks).decode("utf-8", errors="replace")
                     except Exception:
                         body_text = "<unable to decode response body>"
 

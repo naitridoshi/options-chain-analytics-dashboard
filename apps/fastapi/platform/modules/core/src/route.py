@@ -33,8 +33,6 @@ def root():
         content={
             "success": True,
             "environment": FASTAPI_APP_ENVIRONMENT,
-            "uptime": get_execution_time_in_readable_format(
-                start_time=start_time
-            ),
+            "uptime": get_execution_time_in_readable_format(start_time=start_time),
         },
     )

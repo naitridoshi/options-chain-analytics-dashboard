@@ -1,6 +1,3 @@
-import re
-
-
 def convert_to_camel_case(input_string: str):
     # Split the string by underscores
     words = input_string.split("_")

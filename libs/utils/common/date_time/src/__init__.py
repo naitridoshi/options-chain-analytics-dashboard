@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta, timezone, tzinfo
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
@@ -35,9 +35,7 @@ def get_execution_time_in_readable_format(start_time: datetime) -> str:
 
 def get_execution_time_in_seconds(start_time: datetime) -> float:
     if start_time.tzinfo is timezone.utc:
-        return round(
-            (get_current_utc_timestamp() - start_time).total_seconds(), 2
-        )
+        return round((get_current_utc_timestamp() - start_time).total_seconds(), 2)
     else:
         return round((datetime.now() - start_time).total_seconds(), 2)
 

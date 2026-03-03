@@ -12,7 +12,6 @@ logger, listener = log.get_logger()
 listener.start()
 
 
-
 class RequestHelper:
     """HTTP request helper with session pooling, retry mechanism, and structured logging."""
 
@@ -106,9 +105,7 @@ class RequestHelper:
             except requests.exceptions.Timeout:
                 elapsed = get_execution_time_in_seconds(start_time)
                 logger.error(
-                    f"TIMEOUT - Try {try_request}, "
-                    f"url: {url}, "
-                    f"Time Taken: {elapsed}s."
+                    f"TIMEOUT - Try {try_request}, url: {url}, Time Taken: {elapsed}s."
                 )
 
             except requests.exceptions.ConnectionError:
@@ -129,9 +126,7 @@ class RequestHelper:
                 )
 
             if try_request == max_try:
-                raise Exception(
-                    f"Request to {url} failed after {max_try} attempt(s)."
-                )
+                raise Exception(f"Request to {url} failed after {max_try} attempt(s).")
 
         return None
 

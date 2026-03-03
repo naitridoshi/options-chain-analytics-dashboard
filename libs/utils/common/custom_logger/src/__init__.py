@@ -73,9 +73,7 @@ class CustomLogger:
             queue_handler = logging.handlers.QueueHandler(log_queue)
             logger.addHandler(queue_handler)
 
-            listener = QueueListener(
-                log_queue, *_handlers, respect_handler_level=True
-            )
+            listener = QueueListener(log_queue, *_handlers, respect_handler_level=True)
             return logger, listener
 
         for _handler in _handlers:
@@ -188,9 +186,7 @@ class CustomLogger:
 
                 params = inspect.signature(func).parameters
 
-                args_dict, kwargs_dict = serialize_args_kwargs(
-                    args, kwargs, params
-                )
+                args_dict, kwargs_dict = serialize_args_kwargs(args, kwargs, params)
 
                 callee_class_name = get_callee_class_name(inspect)
 
@@ -206,9 +202,7 @@ class CustomLogger:
                 try:
                     result = await func(*args, **kwargs)
                 except Exception as error:
-                    print(
-                        color_string(traceback.format_exc(), Colors.BRIGHT_RED)
-                    )
+                    print(color_string(traceback.format_exc(), Colors.BRIGHT_RED))
                     self.log_function_error(
                         frame_info, func, start_time, error, callee_class_name
                     )
@@ -227,9 +221,7 @@ class CustomLogger:
 
                 params = inspect.signature(func).parameters
 
-                args_dict, kwargs_dict = serialize_args_kwargs(
-                    args, kwargs, params
-                )
+                args_dict, kwargs_dict = serialize_args_kwargs(args, kwargs, params)
 
                 callee_class_name = get_callee_class_name(inspect)
 
@@ -246,9 +238,7 @@ class CustomLogger:
                 try:
                     result = func(*args, **kwargs)
                 except Exception as error:
-                    print(
-                        color_string(traceback.format_exc(), Colors.BRIGHT_RED)
-                    )
+                    print(color_string(traceback.format_exc(), Colors.BRIGHT_RED))
                     self.log_function_error(
                         frame_info, func, start_time, error, callee_class_name
                     )

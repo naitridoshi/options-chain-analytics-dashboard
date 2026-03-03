@@ -59,9 +59,7 @@ def create_chunks_of_json_file(file_path: str, chunk_size: int = 50) -> None:
     return None
 
 
-def edit_key_name_in_training_data(
-    dir_path: str, key: str, new_key: str
-) -> None:
+def edit_key_name_in_training_data(dir_path: str, key: str, new_key: str) -> None:
     for file_name in listdir(dir_path):
         file_path = path.join(dir_path, file_name)
         with open(file_path, "r") as file:
