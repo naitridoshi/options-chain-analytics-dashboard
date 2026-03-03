@@ -1,0 +1,20 @@
+from libs.utils.config.src import config
+
+# Fyers API credentials
+FYERS_CLIENT_ID = config["FYERS_CLIENT_ID"]
+FYERS_SECRET_KEY = config["FYERS_SECRET_KEY"]
+FYERS_REDIRECT_URI = config["FYERS_REDIRECT_URI"]
+FYERS_TOTP_KEY = config["FYERS_TOTP_KEY"]
+FYERS_PIN = config["FYERS_PIN"]
+FYERS_LOG_PATH = config.get("FYERS_LOG_PATH", "logs/fyers")
+
+# Snapshot engine configuration
+SNAPSHOT_STRIKE_COUNT = int(config.get("SNAPSHOT_STRIKE_COUNT", 13))
+SNAPSHOT_EXPIRY_COUNT = int(config.get("SNAPSHOT_EXPIRY_COUNT", 1))
+SNAPSHOT_INTERVAL_MINUTES = int(config.get("SNAPSHOT_INTERVAL_MINUTES", 5))
+
+# Market hours (IST)
+MARKET_OPEN_HOUR = int(config.get("MARKET_OPEN_HOUR", 9))
+MARKET_OPEN_MINUTE = int(config.get("MARKET_OPEN_MINUTE", 0))
+MARKET_CLOSE_HOUR = int(config.get("MARKET_CLOSE_HOUR", 15))
+MARKET_CLOSE_MINUTE = int(config.get("MARKET_CLOSE_MINUTE", 30))
