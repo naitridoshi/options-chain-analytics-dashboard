@@ -9,11 +9,17 @@ from libs.utils.db.postgres.models.src.fyers_token import (  # noqa: F401
 from libs.utils.db.postgres.models.src.instrument import (  # noqa: F401
     Instrument,
 )
+from libs.utils.db.postgres.models.src.option_chain_interval_summary import (  # noqa: F401
+    OptionChainIntervalSummary,
+)
 from libs.utils.db.postgres.models.src.option_chain_snapshot import (  # noqa: F401
     OptionChainSnapshot,
 )
 from libs.utils.db.postgres.models.src.option_chain_strike import (  # noqa: F401
     OptionChainStrike,
+)
+from libs.utils.db.postgres.models.src.option_chain_strike_summary import (  # noqa: F401
+    OptionChainStrikeSummary,
 )
 from libs.utils.db.postgres.models.src.option_contract import (  # noqa: F401
     OptionContract,
@@ -26,5 +32,7 @@ __all__ = [
     "OptionContract",
     "OptionChainSnapshot",
     "OptionChainStrike",
+    "OptionChainIntervalSummary",
+    "OptionChainStrikeSummary",
     "FyersToken",
 ]

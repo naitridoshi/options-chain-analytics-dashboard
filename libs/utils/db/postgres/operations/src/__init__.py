@@ -7,6 +7,9 @@ from libs.utils.db.postgres.operations.src.fyers_token_operations import (
 from libs.utils.db.postgres.operations.src.instrument_operations import (
     InstrumentOperations,
 )
+from libs.utils.db.postgres.operations.src.option_chain_dashboard_operations import (
+    OptionChainDashboardOperations,
+)
 from libs.utils.db.postgres.operations.src.option_contract_operations import (
     OptionContractOperations,
 )
@@ -18,6 +21,7 @@ __all__ = [
     "InstrumentOperations",
     "ExpiryOperations",
     "OptionContractOperations",
+    "OptionChainDashboardOperations",
     "OptionSnapshotOperations",
     "FyersTokenOperations",
 ]

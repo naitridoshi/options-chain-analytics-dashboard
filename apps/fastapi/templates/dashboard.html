@@ -1,0 +1,441 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Options Chain Trading Board</title>
+  <style>
+    :root {
+      --bg: #0a0f18;
+      --bg2: #11192a;
+      --panel: #10192b;
+      --panel-2: #0d1524;
+      --line: #223352;
+      --text: #e6eefc;
+      --muted: #8fa3c7;
+      --accent: #27c4ff;
+      --good: #1ecf7a;
+      --bad: #ff5f6d;
+      --warn: #ffcc66;
+      --gold: #f2c14e;
+      --call-bg: #0d261c;
+      --put-bg: #2a1217;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
+      background:
+        radial-gradient(1300px 420px at 50% -8%, #1a2d4f 0%, transparent 65%),
+        linear-gradient(180deg, #090e17 0%, #0a0f18 50%, #08111f 100%);
+    }
+
+    .page { max-width: 1400px; margin: 14px auto 26px; padding: 0 12px; }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1.15fr 2fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .left-card { padding: 10px; }
+    .right-card { padding: 10px; }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .symbol-title {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+
+    .pill {
+      font-size: 11px;
+      border: 1px solid var(--line);
+      background: #14213a;
+      color: var(--accent);
+      padding: 3px 7px;
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input, button, a.link-btn {
+      background: #13213b;
+      border: 1px solid #27406a;
+      color: var(--text);
+      border-radius: 8px;
+      height: 34px;
+      padding: 0 12px;
+      font-size: 13px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    input { width: 102px; font-weight: 700; letter-spacing: 0.4px; }
+
+    button {
+      background: linear-gradient(180deg, #1b3f6d 0%, #163356 100%);
+      border-color: #3466a3;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .status {
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
+    .status.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .kpi {
+      background: #0f1a2e;
+      border: 1px solid #213657;
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .kpi .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .kpi .val { font-size: 18px; font-weight: 800; margin-top: 4px; }
+
+    .mini-board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .mini {
+      border-radius: 8px;
+      border: 1px solid #284165;
+      padding: 8px;
+      background: #0e1829;
+    }
+    .mini .m-label { color: var(--muted); font-size: 11px; }
+    .mini .m-val { margin-top: 3px; font-size: 17px; font-weight: 800; }
+
+    .board {
+      padding: 10px;
+    }
+
+    .table-wrap {
+      border: 1px solid #274067;
+      border-radius: 10px;
+      overflow: auto;
+      max-height: 61vh;
+      background: #0b1322;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      min-width: 1200px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #142340;
+      color: #d9e9ff;
+      border-bottom: 1px solid #33568b;
+      padding: 8px 6px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    thead th.sp { text-align: center; background: #1a2f51; color: var(--gold); }
+    thead th.call { background: #163625; color: #9bf0c3; }
+    thead th.put { background: #421a22; color: #ffb5c0; }
+
+    tbody td {
+      border-bottom: 1px solid #172845;
+      padding: 6px 6px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(odd) { background: #0a1220; }
+    tbody tr:nth-child(even) { background: #0c1628; }
+    tbody tr:hover { background: #142542; }
+
+    tbody td.call-col { background: linear-gradient(90deg, rgba(17,56,35,0.42), transparent); }
+    tbody td.put-col { background: linear-gradient(270deg, rgba(84,26,36,0.35), transparent); }
+
+    .sp-cell {
+      text-align: center;
+      color: #ffe08a;
+      font-weight: 800;
+      background: #131f35;
+    }
+
+    .pos { color: var(--good); font-weight: 700; }
+    .neg { color: var(--bad); font-weight: 700; }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 1100px) {
+      .top { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+      .mini-board { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="top">
+      <div class="card left-card">
+        <div class="title-row">
+          <div class="symbol-title">
+            <span id="symbolBadge">NIFTY</span>
+            <span class="pill">LIVE BOARD</span>
+          </div>
+          <div class="pill" id="updatedAt">--:--:--</div>
+        </div>
+
+        <div class="actions">
+          <label>Symbol <input id="symbol" value="NIFTY" /></label>
+          <button id="refreshBtn">Refresh</button>
+          <a class="link-btn" href="/login">FYERS Login</a>
+        </div>
+
+        <div id="fyersStatus" class="status warn">Checking FYERS login status...</div>
+        <div id="dataStatus" class="status warn" style="display:none;"></div>
+
+        <div class="subtle" id="meta">Market date: -</div>
+      </div>
+
+      <div class="card right-card">
+        <div class="mini-board" id="kpis"></div>
+      </div>
+    </div>
+
+    <div class="card board">
+      <div style="font-weight:800; letter-spacing:0.3px; margin:2px 2px 8px;">INTERVAL SUMMARY</div>
+      <div class="table-wrap" style="max-height: 30vh; margin-bottom: 10px;">
+        <table id="intervalTable">
+          <thead>
+            <tr>
+              <th>TIME</th>
+              <th>SPOT</th>
+              <th class="call">CALL COI</th>
+              <th>CALL COI %</th>
+              <th class="put">PUT COI</th>
+              <th>PUT COI %</th>
+              <th>NET COI</th>
+              <th class="call">CALL OI</th>
+              <th>CALL OI %</th>
+              <th class="put">PUT OI</th>
+              <th>PUT OI %</th>
+              <th>NET OI</th>
+              <th>PCR COI</th>
+              <th>PCR OI</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div style="font-weight:800; letter-spacing:0.3px; margin:2px 2px 8px;">STRIKE SUMMARY</div>
+      <div class="table-wrap">
+        <table id="strikeTable">
+          <thead>
+            <tr>
+              <th class="call">CALL LTP</th>
+              <th class="call">CALL COI</th>
+              <th class="call">CALL OI</th>
+              <th class="call">CALL VOL</th>
+              <th class="sp">STRIKE</th>
+              <th class="put">PUT LTP</th>
+              <th class="put">PUT COI</th>
+              <th class="put">PUT OI</th>
+              <th class="put">PUT VOL</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let timerId = null;
+    let refreshMs = 5 * 60 * 1000;
+
+    function fmt(v) { return v === null || v === undefined ? "-" : Number(v).toLocaleString(); }
+    function fmt2(v) { return v === null || v === undefined ? "-" : Number(v).toFixed(2); }
+
+    function signedClass(v) {
+      if (v === null || v === undefined) return "";
+      return Number(v) >= 0 ? "pos" : "neg";
+    }
+
+    function toIST(iso) {
+      if (!iso) return "-";
+      const d = new Date(iso);
+      return d.toLocaleTimeString("en-IN", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Asia/Kolkata"
+      });
+    }
+
+    async function refreshFyersStatus() {
+      const statusEl = document.getElementById("fyersStatus");
+      try {
+        const statusRes = await fetch("/api/v1/fyers/status", { credentials: "include" });
+        const statusBody = await statusRes.json();
+        const token = statusBody.data || {};
+        if (statusRes.ok && token.has_token) {
+          statusEl.className = "status ok";
+          statusEl.textContent = `FYERS logged in for ${token.token_date}`;
+          return;
+        }
+        statusEl.className = "status warn";
+        statusEl.innerHTML = `FYERS token missing for today. Please login from <a href="/login" style="color:#ffdf9a">/login</a>.`;
+      } catch (e) {
+        statusEl.className = "status warn";
+        statusEl.textContent = "Unable to fetch FYERS status.";
+      }
+    }
+
+    function showDataStatus(message, isError=true) {
+      const el = document.getElementById("dataStatus");
+      el.style.display = "block";
+      el.className = isError ? "status warn" : "status ok";
+      el.textContent = message;
+    }
+
+    async function load() {
+      const symbol = (document.getElementById("symbol").value || "").trim().toUpperCase();
+      document.getElementById("symbolBadge").textContent = symbol || "NIFTY";
+      await refreshFyersStatus();
+
+      let res;
+      let body;
+      try {
+        res = await fetch(`/api/v1/dashboard/data?symbol=${encodeURIComponent(symbol)}&timeline_limit=200`, { credentials: "include" });
+        body = await res.json();
+      } catch (e) {
+        showDataStatus("Dashboard data request failed. Check API logs.");
+        return;
+      }
+
+      if (!res.ok || !body.success) {
+        const message = body && body.error ? body.error : `Dashboard API failed with HTTP ${res.status}`;
+        showDataStatus(message);
+        return;
+      }
+      document.getElementById("dataStatus").style.display = "none";
+
+      const data = body.data || {};
+      const latest = data.latest;
+      refreshMs = (data.refresh_seconds || 300) * 1000;
+
+      document.getElementById("updatedAt").textContent = latest ? toIST(latest.captured_at) : "--:--:--";
+      document.getElementById("meta").textContent = `Market date: ${data.market_date || "-"} | Refresh: ${(refreshMs/60000)}m`;
+
+      const kpis = [
+        ["SPOT", latest ? fmt2(latest.spot_price) : "-"],
+        ["CALL OI %", latest ? `${fmt2(latest.call_oi_share_pct)}%` : "-"],
+        ["PUT OI %", latest ? `${fmt2(latest.put_oi_share_pct)}%` : "-"],
+        ["CALL COI %", latest ? `${fmt2(latest.call_oi_change_share_pct)}%` : "-"],
+        ["PUT COI %", latest ? `${fmt2(latest.put_oi_change_share_pct)}%` : "-"],
+        ["PCR OI", latest ? fmt2(latest.pcr_oi) : "-"],
+        ["PCR COI", latest ? fmt2(latest.pcr_oi_change) : "-"],
+        ["NET OI", latest ? fmt(latest.net_oi_sum) : "-"],
+        ["NET COI", latest ? fmt(latest.net_oi_change_sum) : "-"],
+        ["SYMBOL", data.instrument ? data.instrument.symbol : "-"]
+      ];
+
+      document.getElementById("kpis").innerHTML = kpis
+        .map(([label, val]) => `<div class="mini"><div class="m-label">${label}</div><div class="m-val">${val}</div></div>`)
+        .join("");
+
+      const strikeBody = document.querySelector("#strikeTable tbody");
+      strikeBody.innerHTML = (data.strikes || []).map((row) => `
+        <tr>
+          <td class="call-col">${fmt2(row.call_ltp)}</td>
+          <td class="call-col ${signedClass(row.call_oi_change)}">${fmt(row.call_oi_change)}</td>
+          <td class="call-col">${fmt(row.call_oi)}</td>
+          <td class="call-col">${fmt(row.call_volume)}</td>
+          <td class="sp-cell">${fmt2(row.strike_price)}</td>
+          <td class="put-col">${fmt2(row.put_ltp)}</td>
+          <td class="put-col ${signedClass(row.put_oi_change)}">${fmt(row.put_oi_change)}</td>
+          <td class="put-col">${fmt(row.put_oi)}</td>
+          <td class="put-col">${fmt(row.put_volume)}</td>
+        </tr>
+      `).join("");
+
+      const intervalBody = document.querySelector("#intervalTable tbody");
+      intervalBody.innerHTML = (data.timeline || []).map((row) => `
+        <tr>
+          <td>${toIST(row.captured_at)}</td>
+          <td>${fmt2(row.spot_price)}</td>
+          <td class="call-col ${signedClass(row.call_oi_change_sum)}">${fmt(row.call_oi_change_sum)}</td>
+          <td>${fmt2(row.call_oi_change_share_pct)}</td>
+          <td class="put-col ${signedClass(row.put_oi_change_sum)}">${fmt(row.put_oi_change_sum)}</td>
+          <td>${fmt2(row.put_oi_change_share_pct)}</td>
+          <td class="${signedClass(row.net_oi_change_sum)}">${fmt(row.net_oi_change_sum)}</td>
+          <td class="call-col">${fmt(row.call_oi_sum)}</td>
+          <td>${fmt2(row.call_oi_share_pct)}</td>
+          <td class="put-col">${fmt(row.put_oi_sum)}</td>
+          <td>${fmt2(row.put_oi_share_pct)}</td>
+          <td class="${signedClass(row.net_oi_sum)}">${fmt(row.net_oi_sum)}</td>
+          <td>${fmt2(row.pcr_oi_change)}</td>
+          <td>${fmt2(row.pcr_oi)}</td>
+        </tr>
+      `).join("");
+
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(load, refreshMs);
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>

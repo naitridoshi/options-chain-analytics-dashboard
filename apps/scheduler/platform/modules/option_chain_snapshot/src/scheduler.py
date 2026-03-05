@@ -18,7 +18,13 @@ from libs.platform.modules.option_chain_snapshot.src import (
 from libs.utils.common.constants.src.custom_logger import Colors
 from libs.utils.common.custom_logger.src import CustomLogger, color_string
 from libs.utils.common.enums.src.custom_logger import LogType
-from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_MINUTES
+from libs.utils.config.src.fyers import (
+    MARKET_CLOSE_HOUR,
+    MARKET_CLOSE_MINUTE,
+    MARKET_OPEN_HOUR,
+    MARKET_OPEN_MINUTE,
+    SNAPSHOT_INTERVAL_MINUTES,
+)
 from libs.utils.db.postgres.operations.src import OptionSnapshotOperations
 
 log = CustomLogger("OptionChainSnapshotScheduler")
@@ -32,7 +38,9 @@ class OptionChainSnapshotScheduler:
         self._started = False
 
     async def tick(self):
-        now_utc = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc)
+        now_utc = now.isoformat()
+        now_ist = now.astimezone(IST).isoformat()
         logger.info(
             "Scheduler tick fired - "
             f"now_utc: {now_utc}, interval_minutes: {SNAPSHOT_INTERVAL_MINUTES}"
@@ -40,7 +48,10 @@ class OptionChainSnapshotScheduler:
         if not is_market_open_now():
             logger.info(
                 "Scheduler tick skipped - market closed at this time - "
-                f"now_utc: {now_utc}",
+                f"now_utc: {now_utc}, "
+                f"now_ist: {now_ist}, "
+                f"market_window_ist: {MARKET_OPEN_HOUR:02d}:{MARKET_OPEN_MINUTE:02d}-"
+                f"{MARKET_CLOSE_HOUR:02d}:{MARKET_CLOSE_MINUTE:02d}",
             )
             return
         result = await OptionChainSnapshotService.capture_for_all_active_instruments()
