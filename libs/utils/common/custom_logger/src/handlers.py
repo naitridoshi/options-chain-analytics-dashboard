@@ -32,7 +32,7 @@ class RequestDetailsFilter(logging.Filter):
     def filter(self, record):
         record.requestId = getattr(record, "requestId", "rid-None")
         record.userId = getattr(record, "userId", "uid-None")
-        record.sessionId = f"sid-{context.get('sessionId', 'None')}"
+        record.sessionId = getattr(record, "sessionId", "sid-None")
         if self.is_request:
             try:
                 record.requestId = f"rid-{context.get('X-Request-ID', 'None')}"

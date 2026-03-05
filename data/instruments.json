@@ -1,0 +1,9 @@
+[
+  {
+    "symbol": "NIFTY",
+    "fyers_symbol": "NSE:NIFTY50-INDEX",
+    "exchange": "NSE",
+    "instrument_type": "INDEX",
+    "is_active": true
+  }
+]
