@@ -28,6 +28,7 @@ class OptionChainStrike(Base, TimestampMixin):
     )
 
     ltp = Column(Numeric)
+    ltp_change = Column(Numeric)
     volume = Column(BigInteger)
     open_interest = Column(BigInteger)
     oi_change = Column(BigInteger)

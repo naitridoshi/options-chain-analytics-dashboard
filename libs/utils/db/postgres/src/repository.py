@@ -34,6 +34,7 @@ class OptionChainStrikeRepository(BaseRepository):
                 OptionChainStrike.open_interest,
                 OptionChainStrike.volume,
                 OptionChainStrike.ltp,
+                OptionChainStrike.ltp_change,
             )
             .join(
                 OptionContract,
@@ -52,6 +53,7 @@ class OptionChainStrikeRepository(BaseRepository):
                 "open_interest": row.open_interest,
                 "volume": row.volume,
                 "ltp": row.ltp,
+                "ltp_change": row.ltp_change,
             }
             for row in rows
         ]

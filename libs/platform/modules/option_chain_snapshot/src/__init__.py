@@ -235,6 +235,11 @@ def parse_option_rows(payload: dict) -> list[dict]:
                         or contract.get("last_price")
                         or contract.get("lastPrice")
                     ),
+                    "ltp_change": _to_decimal(
+                        contract.get("ltp_change")
+                        or contract.get("ltpch")
+                        or contract.get("ltpChange")
+                    ),
                     "volume": _to_int(contract.get("volume") or contract.get("vol")),
                     "open_interest": _to_int(
                         contract.get("open_interest") or contract.get("oi")
@@ -287,6 +292,11 @@ def parse_option_rows(payload: dict) -> list[dict]:
                     "trading_symbol": item.get("symbol"),
                     "lot_size": _to_int(item.get("lot_size") or item.get("lotSize")),
                     "ltp": _to_decimal(item.get("ltp") or item.get("last_price")),
+                    "ltp_change": _to_decimal(
+                        item.get("ltp_change")
+                        or item.get("ltpch")
+                        or item.get("ltpChange")
+                    ),
                     "volume": _to_int(item.get("volume") or item.get("vol")),
                     "open_interest": _to_int(
                         item.get("open_interest") or item.get("oi")

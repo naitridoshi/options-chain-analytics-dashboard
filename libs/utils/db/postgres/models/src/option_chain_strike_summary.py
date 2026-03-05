@@ -57,7 +57,9 @@ class OptionChainStrikeSummary(Base, TimestampMixin):
     put_volume = Column(BigInteger, nullable=False, default=0)
 
     call_ltp = Column(Numeric)
+    call_ltp_change = Column(Numeric)
     put_ltp = Column(Numeric)
+    put_ltp_change = Column(Numeric)
 
     __table_args__ = (
         UniqueConstraint(

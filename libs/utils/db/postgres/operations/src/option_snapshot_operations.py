@@ -66,6 +66,7 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
             row_oi = safe_int(row.get("open_interest"))
             row_volume = safe_int(row.get("volume"))
             row_ltp = safe_decimal(row.get("ltp"))
+            row_ltp_change = safe_decimal(row.get("ltp_change"))
             strike_price = Decimal(str(row["strike_price"]))
 
             strike_entry = strike_agg.setdefault(
@@ -81,7 +82,9 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                     "call_volume": 0,
                     "put_volume": 0,
                     "call_ltp": None,
+                    "call_ltp_change": None,
                     "put_ltp": None,
+                    "put_ltp_change": None,
                 },
             )
 
@@ -91,6 +94,7 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                 strike_entry["call_oi"] = row_oi
                 strike_entry["call_volume"] = row_volume
                 strike_entry["call_ltp"] = row_ltp
+                strike_entry["call_ltp_change"] = row_ltp_change
                 call_oi_change_sum += row_oi_change
                 call_oi_sum += row_oi
                 call_volume_sum += row_volume
@@ -100,6 +104,7 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                 strike_entry["put_oi"] = row_oi
                 strike_entry["put_volume"] = row_volume
                 strike_entry["put_ltp"] = row_ltp
+                strike_entry["put_ltp_change"] = row_ltp_change
                 put_oi_change_sum += row_oi_change
                 put_oi_sum += row_oi
                 put_volume_sum += row_volume
@@ -152,7 +157,9 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                     "call_volume": item["call_volume"],
                     "put_volume": item["put_volume"],
                     "call_ltp": item["call_ltp"],
+                    "call_ltp_change": item["call_ltp_change"],
                     "put_ltp": item["put_ltp"],
+                    "put_ltp_change": item["put_ltp_change"],
                 }
             )
 
@@ -264,6 +271,7 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                         "snapshot_id": snapshot.id,
                         "option_contract_id": contract.id,
                         "ltp": row.get("ltp"),
+                        "ltp_change": row.get("ltp_change"),
                         "volume": row.get("volume"),
                         "open_interest": row.get("open_interest"),
                         "oi_change": row.get("oi_change"),
@@ -283,6 +291,7 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                         "open_interest": row.get("open_interest"),
                         "volume": row.get("volume"),
                         "ltp": row.get("ltp"),
+                        "ltp_change": row.get("ltp_change"),
                     }
                 )
 
@@ -343,7 +352,9 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                         call_volume=item["call_volume"],
                         put_volume=item["put_volume"],
                         call_ltp=item["call_ltp"],
+                        call_ltp_change=item["call_ltp_change"],
                         put_ltp=item["put_ltp"],
+                        put_ltp_change=item["put_ltp_change"],
                     )
                 )
 
@@ -490,7 +501,9 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                                     call_volume=item["call_volume"],
                                     put_volume=item["put_volume"],
                                     call_ltp=item["call_ltp"],
+                                    call_ltp_change=item["call_ltp_change"],
                                     put_ltp=item["put_ltp"],
+                                    put_ltp_change=item["put_ltp_change"],
                                 )
                             )
                         await strike_summary_repo.add_many(

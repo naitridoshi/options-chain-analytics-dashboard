@@ -90,17 +90,6 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
             start_utc = start_ist.astimezone(timezone.utc)
             end_utc = end_ist.astimezone(timezone.utc)
 
-            timeline_rows = await interval_repo.list_ordered(
-                where=[
-                    interval_repo.model.instrument_id == instrument.id,
-                    interval_repo.model.captured_at >= start_utc,
-                    interval_repo.model.captured_at < end_utc,
-                ],
-                order_by=desc(interval_repo.model.captured_at),
-                limit=max(1, timeline_limit),
-            )
-            timeline_rows = list(reversed(timeline_rows))
-
             latest_rows = await interval_repo.list_ordered(
                 where=[
                     interval_repo.model.instrument_id == instrument.id,
@@ -121,32 +110,7 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
                     limit=10000,
                 )
 
-            timeline = [
-                {
-                    "snapshot_id": str(row.snapshot_id),
-                    "captured_at": row.captured_at.isoformat(),
-                    "spot_price": cls._as_number(row.spot_price),
-                    "call_oi_change_sum": row.call_oi_change_sum,
-                    "put_oi_change_sum": row.put_oi_change_sum,
-                    "net_oi_change_sum": row.net_oi_change_sum,
-                    "call_oi_sum": row.call_oi_sum,
-                    "put_oi_sum": row.put_oi_sum,
-                    "net_oi_sum": row.net_oi_sum,
-                    "call_volume_sum": row.call_volume_sum,
-                    "put_volume_sum": row.put_volume_sum,
-                    "pcr_oi": cls._as_number(row.pcr_oi),
-                    "pcr_oi_change": cls._as_number(row.pcr_oi_change),
-                    "call_oi_share_pct": cls._as_number(row.call_oi_share_pct),
-                    "put_oi_share_pct": cls._as_number(row.put_oi_share_pct),
-                    "call_oi_change_share_pct": cls._as_number(
-                        row.call_oi_change_share_pct
-                    ),
-                    "put_oi_change_share_pct": cls._as_number(
-                        row.put_oi_change_share_pct
-                    ),
-                }
-                for row in timeline_rows
-            ]
+            timeline = []
 
             latest = None
             if latest_row:
@@ -184,7 +148,9 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
                     "call_volume": row.call_volume,
                     "put_volume": row.put_volume,
                     "call_ltp": cls._as_number(row.call_ltp),
+                    "call_ltp_change": cls._as_number(row.call_ltp_change),
                     "put_ltp": cls._as_number(row.put_ltp),
+                    "put_ltp_change": cls._as_number(row.put_ltp_change),
                 }
                 for row in strike_rows
             ]
