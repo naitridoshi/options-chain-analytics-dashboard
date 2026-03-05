@@ -1,5 +1,4 @@
 import subprocess
-from typing import Literal
 
 import uvicorn
 from fastapi import FastAPI
@@ -9,6 +8,7 @@ from apps.fastapi.platform.modules.core.src import core_route
 from apps.fastapi.platform.modules.option_chain_snapshot.src import (
     snapshot_route,
 )
+from apps.fastapi.src.lifespan import app_lifespan
 from libs.utils.common.custom_logger.src import (
     Colors,
     CustomLogger,
@@ -31,6 +31,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     middleware=middlewares,
+    lifespan=app_lifespan,
 )
 
 
@@ -45,29 +46,7 @@ def start_server(
     workers: int = 8,
     threads: int = 10,
     environment: str = "development",
-    mode: Literal["cli", "api"] = "api",
 ):
-    if mode == "cli":
-        logger.info(
-            color_string(
-                f"Starting server on http://{host}:{port}/docs with "
-                f"{workers} workers, environment: {environment}, "
-                f"in mode: {mode}.",
-                Colors.BOLD_RED,
-            ),
-            extra={"logType": LogType.STARTUP.value},
-        )
-        uvicorn.run(
-            "apps.fastapi.src:app",
-            host=host,
-            port=port,
-            reload=False,
-            log_level="info",
-            workers=1,
-        )
-
-        return
-
     if environment == "development":
         logger.info(
             color_string(

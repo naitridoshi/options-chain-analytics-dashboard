@@ -20,5 +20,4 @@ if __name__ == "__main__":
         workers=FASTAPI_APP_WORKERS,
         threads=FASTAPI_APP_THREADS,
         environment=FASTAPI_APP_ENVIRONMENT,
-        mode="api",
     )

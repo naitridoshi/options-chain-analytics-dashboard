@@ -80,23 +80,18 @@ class OptionChainSnapshotService:
             except Exception as error:
                 if attempt >= max_retries:
                     logger.error(
-                        "Snapshot retries exhausted",
-                        extra={
-                            "symbol": instrument.symbol,
-                            "attempts": attempt,
-                            "error": str(error),
-                        },
+                        "Snapshot retries exhausted - "
+                        f"symbol: {instrument.symbol} - "
+                        f"attempts: {attempt} - "
+                        f"error: {str(error)}",
                     )
                     raise
                 delay = SNAPSHOT_RETRY_BASE_DELAY_SECONDS * attempt
                 logger.warning(
-                    "Snapshot attempt failed, retrying",
-                    extra={
-                        "symbol": instrument.symbol,
-                        "attempt": attempt,
-                        "delay_seconds": delay,
-                        "error": str(error),
-                    },
+                    "Snapshot attempt failed, retrying - "
+                    f"symbol: {instrument.symbol} - "
+                    f"attempts: {attempt} - "
+                    f"error: {str(error)}",
                 )
                 await asyncio.sleep(delay)
 
@@ -148,12 +143,9 @@ class OptionChainSnapshotService:
                 expiry_rows = all_rows
             if not expiry_rows:
                 logger.warning(
-                    "No option rows for expiry",
-                    extra={
-                        "symbol": instrument.symbol,
-                        "fyers_symbol": instrument.fyers_symbol,
-                        "expiry_date": str(candidate["expiry_date"]),
-                    },
+                    "No option rows for expiry - "
+                    f"fyers_symbol: {instrument.fyers_symbol} - "
+                    f"expiry_date: {candidate['expiry_date']} - ",
                 )
                 continue
 
@@ -177,14 +169,12 @@ class OptionChainSnapshotService:
             )
 
         logger.info(
-            "Snapshot captured",
-            extra={
-                "symbol": instrument.symbol,
-                "fyers_symbol": instrument.fyers_symbol,
-                "snapshots": snapshots_created,
-                "strikes": strikes_inserted,
-                "captured_at": captured_at.isoformat(),
-            },
+            "Snapshot captured - "
+            f"symbol: {instrument.symbol} - "
+            f"fyers_symbol: {instrument.fyers_symbol} - "
+            f"snapshots: {snapshots_created} - "
+            f"strikes: {strikes_inserted} - "
+            f"captured_at: {captured_at.isoformat()}",
         )
 
         return {

@@ -16,7 +16,7 @@ async def run_scheduler() -> None:
     loop.add_signal_handler(signal.SIGINT, _handle_stop)
     loop.add_signal_handler(signal.SIGTERM, _handle_stop)
 
-    snapshot_scheduler.start()
+    await snapshot_scheduler.start()
     try:
         await stop_event.wait()
     finally:

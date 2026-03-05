@@ -1,6 +1,7 @@
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.db.postgres.models.src.expiry import Expiry
@@ -20,6 +21,8 @@ from libs.utils.db.postgres.src.repository import (
 log = CustomLogger("OptionSnapshotOperations")
 logger, listener = log.get_logger()
 listener.start()
+
+IST = ZoneInfo("Asia/Kolkata")
 
 
 class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
@@ -88,8 +91,9 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                     contracts_to_create, commit=False, refresh=False
                 )
                 logger.info(
-                    "Auto-created option contracts",
-                    extra={"count": len(contracts_to_create)},
+                    "Auto-created option contracts - "
+                    "instrument_id: {instrument_id} - "
+                    f"count: {len(contracts_to_create)}",
                 )
 
             snapshot = OptionChainSnapshot(
@@ -123,13 +127,11 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
             await strike_repo.bulk_insert(strike_values, commit=False)
 
             logger.info(
-                "Snapshot created",
-                extra={
-                    "instrument_id": str(instrument_id),
-                    "expiry_date": str(expiry_date),
-                    "snapshot_id": str(snapshot.id),
-                    "strikes": len(strike_values),
-                },
+                "Snapshot created - "
+                f"instrument_id: {instrument_id} - "
+                f"expiry_date: {expiry_date} - "
+                f"snapshot_id: {snapshot.id} - "
+                f"strikes_inserted: {len(strike_values)}",
             )
 
             return {
@@ -137,3 +139,30 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                 "strikes_inserted": len(strike_values),
                 "expiry_id": expiry.id,
             }
+
+    @classmethod
+    async def get_latest_captured_at_for_today_ist(cls) -> datetime | None:
+        now_ist = datetime.now(IST)
+        start_of_day_ist = datetime.combine(
+            now_ist.date(),
+            time.min,
+            tzinfo=IST,
+        )
+        start_of_next_day_ist = start_of_day_ist + timedelta(days=1)
+
+        start_utc = start_of_day_ist.astimezone(timezone.utc)
+        end_utc = start_of_next_day_ist.astimezone(timezone.utc)
+
+        async with postgres_connection.get_session() as session:
+            snapshot_repo = get_option_chain_snapshots_repository(session)
+            snapshots = await snapshot_repo.list_ordered(
+                where=[
+                    snapshot_repo.model.captured_at >= start_utc,
+                    snapshot_repo.model.captured_at < end_utc,
+                ],
+                order_by=snapshot_repo.model.captured_at.desc(),
+                limit=1,
+            )
+            if not snapshots:
+                return None
+            return snapshots[0].captured_at

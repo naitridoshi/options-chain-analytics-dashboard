@@ -65,9 +65,12 @@ def _to_date(value: Any) -> date | None:
         return datetime.fromtimestamp(ts, tz=timezone.utc).date()
 
     if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.isdigit():
+            return _to_date(int(stripped))
         for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d%b%y", "%d%b%Y"):
             try:
-                return datetime.strptime(value, fmt).date()
+                return datetime.strptime(stripped, fmt).date()
             except ValueError:
                 continue
 
@@ -85,6 +88,20 @@ def parse_spot_price(payload: dict) -> Decimal:
     )
     if spot is None and isinstance(data.get("underlying"), dict):
         spot = data["underlying"].get("ltp") or data["underlying"].get("last_price")
+    if spot is None:
+        chain = (
+            data.get("optionsChain") or data.get("options_chain") or data.get("chain")
+        )
+        if isinstance(chain, list):
+            for item in chain:
+                if not isinstance(item, dict):
+                    continue
+                if (item.get("option_type") or "") == "" and _to_decimal(
+                    item.get("strike_price")
+                ) in (None, Decimal("-1")):
+                    spot = item.get("ltp") or item.get("last_price")
+                    if spot is not None:
+                        break
     if spot is None:
         raise ValueError(f"Unable to parse spot price from FYERS response: {payload}")
     return Decimal(str(spot))
@@ -109,6 +126,12 @@ def parse_expiry_candidates(payload: dict) -> list[dict]:
                 or item.get("display")
             )
             timestamp = item.get("timestamp") or item.get("expiry_ts")
+            if timestamp is None:
+                raw_expiry = item.get("expiry")
+                if isinstance(raw_expiry, (int, float)):
+                    timestamp = int(raw_expiry)
+                elif isinstance(raw_expiry, str) and raw_expiry.strip().isdigit():
+                    timestamp = int(raw_expiry.strip())
             if timestamp is not None:
                 timestamp = int(timestamp)
             if not expiry_date and timestamp is not None:
@@ -144,6 +167,10 @@ def parse_expiry_candidates(payload: dict) -> list[dict]:
 def parse_option_rows(payload: dict) -> list[dict]:
     data = payload.get("d") or payload.get("data") or payload
     chain = data.get("optionsChain") or data.get("options_chain") or data.get("chain")
+    fallback_expiry_date = None
+    parsed_candidates = parse_expiry_candidates(payload)
+    if parsed_candidates:
+        fallback_expiry_date = parsed_candidates[0]["expiry_date"]
 
     if not isinstance(chain, list):
         return []
@@ -188,6 +215,8 @@ def parse_option_rows(payload: dict) -> list[dict]:
                 or contract.get("expiry_date")
                 or contract.get("expiry_ts")
             )
+            if row_expiry_date is None:
+                row_expiry_date = fallback_expiry_date
             if row_expiry_date is None:
                 continue
 
@@ -245,6 +274,8 @@ def parse_option_rows(payload: dict) -> list[dict]:
 
         if item.get("option_type") and item.get("symbol") and strike_price is not None:
             row_expiry = expiry_date or _to_date(item.get("expiry_ts"))
+            if row_expiry is None:
+                row_expiry = fallback_expiry_date
             if row_expiry is None:
                 continue
             rows.append(
