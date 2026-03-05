@@ -34,11 +34,8 @@ class OptionChainSnapshotScheduler:
     async def tick(self):
         now_utc = datetime.now(timezone.utc).isoformat()
         logger.info(
-            color_string(
-                "Scheduler tick fired - "
-                f"now_utc: {now_utc}, interval_minutes: {SNAPSHOT_INTERVAL_MINUTES}"
-            ),
-            Colors.BOLD_BLUE,
+            "Scheduler tick fired - "
+            f"now_utc: {now_utc}, interval_minutes: {SNAPSHOT_INTERVAL_MINUTES}"
         )
         if not is_market_open_now():
             logger.info(
@@ -48,13 +45,10 @@ class OptionChainSnapshotScheduler:
             return
         result = await OptionChainSnapshotService.capture_for_all_active_instruments()
         logger.info(
-            color_string(
-                "Scheduler tick completed - "
-                f"now_utc: {now_utc}, processed_instruments: {result.get('processed_instruments')}, "
-                f"snapshots_created: {result.get('snapshots_created')}, "
-                f"strikes_inserted: {result.get('strikes_inserted')}"
-            ),
-            Colors.BOLD_GREEN,
+            "Scheduler tick completed - "
+            f"now_utc: {now_utc}, processed_instruments: {result.get('processed_instruments')}, "
+            f"snapshots_created: {result.get('snapshots_created')}, "
+            f"strikes_inserted: {result.get('strikes_inserted')}"
         )
 
     def _job_event_listener(self, event):
