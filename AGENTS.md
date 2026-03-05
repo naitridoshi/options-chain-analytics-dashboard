@@ -37,10 +37,10 @@ Options Chain Analytics Dashboard backend for ingesting FYERS option-chain snaps
 1. Use `fyers-apiv3` SDK for market data (`optionchain`).
 2. Token model is daily (`fyers_tokens.token_date`) and no refresh token.
 3. Auto-login uses:
-   - `FYERS_USER_ID`
+   - `FYERS_CLIENT_ID`
    - `FYERS_TOTP_KEY`
    - `FYERS_PIN`
-   - `FYERS_CLIENT_ID` / `FYERS_SECRET_KEY`
+   - `FYERS_APP_ID` / `FYERS_SECRET_KEY`
 4. Instrument-to-FYERS mapping must be data-driven via `instruments.fyers_symbol`.
    - Never hardcode symbol mappings in service code.
 
@@ -62,7 +62,6 @@ Required keys:
 - `FYERS_APP_ID`
 - `FYERS_SECRET_KEY`
 - `FYERS_REDIRECT_URI`
-- `FYERS_USER_ID`
 - `FYERS_TOTP_KEY`
 - `FYERS_PIN`
 - `FYERS_LOG_PATH`

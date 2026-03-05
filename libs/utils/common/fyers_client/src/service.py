@@ -21,7 +21,6 @@ from libs.utils.config.src.fyers import (
     FYERS_REDIRECT_URI,
     FYERS_SECRET_KEY,
     FYERS_TOTP_KEY,
-    FYERS_USER_ID,
 )
 from libs.utils.db.postgres.operations.src import FyersTokenOperations
 
@@ -49,7 +48,7 @@ class FyersClientService:
         async with httpx.AsyncClient(timeout=30) as client:
             send_otp_res = await client.post(
                 f"{cls.VAGATOR_BASE}/vagator/v2/send_login_otp_v2",
-                json={"fy_id": b64_str(FYERS_USER_ID), "app_id": "2"},
+                json={"fy_id": b64_str(FYERS_CLIENT_ID), "app_id": "2"},
             )
             send_otp_res.raise_for_status()
             send_otp_payload = send_otp_res.json()
@@ -86,7 +85,7 @@ class FyersClientService:
                 f"{cls.API_BASE}/api/v3/token",
                 headers={"Authorization": f"Bearer {trade_access_token}"},
                 json={
-                    "fyers_id": FYERS_USER_ID,
+                    "fyers_id": FYERS_CLIENT_ID,
                     "app_id": app_id,
                     "redirect_uri": FYERS_REDIRECT_URI,
                     "appType": app_type,
