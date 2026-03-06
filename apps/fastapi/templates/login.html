@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FYERS Login Panel</title>
+  <style>
+    :root {
+      --bg: #0a0f18;
+      --panel: #10192b;
+      --panel-2: #0d1524;
+      --line: #223352;
+      --text: #e6eefc;
+      --muted: #8fa3c7;
+      --good: #1ecf7a;
+      --bad: #ff5f6d;
+      --accent: #27c4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 420px at 50% -8%, #1a2d4f 0%, transparent 65%),
+        linear-gradient(180deg, #090e17 0%, #0a0f18 50%, #08111f 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .panel {
+      width: min(760px, 100%);
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.4);
+      padding: 18px;
+    }
+
+    .title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      font-size: 25px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .badge {
+      font-size: 11px;
+      border: 1px solid #2d446a;
+      background: #13213b;
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .status {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .status.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
+    .status.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid #2d4f7f;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #1b3f6d 0%, #163356 100%);
+    }
+
+    .btn.secondary {
+      background: #13213b;
+      border-color: #27406a;
+      color: #cfe1ff;
+    }
+
+    .hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    code {
+      background: #12213a;
+      border: 1px solid #2a4268;
+      border-radius: 5px;
+      padding: 2px 5px;
+      color: #cfe4ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="title">FYERS Daily Login <span class="badge">TRADING BOARD</span></div>
+    <div class="subtitle">Run this once every morning so snapshots and scheduler can access market data for today.</div>
+
+    <div id="tokenStatus" class="status warn">Checking token status...</div>
+
+    <div class="row">
+      <a class="btn" href="/api/v1/fyers/login">Login with FYERS</a>
+      <a class="btn secondary" href="/dashboard">Open Dashboard</a>
+    </div>
+
+    <div class="hint">
+      After broker auth, callback to <code>/callback</code> stores token in <code>fyers_tokens</code>.
+      If dashboard shows token missing, hard-refresh once after login.
+    </div>
+  </div>
+
+  <script>
+    async function refreshStatus() {
+      const statusEl = document.getElementById("tokenStatus");
+      try {
+        const resp = await fetch("/api/v1/fyers/status", { credentials: "include" });
+        const body = await resp.json();
+        const data = body.data || {};
+        if (resp.ok && data.has_token) {
+          statusEl.className = "status ok";
+          statusEl.textContent = `Logged in for today (${data.token_date})`;
+        } else {
+          statusEl.className = "status warn";
+          statusEl.textContent = "Not logged in for today. Click Login with FYERS.";
+        }
+      } catch (e) {
+        statusEl.className = "status warn";
+        statusEl.textContent = "Unable to fetch FYERS status.";
+      }
+    }
+
+    refreshStatus();
+    setInterval(refreshStatus, 30000);
+  </script>
+</body>
+</html>

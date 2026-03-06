@@ -1,0 +1,8 @@
+EXPIRIES_TABLE = "expiries"
+INSTRUMENTS_TABLE = "instruments"
+OPTION_CONTRACTS_TABLE = "option_contracts"
+OPTION_CHAIN_SNAPSHOTS_TABLE = "option_chain_snapshots"
+OPTION_CHAIN_STRIKES_TABLE = "option_chain_strikes"
+OPTION_CHAIN_INTERVAL_SUMMARIES_TABLE = "option_chain_interval_summaries"
+OPTION_CHAIN_STRIKE_SUMMARIES_TABLE = "option_chain_strike_summaries"
+FYERS_TOKEN_TABLE = "fyers_tokens"
