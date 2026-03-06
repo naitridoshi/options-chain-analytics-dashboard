@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -8,7 +8,7 @@ from libs.utils.config.src.fyers import (
     MARKET_CLOSE_MINUTE,
     MARKET_OPEN_HOUR,
     MARKET_OPEN_MINUTE,
-    SNAPSHOT_INTERVAL_MINUTES,
+    SNAPSHOT_INTERVAL_SECONDS,
 )
 
 IST = ZoneInfo("Asia/Kolkata")
@@ -27,15 +27,15 @@ def is_market_open_now(now_utc: datetime | None = None) -> bool:
 
 def normalize_interval_boundary(
     dt_utc: datetime,
-    interval_minutes: int = SNAPSHOT_INTERVAL_MINUTES,
+    interval_seconds: int = SNAPSHOT_INTERVAL_SECONDS,
 ) -> datetime:
+    if interval_seconds <= 0:
+        raise ValueError("interval_seconds must be greater than 0")
     dt_ist = dt_utc.astimezone(IST)
-    minute_bucket = (dt_ist.minute // interval_minutes) * interval_minutes
-    normalized_ist = dt_ist.replace(
-        minute=minute_bucket,
-        second=0,
-        microsecond=0,
-    )
+    start_of_day_ist = dt_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+    elapsed_seconds = int((dt_ist - start_of_day_ist).total_seconds())
+    second_bucket = (elapsed_seconds // interval_seconds) * interval_seconds
+    normalized_ist = start_of_day_ist + timedelta(seconds=second_bucket)
     return normalized_ist.astimezone(timezone.utc)
 
 

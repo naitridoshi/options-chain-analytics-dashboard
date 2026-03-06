@@ -62,6 +62,12 @@
       letter-spacing: 0.3px;
     }
 
+    .symbol-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .pill {
       font-size: 11px;
       border: 1px solid var(--line);
@@ -71,6 +77,17 @@
       border-radius: 999px;
       font-weight: 700;
     }
+
+    .fyers-badge {
+      font-size: 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .fyers-badge.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
+    .fyers-badge.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
 
     .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
@@ -108,7 +125,15 @@
     .status.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
     .status.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
 
-    .meta { margin-top: 6px; color: var(--muted); font-size: 11px; }
+    .meta-row {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .meta { color: var(--muted); font-size: 11px; }
 
     .kpis {
       margin-top: 10px;
@@ -125,6 +150,44 @@
     }
 
     .kpi .label { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+    .kpi .label.with-tip { display: inline-flex; align-items: center; gap: 4px; }
+    .kpi .label-tip {
+      position: relative;
+      color: #aecdff;
+      font-size: 10px;
+      border: 1px solid #2a3f64;
+      border-radius: 999px;
+      padding: 0 5px;
+      line-height: 1.4;
+      cursor: help;
+      text-transform: none;
+    }
+    .kpi .label-tip .label-tip-pop {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%) translateY(4px);
+      width: 280px;
+      border: 1px solid #2a3f64;
+      border-radius: 8px;
+      background: #0f1b30;
+      color: #d6e3ff;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+      padding: 8px;
+      line-height: 1.35;
+      white-space: normal;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .kpi .label-tip:hover .label-tip-pop,
+    .kpi .label-tip:focus .label-tip-pop {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
     .kpi .val { margin-top: 2px; font-size: 16px; font-weight: 800; }
 
     .board { padding: 10px; }
@@ -183,7 +246,14 @@
       background: #131f35;
     }
 
-    .atm { outline: 1px solid #f7d34a; outline-offset: -1px; }
+    .sp-cell.atm {
+      background: linear-gradient(180deg, #3f3200 0%, #2d2500 100%);
+      color: #ffe88a;
+      outline: 2px solid #ffd84d;
+      outline-offset: -2px;
+      box-shadow: inset 0 0 0 1px #fff2a8, 0 0 16px rgba(255, 216, 77, 0.55);
+      font-weight: 900;
+    }
 
     .pos { color: var(--good); font-weight: 700; }
     .neg { color: var(--bad); font-weight: 700; }
@@ -199,40 +269,8 @@
       text-align: right;
     }
 
-    .summary-row {
-      margin-top: 10px;
-      display: grid;
-      grid-template-columns: 120px 220px 120px 220px;
-      gap: 8px;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .sum-label {
-      background: #e6e6e6;
-      color: #111;
-      border-radius: 6px;
-      font-weight: 800;
-      text-align: center;
-      padding: 8px 6px;
-    }
-
-    .sum-val {
-      border-radius: 6px;
-      font-weight: 900;
-      text-align: center;
-      padding: 8px 6px;
-      font-size: 34px;
-      line-height: 1;
-      letter-spacing: 1px;
-    }
-
-    .sum-val.coi { background: #f1e500; color: #121212; }
-    .sum-val.oi { background: #d9d9d9; color: #111; }
-
     @media (max-width: 1200px) {
       .kpis { grid-template-columns: repeat(3, minmax(120px, 1fr)); }
-      .summary-row { grid-template-columns: 120px 1fr; }
     }
   </style>
 </head>
@@ -241,7 +279,10 @@
     <div class="card top">
       <div class="top-row">
         <div class="symbol-title">
-          <span id="symbolBadge">NIFTY</span>
+          <div class="symbol-meta">
+            <span id="symbolBadge">NIFTY</span>
+            <span id="fyersStatusBadge" class="fyers-badge warn">FYERS: CHECKING</span>
+          </div>
           <span class="pill">LATEST SNAPSHOT</span>
         </div>
         <div class="actions">
@@ -251,9 +292,10 @@
         </div>
       </div>
 
-      <div id="fyersStatus" class="status warn">Checking FYERS login status...</div>
       <div id="dataStatus" class="status warn" style="display:none;"></div>
-      <div id="meta" class="meta">Market date: -</div>
+      <div class="meta-row">
+        <div id="meta" class="meta">Market date: -</div>
+      </div>
 
       <div class="kpis" id="kpis"></div>
     </div>
@@ -303,12 +345,6 @@
         </table>
       </div>
 
-      <div class="summary-row">
-        <div class="sum-label">COI</div>
-        <div class="sum-val coi" id="coiDiff">-</div>
-        <div class="sum-label">OI</div>
-        <div class="sum-val oi" id="oiDiff">-</div>
-      </div>
     </div>
   </div>
 
@@ -318,15 +354,34 @@
 
     function fmt(v) {
       if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
-      const n = Number(v);
-      return n < 0 ? `(${Math.abs(n).toLocaleString()})` : n.toLocaleString();
+      return Number(v).toLocaleString();
     }
 
     function fmt2(v) {
       if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
-      const n = Number(v);
-      const fixed = Math.abs(n).toFixed(2);
-      return n < 0 ? `(${fixed})` : fixed;
+      return Number(v).toFixed(2);
+    }
+
+    function fmtPcr(v) {
+      if (v === null || v === undefined) return "-";
+      if (v === "INF") return "∞";
+      if (v === "-INF") return "-∞";
+      if (Number.isNaN(Number(v))) return "-";
+      return Number(v).toFixed(2);
+    }
+
+    function fmt2Signed(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+      return Number(v).toFixed(2);
+    }
+
+    function escHtml(v) {
+      return String(v)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#39;");
     }
 
     function signedClass(v) {
@@ -348,21 +403,21 @@
     }
 
     async function refreshFyersStatus() {
-      const statusEl = document.getElementById("fyersStatus");
+      const statusEl = document.getElementById("fyersStatusBadge");
       try {
         const statusRes = await fetch("/api/v1/fyers/status", { credentials: "include" });
         const statusBody = await statusRes.json();
         const token = statusBody.data || {};
         if (statusRes.ok && token.has_token) {
-          statusEl.className = "status ok";
-          statusEl.textContent = `FYERS logged in for ${token.token_date}`;
+          statusEl.className = "fyers-badge ok";
+          statusEl.textContent = `FYERS ${token.token_date}`;
           return;
         }
-        statusEl.className = "status warn";
-        statusEl.innerHTML = `FYERS token missing for today. Login from <a href="/login" style="color:#ffdf9a">/login</a>.`;
+        statusEl.className = "fyers-badge warn";
+        statusEl.textContent = "FYERS: TOKEN MISSING";
       } catch (e) {
-        statusEl.className = "status warn";
-        statusEl.textContent = "Unable to fetch FYERS status.";
+        statusEl.className = "fyers-badge warn";
+        statusEl.textContent = "FYERS: STATUS ERROR";
       }
     }
 
@@ -398,24 +453,46 @@
       const latest = data.latest;
       const strikes = data.strikes || [];
       refreshMs = (data.refresh_seconds || 300) * 1000;
+      const refreshLabel = refreshMs >= 60000
+        ? `${(refreshMs / 60000).toFixed(2)}m`
+        : `${(refreshMs / 1000).toFixed(0)}s`;
 
       document.getElementById("meta").textContent =
-        `Market date: ${data.market_date || "-"} | Captured (IST): ${latest ? toIST(latest.captured_at) : "-"} | Auto-refresh: ${refreshMs / 60000}m`;
+        `Market date: ${data.market_date || "-"} | Captured (IST): ${latest ? toIST(latest.captured_at) : "-"} | Auto-refresh: ${refreshLabel}`;
+
+      const prevCloseSource = latest && latest.prev_close_captured_at
+        ? `Prev close used: ${toIST(latest.prev_close_captured_at)} IST (${latest.prev_close_selection === "exact_close_time" ? "exact market close" : "latest prev market-day snapshot"})`
+        : "Previous market-day close snapshot not available";
 
       const kpis = [
-        ["SPOT", latest ? fmt2(latest.spot_price) : "-"],
-        ["OI PCR", latest ? fmt2(latest.pcr_oi) : "-"],
-        ["COI PCR", latest ? fmt2(latest.pcr_oi_change) : "-"],
-        ["CALL OI %", latest ? `${fmt2(latest.call_oi_share_pct)}%` : "-"],
-        ["PUT OI %", latest ? `${fmt2(latest.put_oi_share_pct)}%` : "-"],
-        ["CALL COI %", latest ? `${fmt2(latest.call_oi_change_share_pct)}%` : "-"],
-        ["PUT COI %", latest ? `${fmt2(latest.put_oi_change_share_pct)}%` : "-"],
-        ["NET OI", latest ? fmt(latest.net_oi_sum) : "-"],
-        ["NET COI", latest ? fmt(latest.net_oi_change_sum) : "-"],
-        ["SYMBOL", data.instrument ? data.instrument.symbol : "-"]
+        { label: "SPOT", val: latest ? fmt2(latest.spot_price) : "-" },
+        {
+          label: "CHANGE",
+          val: latest ? fmt2(latest.change_from_prev_close) : "-",
+          tip: prevCloseSource,
+        },
+        {
+          label: "CHANGE %",
+          val: latest ? `${fmt2(latest.change_pct_from_prev_close)}%` : "-",
+          tip: prevCloseSource,
+        },
+        { label: "OI PCR", val: latest ? fmt2(latest.pcr_oi) : "-" },
+        { label: "COI PCR", val: latest ? fmtPcr(latest.coi_pcr_window) : "-" },
+        { label: "ATM PCR", val: latest ? fmtPcr(latest.atm_pcr) : "-" },
+        { label: "STRENGTH PCR", val: latest ? fmtPcr(latest.strength_pcr) : "-" },
+        { label: "CALL COI %", val: latest ? `${fmt2(latest.call_oi_change_share_pct)}%` : "-" },
+        { label: "PUT COI %", val: latest ? `${fmt2(latest.put_oi_change_share_pct)}%` : "-" },
+        { label: "NET OI", val: latest ? fmt(latest.net_oi_sum) : "-" },
+        { label: "NET COI", val: latest ? fmt(latest.net_oi_change_sum) : "-" },
+        { label: "SYMBOL", val: data.instrument ? data.instrument.symbol : "-" }
       ];
       document.getElementById("kpis").innerHTML = kpis
-        .map(([label, val]) => `<div class="kpi"><div class="label">${label}</div><div class="val">${val}</div></div>`)
+        .map((item) => {
+          const labelHtml = item.tip
+            ? `<div class="label with-tip">${item.label}<span class="label-tip" tabindex="0">i<span class="label-tip-pop">${escHtml(item.tip)}</span></span></div>`
+            : `<div class="label">${item.label}</div>`;
+          return `<div class="kpi">${labelHtml}<div class="val">${item.val}</div></div>`;
+        })
         .join("");
 
       const spot = latest ? Number(latest.spot_price) : null;
@@ -446,21 +523,21 @@
 
         return `
           <tr>
-            <td class="call-col">${fmt2(callRatio)}</td>
-            <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}</td>
+            <td class="call-col">${fmt2(callRatio)}%</td>
+            <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}%</td>
             <td class="call-col">${fmt(callOi)}</td>
             <td class="call-col ${signedClass(callCoi)}">${fmt(callCoi)}</td>
-            <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2(row.call_ltp_change)}</td>
+            <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2(row.call_ltp)}</td>
             <td class="call-col">-</td>
             <td class="sp-cell ${isAtm ? 'atm' : ''}">${fmt2(row.strike_price)}</td>
             <td class="put-col">-</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2(row.put_ltp)}</td>
-            <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2(row.put_ltp_change)}</td>
+            <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${signedClass(putCoi)}">${fmt(putCoi)}</td>
             <td class="put-col">${fmt(putOi)}</td>
-            <td class="put-col ${signedClass(putCoiPctChng)}">${fmt2(putCoiPctChng)}</td>
-            <td class="put-col">${fmt2(putRatio)}</td>
+            <td class="put-col ${signedClass(putCoiPctChng)}">${fmt2(putCoiPctChng)}%</td>
+            <td class="put-col">${fmt2(putRatio)}%</td>
           </tr>
         `;
       }).join("");
@@ -470,23 +547,19 @@
       const callCoiSum = latest ? latest.call_oi_change_sum : null;
       const putCoiSum = latest ? latest.put_oi_change_sum : null;
 
-      document.getElementById("footCallOi").textContent = fmt(callOiSum);
-      document.getElementById("footPutOi").textContent = fmt(putOiSum);
-      document.getElementById("footCallCoi").textContent = fmt(callCoiSum);
-      document.getElementById("footPutCoi").textContent = fmt(putCoiSum);
+      document.getElementById("footCallOi").textContent = "";
+      document.getElementById("footPutOi").textContent = "";
+      document.getElementById("footCallCoi").textContent = "";
+      document.getElementById("footPutCoi").textContent = "";
       document.getElementById("footOiPcr").textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
-      document.getElementById("footCoiPcr").textContent = latest ? `COI PCR ${fmt2(latest.pcr_oi_change)}` : "-";
-
-      const coiDiff = latest ? Number(putCoiSum || 0) - Number(callCoiSum || 0) : null;
-      const oiDiff = latest ? Number(putOiSum || 0) - Number(callOiSum || 0) : null;
-      document.getElementById("coiDiff").textContent = fmt(coiDiff);
-      document.getElementById("oiDiff").textContent = fmt(oiDiff);
+      document.getElementById("footCoiPcr").textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
 
       if (timerId) clearTimeout(timerId);
       timerId = setTimeout(load, refreshMs);
     }
 
     document.getElementById("refreshBtn").addEventListener("click", load);
+
     load();
   </script>
 </body>

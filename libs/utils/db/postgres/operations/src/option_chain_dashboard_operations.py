@@ -4,7 +4,11 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, desc
 
-from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_MINUTES
+from libs.utils.config.src.fyers import (
+    MARKET_CLOSE_HOUR,
+    MARKET_CLOSE_MINUTE,
+    SNAPSHOT_INTERVAL_SECONDS,
+)
 from libs.utils.db.postgres.models.src.instrument import Instrument
 from libs.utils.db.postgres.models.src.option_chain_interval_summary import (
     OptionChainIntervalSummary,
@@ -28,6 +32,114 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
         if isinstance(value, Decimal):
             return float(value)
         return value
+
+    @staticmethod
+    def _sum_range(rows: list, start_idx: int, end_idx: int, field_name: str) -> int:
+        if not rows:
+            return 0
+        start = max(0, start_idx)
+        end = min(len(rows) - 1, end_idx)
+        if start > end:
+            return 0
+        total = 0
+        for idx in range(start, end + 1):
+            value = getattr(rows[idx], field_name, 0)
+            total += int(value or 0)
+        return total
+
+    @staticmethod
+    def _pcr_value(put_total: int, call_total: int) -> float | str | None:
+        if call_total == 0:
+            if put_total == 0:
+                return None
+            return "INF" if put_total > 0 else "-INF"
+        return put_total / call_total
+
+    @classmethod
+    def _compute_custom_pcrs(
+        cls, strike_rows: list, spot_price: Decimal | None
+    ) -> dict:
+        if not strike_rows or spot_price is None:
+            return {
+                "coi_pcr_window": None,
+                "atm_pcr": None,
+                "strength_pcr": None,
+            }
+
+        spot_float = float(spot_price)
+        atm_index = min(
+            range(len(strike_rows)),
+            key=lambda idx: abs(float(strike_rows[idx].strike_price) - spot_float),
+        )
+
+        call_total_coi_window = cls._sum_range(
+            strike_rows, atm_index - 6, atm_index + 6, "call_oi_change"
+        )
+        put_total_coi_window = cls._sum_range(
+            strike_rows, atm_index - 6, atm_index + 6, "put_oi_change"
+        )
+
+        call_total_atm = cls._sum_range(
+            strike_rows, atm_index - 1, atm_index, "call_oi_change"
+        )
+        put_total_atm = cls._sum_range(
+            strike_rows, atm_index, atm_index + 1, "put_oi_change"
+        )
+
+        call_total_strength = cls._sum_range(
+            strike_rows, atm_index - 4, atm_index, "call_oi_change"
+        )
+        put_total_strength = cls._sum_range(
+            strike_rows, atm_index, atm_index + 4, "put_oi_change"
+        )
+
+        return {
+            "coi_pcr_window": cls._pcr_value(
+                put_total_coi_window, call_total_coi_window
+            ),
+            "atm_pcr": cls._pcr_value(put_total_atm, call_total_atm),
+            "strength_pcr": cls._pcr_value(put_total_strength, call_total_strength),
+        }
+
+    @classmethod
+    async def _resolve_previous_close_reference(
+        cls,
+        *,
+        interval_repo,
+        instrument_id,
+        today_start_utc: datetime,
+    ):
+        latest_before_today = await interval_repo.list_ordered(
+            where=[
+                interval_repo.model.instrument_id == instrument_id,
+                interval_repo.model.captured_at < today_start_utc,
+            ],
+            order_by=desc(interval_repo.model.captured_at),
+            limit=1,
+        )
+        if not latest_before_today:
+            return None, None
+
+        fallback_row = latest_before_today[0]
+        prev_market_date_ist = fallback_row.captured_at.astimezone(IST).date()
+        exact_close_ist = datetime.combine(
+            prev_market_date_ist,
+            time(hour=MARKET_CLOSE_HOUR, minute=MARKET_CLOSE_MINUTE, second=0),
+            tzinfo=IST,
+        )
+        exact_close_utc = exact_close_ist.astimezone(timezone.utc)
+
+        exact_close_rows = await interval_repo.list_ordered(
+            where=[
+                interval_repo.model.instrument_id == instrument_id,
+                interval_repo.model.captured_at == exact_close_utc,
+            ],
+            order_by=desc(interval_repo.model.captured_at),
+            limit=1,
+        )
+        if exact_close_rows:
+            return exact_close_rows[0], "exact_close_time"
+        return fallback_row, "latest_previous_market_day"
 
     @classmethod
     async def _resolve_instrument(
@@ -74,7 +186,7 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
                     "market_date": (
                         market_date or datetime.now(IST).date()
                     ).isoformat(),
-                    "refresh_seconds": SNAPSHOT_INTERVAL_MINUTES * 60,
+                    "refresh_seconds": SNAPSHOT_INTERVAL_SECONDS,
                     "timeline": [],
                     "latest": None,
                     "strikes": [],
@@ -114,10 +226,43 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
 
             latest = None
             if latest_row:
+                custom_pcrs = cls._compute_custom_pcrs(
+                    strike_rows, latest_row.spot_price
+                )
+                (
+                    previous_close_row,
+                    previous_close_selection,
+                ) = await cls._resolve_previous_close_reference(
+                    interval_repo=interval_repo,
+                    instrument_id=instrument.id,
+                    today_start_utc=start_utc,
+                )
+                previous_close_spot = (
+                    previous_close_row.spot_price if previous_close_row else None
+                )
+                change_from_prev_close = None
+                change_pct_from_prev_close = None
+                if previous_close_spot is not None:
+                    change_from_prev_close = latest_row.spot_price - previous_close_spot
+                    if previous_close_spot != 0:
+                        change_pct_from_prev_close = (
+                            change_from_prev_close / previous_close_spot
+                        ) * Decimal("100")
                 latest = {
                     "snapshot_id": str(latest_row.snapshot_id),
                     "captured_at": latest_row.captured_at.isoformat(),
                     "spot_price": cls._as_number(latest_row.spot_price),
+                    "prev_close_spot": cls._as_number(previous_close_spot),
+                    "prev_close_captured_at": (
+                        previous_close_row.captured_at.isoformat()
+                        if previous_close_row
+                        else None
+                    ),
+                    "prev_close_selection": previous_close_selection,
+                    "change_from_prev_close": cls._as_number(change_from_prev_close),
+                    "change_pct_from_prev_close": cls._as_number(
+                        change_pct_from_prev_close
+                    ),
                     "call_oi_change_sum": latest_row.call_oi_change_sum,
                     "put_oi_change_sum": latest_row.put_oi_change_sum,
                     "net_oi_change_sum": latest_row.net_oi_change_sum,
@@ -134,6 +279,9 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
                     "put_oi_change_share_pct": cls._as_number(
                         latest_row.put_oi_change_share_pct
                     ),
+                    "coi_pcr_window": custom_pcrs["coi_pcr_window"],
+                    "atm_pcr": custom_pcrs["atm_pcr"],
+                    "strength_pcr": custom_pcrs["strength_pcr"],
                 }
 
             strikes = [
@@ -165,7 +313,7 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
                     "fyers_symbol": instrument.fyers_symbol,
                 },
                 "market_date": resolved_date.isoformat(),
-                "refresh_seconds": SNAPSHOT_INTERVAL_MINUTES * 60,
+                "refresh_seconds": SNAPSHOT_INTERVAL_SECONDS,
                 "timeline": timeline,
                 "latest": latest,
                 "strikes": strikes,

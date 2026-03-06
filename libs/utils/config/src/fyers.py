@@ -12,7 +12,12 @@ FYERS_LOG_PATH = config.get("FYERS_LOG_PATH", "logs/fyers")
 # Snapshot engine configuration
 SNAPSHOT_STRIKE_COUNT = int(config.get("SNAPSHOT_STRIKE_COUNT", 13))
 SNAPSHOT_EXPIRY_COUNT = int(config.get("SNAPSHOT_EXPIRY_COUNT", 1))
-SNAPSHOT_INTERVAL_MINUTES = int(config.get("SNAPSHOT_INTERVAL_MINUTES", 5))
+_snapshot_interval_minutes_fallback = int(config.get("SNAPSHOT_INTERVAL_MINUTES", 5))
+SNAPSHOT_INTERVAL_SECONDS = int(
+    config.get("SNAPSHOT_INTERVAL_SECONDS", _snapshot_interval_minutes_fallback * 60)
+)
+if SNAPSHOT_INTERVAL_SECONDS <= 0:
+    raise ValueError("SNAPSHOT_INTERVAL_SECONDS must be greater than 0")
 SNAPSHOT_MAX_RETRIES = int(config.get("SNAPSHOT_MAX_RETRIES", 3))
 SNAPSHOT_RETRY_BASE_DELAY_SECONDS = int(
     config.get("SNAPSHOT_RETRY_BASE_DELAY_SECONDS", 3)

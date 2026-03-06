@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from time import perf_counter
 
 from apscheduler.events import (
     EVENT_JOB_ERROR,
@@ -23,7 +24,7 @@ from libs.utils.config.src.fyers import (
     MARKET_CLOSE_MINUTE,
     MARKET_OPEN_HOUR,
     MARKET_OPEN_MINUTE,
-    SNAPSHOT_INTERVAL_MINUTES,
+    SNAPSHOT_INTERVAL_SECONDS,
 )
 from libs.utils.db.postgres.operations.src import OptionSnapshotOperations
 
@@ -38,29 +39,45 @@ class OptionChainSnapshotScheduler:
         self._started = False
 
     async def tick(self):
+        tick_start = perf_counter()
+        tick_status = "unknown"
         now = datetime.now(timezone.utc)
         now_utc = now.isoformat()
         now_ist = now.astimezone(IST).isoformat()
         logger.info(
             "Scheduler tick fired - "
-            f"now_utc: {now_utc}, interval_minutes: {SNAPSHOT_INTERVAL_MINUTES}"
+            f"now_utc: {now_utc}, interval_seconds: {SNAPSHOT_INTERVAL_SECONDS}"
         )
-        if not is_market_open_now():
-            logger.info(
-                "Scheduler tick skipped - market closed at this time - "
-                f"now_utc: {now_utc}, "
-                f"now_ist: {now_ist}, "
-                f"market_window_ist: {MARKET_OPEN_HOUR:02d}:{MARKET_OPEN_MINUTE:02d}-"
-                f"{MARKET_CLOSE_HOUR:02d}:{MARKET_CLOSE_MINUTE:02d}",
+        try:
+            if not is_market_open_now():
+                tick_status = "market_closed"
+                logger.info(
+                    "Scheduler tick skipped - market closed at this time - "
+                    f"now_utc: {now_utc}, "
+                    f"now_ist: {now_ist}, "
+                    f"market_window_ist: {MARKET_OPEN_HOUR:02d}:{MARKET_OPEN_MINUTE:02d}-"
+                    f"{MARKET_CLOSE_HOUR:02d}:{MARKET_CLOSE_MINUTE:02d}",
+                )
+                return
+            result = (
+                await OptionChainSnapshotService.capture_for_all_active_instruments()
             )
-            return
-        result = await OptionChainSnapshotService.capture_for_all_active_instruments()
-        logger.info(
-            "Scheduler tick completed - "
-            f"now_utc: {now_utc}, processed_instruments: {result.get('processed_instruments')}, "
-            f"snapshots_created: {result.get('snapshots_created')}, "
-            f"strikes_inserted: {result.get('strikes_inserted')}"
-        )
+            tick_status = "completed"
+            logger.info(
+                "Scheduler tick completed - "
+                f"now_utc: {now_utc}, processed_instruments: {result.get('processed_instruments')}, "
+                f"snapshots_created: {result.get('snapshots_created')}, "
+                f"strikes_inserted: {result.get('strikes_inserted')}"
+            )
+        except Exception:
+            tick_status = "failed"
+            raise
+        finally:
+            duration_seconds = perf_counter() - tick_start
+            logger.info(
+                "Scheduler tick duration - "
+                f"status: {tick_status}, duration_seconds: {duration_seconds:.3f}"
+            )
 
     def _job_event_listener(self, event):
         job = self.scheduler.get_job(event.job_id) if event.job_id else None
@@ -104,7 +121,7 @@ class OptionChainSnapshotScheduler:
         run_immediately_on_startup = False
         if latest_captured_at is not None:
             candidate_start_ist = latest_captured_at.astimezone(IST) + timedelta(
-                minutes=SNAPSHOT_INTERVAL_MINUTES
+                seconds=SNAPSHOT_INTERVAL_SECONDS
             )
             startup_reason = "last_plus_interval"
 
@@ -119,7 +136,7 @@ class OptionChainSnapshotScheduler:
         job = self.scheduler.add_job(
             self.tick,
             trigger=IntervalTrigger(
-                minutes=SNAPSHOT_INTERVAL_MINUTES,
+                seconds=SNAPSHOT_INTERVAL_SECONDS,
                 start_date=start_date_ist,
             ),
             id="options-chain-snapshot",
@@ -144,7 +161,7 @@ class OptionChainSnapshotScheduler:
         logger.info(
             color_string(
                 "Option chain snapshot scheduler started - "
-                f"job_id: {job.id}, interval_minutes: {SNAPSHOT_INTERVAL_MINUTES}, "
+                f"job_id: {job.id}, interval_seconds: {SNAPSHOT_INTERVAL_SECONDS}, "
                 f"latest_captured_at_ist: {latest_captured_at.astimezone(IST).isoformat() if latest_captured_at else None}, "
                 f"computed_start_time_ist: {start_date_ist.isoformat()}, "
                 f"next_run_time: {job.next_run_time.isoformat() if job.next_run_time else None}",
