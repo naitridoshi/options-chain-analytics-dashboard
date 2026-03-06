@@ -145,8 +145,21 @@
     .kpis {
       margin-top: 10px;
       display: grid;
-      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      grid-template-columns: minmax(180px, 1fr) minmax(240px, 1.2fr) minmax(180px, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .kpi-stack {
+      display: grid;
+      grid-template-rows: repeat(3, minmax(64px, auto));
       gap: 6px;
+    }
+
+    .signal-col {
+      display: grid;
+      grid-template-rows: repeat(2, minmax(96px, auto));
+      gap: 8px;
     }
 
     .kpi {
@@ -196,6 +209,44 @@
       transform: translateX(-50%) translateY(0);
     }
     .kpi .val { margin-top: 2px; font-size: 16px; font-weight: 800; }
+    .signal-card {
+      border-radius: 8px;
+      border: 1px solid #284165;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+      font-weight: 800;
+    }
+    .signal-card .title {
+      font-size: 11px;
+      letter-spacing: 0.35px;
+      text-transform: uppercase;
+      opacity: 0.95;
+    }
+    .signal-card .value {
+      font-size: 22px;
+      line-height: 1.05;
+      letter-spacing: 0.5px;
+    }
+    .signal-positive {
+      background: #6fd36f;
+      border-color: #8ee28e;
+      color: #101010;
+    }
+    .signal-negative {
+      background: #f28a8a;
+      border-color: #ffb0b0;
+      color: #101010;
+    }
+    .signal-neutral {
+      background: #87d8ff;
+      border-color: #afe8ff;
+      color: #101010;
+    }
     .skeleton {
       position: relative;
       overflow: hidden;
@@ -318,7 +369,9 @@
     }
 
     @media (max-width: 1200px) {
-      .kpis { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+      .kpis { grid-template-columns: 1fr; }
+      .kpi-stack { grid-template-rows: unset; grid-template-columns: repeat(3, minmax(120px, 1fr)); }
+      .signal-col { grid-template-rows: unset; grid-template-columns: repeat(2, minmax(140px, 1fr)); }
     }
   </style>
 </head>
@@ -334,8 +387,6 @@
           <span class="pill">LATEST SNAPSHOT</span>
         </div>
         <div class="actions">
-          <label>Symbol <input id="symbol" value="NIFTY" /></label>
-          <button id="refreshBtn">Refresh</button>
           <a class="link-btn" href="/login">FYERS Login</a>
         </div>
       </div>
@@ -424,6 +475,27 @@
       return Number(v).toFixed(2);
     }
 
+    function pcrNumber(v) {
+      if (v === null || v === undefined || v === "INF" || v === "-INF") return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function renderSignalCard(title, value, tone) {
+      return `<div class="signal-card signal-${tone}">
+        <div class="title">${title}</div>
+        <div class="value">${value}</div>
+      </div>`;
+    }
+
+    function kpiToneClass(raw) {
+      if (raw === null || raw === undefined || Number.isNaN(Number(raw))) return "";
+      const n = Number(raw);
+      if (n > 0) return "pos";
+      if (n < 0) return "neg";
+      return "";
+    }
+
     function escHtml(v) {
       return String(v)
         .replaceAll("&", "&amp;")
@@ -478,10 +550,15 @@
     }
 
     function showLoadingState() {
-      const kpiLabels = ["SPOT", "CHANGE", "CHANGE %", "COI PCR", "ATM PCR", "STRENGTH PCR"];
-      document.getElementById("kpis").innerHTML = kpiLabels
-        .map(() => `<div class="kpi"><div class="label skeleton"></div><div class="val skeleton"></div></div>`)
-        .join("");
+      const kpiCardSkeleton = `<div class="kpi"><div class="label skeleton"></div><div class="val skeleton"></div></div>`;
+      document.getElementById("kpis").innerHTML = `
+        <div class="kpi-stack">${kpiCardSkeleton}${kpiCardSkeleton}${kpiCardSkeleton}</div>
+        <div class="signal-col">
+          <div class="signal-card"><div class="title skeleton" style="width:120px;height:10px;"></div><div class="value skeleton" style="width:160px;height:24px;"></div></div>
+          <div class="signal-card"><div class="title skeleton" style="width:100px;height:10px;"></div><div class="value skeleton" style="width:140px;height:24px;"></div></div>
+        </div>
+        <div class="kpi-stack">${kpiCardSkeleton}${kpiCardSkeleton}${kpiCardSkeleton}</div>
+      `;
 
       document.querySelector("#gridTable tbody").innerHTML =
         `<tr><td colspan="15" style="padding:14px 8px;">
@@ -493,8 +570,8 @@
     }
 
     async function load() {
-      const symbol = (document.getElementById("symbol").value || "").trim().toUpperCase();
-      document.getElementById("symbolBadge").textContent = symbol || "NIFTY";
+      const symbol = (document.getElementById("symbolBadge").textContent || "NIFTY").trim().toUpperCase();
+      document.getElementById("symbolBadge").textContent = symbol;
       if (!hasRendered) {
         showLoadingState();
       }
@@ -531,30 +608,79 @@
         ? `Prev close used: ${toIST(latest.prev_close_captured_at)} IST (${latest.prev_close_selection === "exact_close_time" ? "exact market close" : "latest prev market-day snapshot"})`
         : "Previous market-day close snapshot not available";
 
-      const kpis = [
-        { label: "SPOT", val: latest ? fmt2(latest.spot_price) : "-" },
+      const leftKpis = [
+        {
+          label: "SPOT",
+          val: latest ? fmt2(latest.spot_price) : "-",
+          raw: latest ? latest.spot_price : null,
+        },
         {
           label: "CHANGE",
           val: latest ? fmt2(latest.change_from_prev_close) : "-",
           tip: prevCloseSource,
+          raw: latest ? latest.change_from_prev_close : null,
         },
         {
           label: "CHANGE %",
           val: latest ? `${fmt2(latest.change_pct_from_prev_close)}%` : "-",
           tip: prevCloseSource,
+          raw: latest ? latest.change_pct_from_prev_close : null,
         },
-        { label: "COI PCR", val: latest ? fmtPcr(latest.coi_pcr_window) : "-" },
-        { label: "ATM PCR", val: latest ? fmtPcr(latest.atm_pcr) : "-" },
-        { label: "STRENGTH PCR", val: latest ? fmtPcr(latest.strength_pcr) : "-" },
       ];
-      document.getElementById("kpis").innerHTML = kpis
-        .map((item) => {
+      const rightKpis = [
+        {
+          label: "COI PCR",
+          val: latest ? fmtPcr(latest.coi_pcr_window) : "-",
+          raw: latest ? pcrNumber(latest.coi_pcr_window) : null,
+        },
+        {
+          label: "ATM PCR",
+          val: latest ? fmtPcr(latest.atm_pcr) : "-",
+          raw: latest ? pcrNumber(latest.atm_pcr) : null,
+        },
+        {
+          label: "STRENGTH PCR",
+          val: latest ? fmtPcr(latest.strength_pcr) : "-",
+          raw: latest ? pcrNumber(latest.strength_pcr) : null,
+        },
+      ];
+
+      const coiPcr = latest ? pcrNumber(latest.coi_pcr_window) : null;
+      const atmPcr = latest ? pcrNumber(latest.atm_pcr) : null;
+      const strengthPcr = latest ? pcrNumber(latest.strength_pcr) : null;
+      const hasAllPcr = coiPcr !== null && atmPcr !== null && strengthPcr !== null;
+
+      let tradingStrategy = { value: "NO TRADE ZONE", tone: "neutral" };
+      let dataTrend = { value: "NEUTRAL", tone: "neutral" };
+
+      if (hasAllPcr) {
+        const allAboveBuy = coiPcr > 1.25 && atmPcr > 1.25 && strengthPcr > 1.25;
+        const allBelowSell = coiPcr < 0.70 && atmPcr < 0.70 && strengthPcr < 0.70;
+        const allAbovePositive = allAboveBuy;
+        const negativeTrend = coiPcr < 0.75 && atmPcr < 1.00 && strengthPcr < 0.75;
+
+        if (allAboveBuy) tradingStrategy = { value: "BUY ON DIPS", tone: "positive" };
+        else if (allBelowSell) tradingStrategy = { value: "SELL ON RISE", tone: "negative" };
+
+        if (allAbovePositive) dataTrend = { value: "POSITIVE", tone: "positive" };
+        else if (negativeTrend) dataTrend = { value: "NEGATIVE", tone: "negative" };
+      }
+
+      const renderKpiCard = (item) => {
           const labelHtml = item.tip
             ? `<div class="label with-tip">${item.label}<span class="label-tip" tabindex="0">i<span class="label-tip-pop">${escHtml(item.tip)}</span></span></div>`
             : `<div class="label">${item.label}</div>`;
-          return `<div class="kpi">${labelHtml}<div class="val">${item.val}</div></div>`;
-        })
-        .join("");
+          return `<div class="kpi">${labelHtml}<div class="val ${kpiToneClass(item.raw)}">${item.val}</div></div>`;
+      };
+
+      document.getElementById("kpis").innerHTML = `
+        <div class="kpi-stack">${leftKpis.map(renderKpiCard).join("")}</div>
+        <div class="signal-col">
+          ${renderSignalCard("TRADING STRATEGY", tradingStrategy.value, tradingStrategy.tone)}
+          ${renderSignalCard("DATA TREND", dataTrend.value, dataTrend.tone)}
+        </div>
+        <div class="kpi-stack">${rightKpis.map(renderKpiCard).join("")}</div>
+      `;
       hasRendered = true;
 
       const spot = latest ? Number(latest.spot_price) : null;
@@ -619,8 +745,6 @@
       if (timerId) clearTimeout(timerId);
       timerId = setTimeout(load, refreshMs);
     }
-
-    document.getElementById("refreshBtn").addEventListener("click", load);
 
     load();
   </script>
