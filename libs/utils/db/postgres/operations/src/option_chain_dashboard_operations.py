@@ -5,9 +5,9 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import and_, desc
 
 from libs.utils.config.src.fyers import (
+    INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS,
     MARKET_CLOSE_HOUR,
     MARKET_CLOSE_MINUTE,
-    SNAPSHOT_INTERVAL_SECONDS,
 )
 from libs.utils.db.postgres.models.src.instrument import Instrument
 from libs.utils.db.postgres.models.src.option_chain_interval_summary import (
@@ -186,7 +186,7 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
                     "market_date": (
                         market_date or datetime.now(IST).date()
                     ).isoformat(),
-                    "refresh_seconds": SNAPSHOT_INTERVAL_SECONDS,
+                    "refresh_seconds": INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS,
                     "timeline": [],
                     "latest": None,
                     "strikes": [],
@@ -313,7 +313,7 @@ class OptionChainDashboardOperations(BaseOperations[OptionChainIntervalSummary])
                     "fyers_symbol": instrument.fyers_symbol,
                 },
                 "market_date": resolved_date.isoformat(),
-                "refresh_seconds": SNAPSHOT_INTERVAL_SECONDS,
+                "refresh_seconds": INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS,
                 "timeline": timeline,
                 "latest": latest,
                 "strikes": strikes,

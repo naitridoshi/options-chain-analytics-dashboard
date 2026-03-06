@@ -4,11 +4,11 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from libs.utils.config.src.fyers import (
+    INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS,
     MARKET_CLOSE_HOUR,
     MARKET_CLOSE_MINUTE,
     MARKET_OPEN_HOUR,
     MARKET_OPEN_MINUTE,
-    SNAPSHOT_INTERVAL_SECONDS,
 )
 
 IST = ZoneInfo("Asia/Kolkata")
@@ -27,7 +27,7 @@ def is_market_open_now(now_utc: datetime | None = None) -> bool:
 
 def normalize_interval_boundary(
     dt_utc: datetime,
-    interval_seconds: int = SNAPSHOT_INTERVAL_SECONDS,
+    interval_seconds: int = INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS,
 ) -> datetime:
     if interval_seconds <= 0:
         raise ValueError("interval_seconds must be greater than 0")

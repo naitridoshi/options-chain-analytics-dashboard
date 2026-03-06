@@ -16,6 +16,12 @@ from libs.utils.db.postgres.operations.src.option_contract_operations import (
 from libs.utils.db.postgres.operations.src.option_snapshot_operations import (
     OptionSnapshotOperations,
 )
+from libs.utils.db.postgres.operations.src.script_operations import (
+    ScriptOperations,
+)
+from libs.utils.db.postgres.operations.src.script_snapshot_operations import (
+    ScriptSnapshotOperations,
+)
 
 __all__ = [
     "InstrumentOperations",
@@ -24,4 +30,6 @@ __all__ = [
     "OptionChainDashboardOperations",
     "OptionSnapshotOperations",
     "FyersTokenOperations",
+    "ScriptOperations",
+    "ScriptSnapshotOperations",
 ]

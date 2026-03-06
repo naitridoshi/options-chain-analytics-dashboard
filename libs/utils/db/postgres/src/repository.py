@@ -9,6 +9,8 @@ from libs.utils.db.postgres.models.src import (
     OptionChainStrike,
     OptionChainStrikeSummary,
     OptionContract,
+    Script,
+    ScriptPriceSnapshot,
 )
 from libs.utils.db.postgres.src.base_repository import BaseRepository
 
@@ -111,3 +113,11 @@ def get_option_chain_strike_summaries_repository(session):
 
 def get_option_contracts_repository(session):
     return BaseRepository(OptionContract, session)
+
+
+def get_scripts_repository(session):
+    return BaseRepository(Script, session)
+
+
+def get_script_price_snapshots_repository(session):
+    return BaseRepository(ScriptPriceSnapshot, session)
