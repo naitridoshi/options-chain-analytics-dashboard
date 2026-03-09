@@ -2,6 +2,7 @@ import asyncio
 import os
 from datetime import datetime, timezone
 from decimal import Decimal
+from typing import Callable
 
 import httpx
 from fyers_apiv3 import fyersModel
@@ -186,3 +187,116 @@ class FyersClientService:
                 f"FYERS validate-authcode returned no access_token: {payload}"
             )
         return access_token
+
+    @classmethod
+    def create_websocket_client(cls, access_token: str):
+        """Create a FYERS WebSocket client for market data.
+
+        Args:
+            access_token: Valid FYERS access token
+
+        Returns:
+            FYERS WebSocket client instance
+        """
+        try:
+            from fyers_apiv3 import FyersWebsocket
+
+            client = FyersWebsocket.FyersDataSocket(
+                client_id=FYERS_APP_ID,
+                token=access_token,
+                log_path=FYERS_LOG_PATH,
+            )
+            logger.info("WebSocket client created")
+            return client
+        except ImportError:
+            logger.error("fyers_apiv3 FyersWebsocket module not available")
+            raise
+
+    @classmethod
+    def subscribe_symbols(
+        cls,
+        ws_client,
+        symbols: list[str],
+        data_type: str = "symbolData",
+    ) -> None:
+        """Subscribe to symbols on WebSocket.
+
+        Args:
+            ws_client: FYERS WebSocket client
+            symbols: List of symbols to subscribe (max 500)
+            data_type: Type of data to subscribe (symbolData for market data)
+        """
+        try:
+            if not symbols:
+                logger.warning("Empty symbol list provided for subscription")
+                return
+
+            if len(symbols) > 500:
+                logger.warning(
+                    f"Symbol count {len(symbols)} exceeds FYERS limit of 500. "
+                    "Consider chunking subscriptions."
+                )
+
+            payload = {"symbols": symbols, "datatype": data_type}
+            ws_client.subscribe(payload)
+            logger.info(
+                f"WebSocket subscription requested - symbols: {len(symbols)}, data_type: {data_type}"
+            )
+        except Exception as error:
+            logger.error(
+                f"Failed to subscribe symbols - error: {str(error)}, count: {len(symbols)}"
+            )
+            raise
+
+    @classmethod
+    def unsubscribe_symbols(cls, ws_client, symbols: list[str]) -> None:
+        """Unsubscribe from symbols on WebSocket.
+
+        Args:
+            ws_client: FYERS WebSocket client
+            symbols: List of symbols to unsubscribe
+        """
+        try:
+            if not symbols:
+                logger.warning("Empty symbol list provided for unsubscription")
+                return
+
+            payload = {"symbols": symbols}
+            ws_client.unsubscribe(payload)
+            logger.info(f"WebSocket unsubscription requested - symbols: {len(symbols)}")
+        except Exception as error:
+            logger.error(
+                f"Failed to unsubscribe symbols - error: {str(error)}, count: {len(symbols)}"
+            )
+
+    @classmethod
+    def set_websocket_callbacks(
+        cls,
+        ws_client,
+        on_message: Callable | None = None,
+        on_connect: Callable | None = None,
+        on_disconnect: Callable | None = None,
+        on_error: Callable | None = None,
+    ) -> None:
+        """Set callbacks for WebSocket events.
+
+        Args:
+            ws_client: FYERS WebSocket client
+            on_message: Callback for message events
+            on_connect: Callback for connect events
+            on_disconnect: Callback for disconnect events
+            on_error: Callback for error events
+        """
+        try:
+            if on_message:
+                ws_client.on_message(on_message)
+            if on_connect:
+                ws_client.on_connect(on_connect)
+            if on_disconnect:
+                ws_client.on_disconnect(on_disconnect)
+            if on_error:
+                ws_client.on_error(on_error)
+            logger.info("WebSocket callbacks configured")
+        except Exception as error:
+            logger.error(f"Failed to set WebSocket callbacks - error: {str(error)}")
+            raise

@@ -272,6 +272,7 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                         "option_contract_id": contract.id,
                         "ltp": row.get("ltp"),
                         "ltp_change": row.get("ltp_change"),
+                        "avg_price": row.get("avg_price"),
                         "volume": row.get("volume"),
                         "open_interest": row.get("open_interest"),
                         "oi_change": row.get("oi_change"),
