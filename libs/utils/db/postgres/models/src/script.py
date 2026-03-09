@@ -12,6 +12,7 @@ class Script(Base, TimestampMixin):
     __tablename__ = SCRIPTS_TABLE
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=True)
     symbol = Column(String, unique=True, nullable=False)
     fyers_symbol = Column(String, unique=True, nullable=False)
     exchange = Column(String, nullable=False, default="NSE")
