@@ -1,93 +1,33 @@
 [
   {
-    "symbol": "AARTIIND",
-    "fyers_symbol": "NSE:AARTIIND-EQ",
-    "lot_size": 850,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "ABB INDIA LIMITED",
     "symbol": "ABB",
     "fyers_symbol": "NSE:ABB-EQ",
-    "lot_size": 250,
+    "lot_size": 125,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "ABBOTINDIA",
-    "fyers_symbol": "NSE:ABBOTINDIA-EQ",
-    "lot_size": 40,
+    "name": "AMBER ENTERPRISES (I) LTD",
+    "symbol": "AMBER",
+    "fyers_symbol": "NSE:AMBER-EQ",
+    "lot_size": 100,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "ABCAPITAL",
-    "fyers_symbol": "NSE:ABCAPITAL-EQ",
-    "lot_size": 5400,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ABFRL",
-    "fyers_symbol": "NSE:ABFRL-EQ",
-    "lot_size": 2600,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ACC",
-    "fyers_symbol": "NSE:ACC-EQ",
-    "lot_size": 250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ADANIENT",
-    "fyers_symbol": "NSE:ADANIENT-EQ",
-    "lot_size": 250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ADANIPORTS",
-    "fyers_symbol": "NSE:ADANIPORTS-EQ",
-    "lot_size": 625,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "ALKEM LABORATORIES LTD.",
     "symbol": "ALKEM",
     "fyers_symbol": "NSE:ALKEM-EQ",
-    "lot_size": 200,
+    "lot_size": 125,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "AMARAJABAT",
-    "fyers_symbol": "NSE:AMARAJABAT-EQ",
-    "lot_size": 1000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "AMBUJACEM",
-    "fyers_symbol": "NSE:AMBUJACEM-EQ",
-    "lot_size": 1800,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "APOLLO HOSPITALS ENTER. L",
     "symbol": "APOLLOHOSP",
     "fyers_symbol": "NSE:APOLLOHOSP-EQ",
     "lot_size": 125,
@@ -96,14 +36,124 @@
     "is_active": true
   },
   {
-    "symbol": "APOLLOTYRE",
-    "fyers_symbol": "NSE:APOLLOTYRE-EQ",
-    "lot_size": 3500,
+    "name": "ASTRAL LIMITED",
+    "symbol": "ASTRAL",
+    "fyers_symbol": "NSE:ASTRAL-EQ",
+    "lot_size": 425,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "360 ONE WAM LIMITED",
+    "symbol": "360ONE",
+    "fyers_symbol": "NSE:360ONE-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "AXIS BANK LIMITED",
+    "symbol": "AXISBANK",
+    "fyers_symbol": "NSE:AXISBANK-EQ",
+    "lot_size": 625,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ADANI ENERGY SOLUTION LTD",
+    "symbol": "ADANIENSOL",
+    "fyers_symbol": "NSE:ADANIENSOL-EQ",
+    "lot_size": 675,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BAJAJ AUTO LIMITED",
+    "symbol": "BAJAJ-AUTO",
+    "fyers_symbol": "NSE:BAJAJ-AUTO-EQ",
+    "lot_size": 75,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ADANI ENTERPRISES LIMITED",
+    "symbol": "ADANIENT",
+    "fyers_symbol": "NSE:ADANIENT-EQ",
+    "lot_size": 309,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ADANI GREEN ENERGY LTD",
+    "symbol": "ADANIGREEN",
+    "fyers_symbol": "NSE:ADANIGREEN-EQ",
+    "lot_size": 600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ADANI PORT & SEZ LTD",
+    "symbol": "ADANIPORTS",
+    "fyers_symbol": "NSE:ADANIPORTS-EQ",
+    "lot_size": 475,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BANDHAN BANK LIMITED",
+    "symbol": "BANDHANBNK",
+    "fyers_symbol": "NSE:BANDHANBNK-EQ",
+    "lot_size": 3600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BAJAJ HOLDINGS & INVS LTD",
+    "symbol": "BAJAJHLDNG",
+    "fyers_symbol": "NSE:BAJAJHLDNG-EQ",
+    "lot_size": 50,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BANK OF BARODA",
+    "symbol": "BANKBARODA",
+    "fyers_symbol": "NSE:BANKBARODA-EQ",
+    "lot_size": 2925,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "APL APOLLO TUBES LTD",
+    "symbol": "APLAPOLLO",
+    "fyers_symbol": "NSE:APLAPOLLO-EQ",
+    "lot_size": 350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BHARAT FORGE LTD",
+    "symbol": "BHARATFORG",
+    "fyers_symbol": "NSE:BHARATFORG-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ASHOK LEYLAND LTD",
     "symbol": "ASHOKLEY",
     "fyers_symbol": "NSE:ASHOKLEY-EQ",
     "lot_size": 5000,
@@ -112,390 +162,106 @@
     "is_active": true
   },
   {
+    "name": "BHARTI AIRTEL LIMITED",
+    "symbol": "BHARTIARTL",
+    "fyers_symbol": "NSE:BHARTIARTL-EQ",
+    "lot_size": 475,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BIOCON LIMITED.",
+    "symbol": "BIOCON",
+    "fyers_symbol": "NSE:BIOCON-EQ",
+    "lot_size": 2500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BLUE STAR LIMITED",
+    "symbol": "BLUESTARCO",
+    "fyers_symbol": "NSE:BLUESTARCO-EQ",
+    "lot_size": 325,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ASIAN PAINTS LIMITED",
     "symbol": "ASIANPAINT",
     "fyers_symbol": "NSE:ASIANPAINT-EQ",
-    "lot_size": 200,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ASTRAL",
-    "fyers_symbol": "NSE:ASTRAL-EQ",
-    "lot_size": 275,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ATUL",
-    "fyers_symbol": "NSE:ATUL-EQ",
-    "lot_size": 75,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "AUBANK",
-    "fyers_symbol": "NSE:AUBANK-EQ",
-    "lot_size": 1000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "AUROPHARMA",
-    "fyers_symbol": "NSE:AUROPHARMA-EQ",
-    "lot_size": 1000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "AXISBANK",
-    "fyers_symbol": "NSE:AXISBANK-EQ",
-    "lot_size": 1200,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BAJAJ-AUTO",
-    "fyers_symbol": "NSE:BAJAJ-AUTO-EQ",
     "lot_size": 250,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "CANARA BANK",
+    "symbol": "CANBK",
+    "fyers_symbol": "NSE:CANBK-EQ",
+    "lot_size": 6750,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BAJAJ FINSERV LTD.",
     "symbol": "BAJAJFINSV",
     "fyers_symbol": "NSE:BAJAJFINSV-EQ",
-    "lot_size": 500,
+    "lot_size": 250,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "BAJAJ FINANCE LIMITED",
     "symbol": "BAJFINANCE",
     "fyers_symbol": "NSE:BAJFINANCE-EQ",
-    "lot_size": 125,
+    "lot_size": 750,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "BALKRISIND",
-    "fyers_symbol": "NSE:BALKRISIND-EQ",
-    "lot_size": 300,
+    "name": "COLGATE PALMOLIVE LTD.",
+    "symbol": "COLPAL",
+    "fyers_symbol": "NSE:COLPAL-EQ",
+    "lot_size": 225,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "BALRAMCHIN",
-    "fyers_symbol": "NSE:BALRAMCHIN-EQ",
-    "lot_size": 1600,
+    "name": "BANK OF INDIA",
+    "symbol": "BANKINDIA",
+    "fyers_symbol": "NSE:BANKINDIA-EQ",
+    "lot_size": 5200,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "BANDHANBNK",
-    "fyers_symbol": "NSE:BANDHANBNK-EQ",
-    "lot_size": 1800,
+    "name": "ADITYA BIRLA CAPITAL LTD.",
+    "symbol": "ABCAPITAL",
+    "fyers_symbol": "NSE:ABCAPITAL-EQ",
+    "lot_size": 3100,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "BANKBARODA",
-    "fyers_symbol": "NSE:BANKBARODA-EQ",
-    "lot_size": 5850,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BATAINDIA",
-    "fyers_symbol": "NSE:BATAINDIA-EQ",
-    "lot_size": 275,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BEL",
-    "fyers_symbol": "NSE:BEL-EQ",
-    "lot_size": 5700,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BERGEPAINT",
-    "fyers_symbol": "NSE:BERGEPAINT-EQ",
-    "lot_size": 1100,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BHARATFORG",
-    "fyers_symbol": "NSE:BHARATFORG-EQ",
-    "lot_size": 1000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BHARTIARTL",
-    "fyers_symbol": "NSE:BHARTIARTL-EQ",
-    "lot_size": 950,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BHEL",
-    "fyers_symbol": "NSE:BHEL-EQ",
-    "lot_size": 10500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BIOCON",
-    "fyers_symbol": "NSE:BIOCON-EQ",
-    "lot_size": 2300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BOSCHLTD",
-    "fyers_symbol": "NSE:BOSCHLTD-EQ",
+    "name": "DIXON TECHNO (INDIA) LTD",
+    "symbol": "DIXON",
+    "fyers_symbol": "NSE:DIXON-EQ",
     "lot_size": 50,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "BPCL",
-    "fyers_symbol": "NSE:BPCL-EQ",
-    "lot_size": 1800,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BRITANNIA",
-    "fyers_symbol": "NSE:BRITANNIA-EQ",
-    "lot_size": 200,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "BSOFT",
-    "fyers_symbol": "NSE:BSOFT-EQ",
-    "lot_size": 1300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CANBK",
-    "fyers_symbol": "NSE:CANBK-EQ",
-    "lot_size": 2700,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CANFINHOME",
-    "fyers_symbol": "NSE:CANFINHOME-EQ",
-    "lot_size": 975,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CHAMBLFERT",
-    "fyers_symbol": "NSE:CHAMBLFERT-EQ",
-    "lot_size": 1500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CHOLAFIN",
-    "fyers_symbol": "NSE:CHOLAFIN-EQ",
-    "lot_size": 1250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CIPLA",
-    "fyers_symbol": "NSE:CIPLA-EQ",
-    "lot_size": 650,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "COALINDIA",
-    "fyers_symbol": "NSE:COALINDIA-EQ",
-    "lot_size": 4200,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "COFORGE",
-    "fyers_symbol": "NSE:COFORGE-EQ",
-    "lot_size": 150,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "COLPAL",
-    "fyers_symbol": "NSE:COLPAL-EQ",
-    "lot_size": 350,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CONCOR",
-    "fyers_symbol": "NSE:CONCOR-EQ",
-    "lot_size": 1000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "COROMANDEL",
-    "fyers_symbol": "NSE:COROMANDEL-EQ",
-    "lot_size": 700,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CROMPTON",
-    "fyers_symbol": "NSE:CROMPTON-EQ",
-    "lot_size": 1500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CUB",
-    "fyers_symbol": "NSE:CUB-EQ",
-    "lot_size": 5000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "CUMMINSIND",
-    "fyers_symbol": "NSE:CUMMINSIND-EQ",
-    "lot_size": 600,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "DABUR",
-    "fyers_symbol": "NSE:DABUR-EQ",
-    "lot_size": 1250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "DALBHARAT",
-    "fyers_symbol": "NSE:DALBHARAT-EQ",
-    "lot_size": 500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "DEEPAKNTR",
-    "fyers_symbol": "NSE:DEEPAKNTR-EQ",
-    "lot_size": 250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "DELTACORP",
-    "fyers_symbol": "NSE:DELTACORP-EQ",
-    "lot_size": 2300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "DIVISLAB",
-    "fyers_symbol": "NSE:DIVISLAB-EQ",
-    "lot_size": 150,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "DIXON",
-    "fyers_symbol": "NSE:DIXON-EQ",
-    "lot_size": 125,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "DLF",
-    "fyers_symbol": "NSE:DLF-EQ",
-    "lot_size": 1650,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "DRREDDY",
-    "fyers_symbol": "NSE:DRREDDY-EQ",
-    "lot_size": 125,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "EICHERMOT",
-    "fyers_symbol": "NSE:EICHERMOT-EQ",
-    "lot_size": 175,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ESCORTS",
-    "fyers_symbol": "NSE:ESCORTS-EQ",
-    "lot_size": 275,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "EXIDEIND",
-    "fyers_symbol": "NSE:EXIDEIND-EQ",
-    "lot_size": 3600,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "FEDERAL BANK LTD",
     "symbol": "FEDERALBNK",
     "fyers_symbol": "NSE:FEDERALBNK-EQ",
     "lot_size": 5000,
@@ -504,126 +270,115 @@
     "is_active": true
   },
   {
-    "symbol": "FSL",
-    "fyers_symbol": "NSE:FSL-EQ",
-    "lot_size": 5200,
+    "name": "FORTIS HEALTHCARE LTD",
+    "symbol": "FORTIS",
+    "fyers_symbol": "NSE:FORTIS-EQ",
+    "lot_size": 775,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "EICHER MOTORS LTD",
+    "symbol": "EICHERMOT",
+    "fyers_symbol": "NSE:EICHERMOT-EQ",
+    "lot_size": 100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "GAIL (INDIA) LTD",
     "symbol": "GAIL",
     "fyers_symbol": "NSE:GAIL-EQ",
-    "lot_size": 9150,
+    "lot_size": 3150,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "BHARAT ELECTRONICS LTD",
+    "symbol": "BEL",
+    "fyers_symbol": "NSE:BEL-EQ",
+    "lot_size": 1425,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "GLENMARK PHARMACEUTICALS",
     "symbol": "GLENMARK",
     "fyers_symbol": "NSE:GLENMARK-EQ",
-    "lot_size": 1150,
+    "lot_size": 375,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "GMRINFRA",
-    "fyers_symbol": "NSE:GMRINFRA-EQ",
-    "lot_size": 22500,
+    "name": "ANGEL ONE LIMITED",
+    "symbol": "ANGELONE",
+    "fyers_symbol": "NSE:ANGELONE-EQ",
+    "lot_size": 2500,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "GNFC",
-    "fyers_symbol": "NSE:GNFC-EQ",
-    "lot_size": 1300,
+    "name": "GMR AIRPORTS LIMITED",
+    "symbol": "GMRAIRPORT",
+    "fyers_symbol": "NSE:GMRAIRPORT-EQ",
+    "lot_size": 6975,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "GODREJ CONSUMER PRODUCTS",
     "symbol": "GODREJCP",
     "fyers_symbol": "NSE:GODREJCP-EQ",
-    "lot_size": 1000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "GODREJPROP",
-    "fyers_symbol": "NSE:GODREJPROP-EQ",
-    "lot_size": 325,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "GRANULES",
-    "fyers_symbol": "NSE:GRANULES-EQ",
-    "lot_size": 2000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "GRASIM",
-    "fyers_symbol": "NSE:GRASIM-EQ",
-    "lot_size": 475,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "GSPL",
-    "fyers_symbol": "NSE:GSPL-EQ",
-    "lot_size": null,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "GUJGASLTD",
-    "fyers_symbol": "NSE:GUJGASLTD-EQ",
-    "lot_size": 1250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "HAL",
-    "fyers_symbol": "NSE:HAL-EQ",
-    "lot_size": 475,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "HAVELLS",
-    "fyers_symbol": "NSE:HAVELLS-EQ",
     "lot_size": 500,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "HCLTECH",
-    "fyers_symbol": "NSE:HCLTECH-EQ",
-    "lot_size": 700,
+    "name": "BHEL",
+    "symbol": "BHEL",
+    "fyers_symbol": "NSE:BHEL-EQ",
+    "lot_size": 2625,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "HDFC",
-    "fyers_symbol": "NSE:HDFC-EQ",
-    "lot_size": 300,
+    "name": "GRASIM INDUSTRIES LTD",
+    "symbol": "GRASIM",
+    "fyers_symbol": "NSE:GRASIM-EQ",
+    "lot_size": 250,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "BOSCH LIMITED",
+    "symbol": "BOSCHLTD",
+    "fyers_symbol": "NSE:BOSCHLTD-EQ",
+    "lot_size": 25,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BHARAT PETROLEUM CORP  LT",
+    "symbol": "BPCL",
+    "fyers_symbol": "NSE:BPCL-EQ",
+    "lot_size": 1975,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HDFC AMC LIMITED",
     "symbol": "HDFCAMC",
     "fyers_symbol": "NSE:HDFCAMC-EQ",
     "lot_size": 300,
@@ -632,126 +387,79 @@
     "is_active": true
   },
   {
-    "symbol": "HDFCBANK",
-    "fyers_symbol": "NSE:HDFCBANK-EQ",
-    "lot_size": 550,
+    "name": "BSE LIMITED",
+    "symbol": "BSE",
+    "fyers_symbol": "NSE:BSE-EQ",
+    "lot_size": 375,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "HDFCLIFE",
-    "fyers_symbol": "NSE:HDFCLIFE-EQ",
-    "lot_size": 1100,
+    "name": "COMPUTER AGE MNGT SER LTD",
+    "symbol": "CAMS",
+    "fyers_symbol": "NSE:CAMS-EQ",
+    "lot_size": 750,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "HEROMOTOCO",
-    "fyers_symbol": "NSE:HEROMOTOCO-EQ",
-    "lot_size": 300,
+    "name": "CG POWER AND IND SOL LTD",
+    "symbol": "CGPOWER",
+    "fyers_symbol": "NSE:CGPOWER-EQ",
+    "lot_size": 850,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "HINDALCO",
-    "fyers_symbol": "NSE:HINDALCO-EQ",
-    "lot_size": 1075,
+    "name": "CIPLA LTD",
+    "symbol": "CIPLA",
+    "fyers_symbol": "NSE:CIPLA-EQ",
+    "lot_size": 375,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "HINDCOPPER",
-    "fyers_symbol": "NSE:HINDCOPPER-EQ",
-    "lot_size": 4300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "HINDUSTAN PETROLEUM CORP",
     "symbol": "HINDPETRO",
     "fyers_symbol": "NSE:HINDPETRO-EQ",
-    "lot_size": 2700,
+    "lot_size": 2025,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "HINDUNILVR",
-    "fyers_symbol": "NSE:HINDUNILVR-EQ",
-    "lot_size": 300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "HONAUT",
-    "fyers_symbol": "NSE:HONAUT-EQ",
-    "lot_size": 15,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "IBULHSGFIN",
-    "fyers_symbol": "NSE:IBULHSGFIN-EQ",
-    "lot_size": 4000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ICICIBANK",
-    "fyers_symbol": "NSE:ICICIBANK-EQ",
-    "lot_size": 1375,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ICICIGI",
-    "fyers_symbol": "NSE:ICICIGI-EQ",
-    "lot_size": 425,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "ICICI PRU LIFE INS CO LTD",
     "symbol": "ICICIPRULI",
     "fyers_symbol": "NSE:ICICIPRULI-EQ",
-    "lot_size": 1500,
+    "lot_size": 925,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "IDEA",
-    "fyers_symbol": "NSE:IDEA-EQ",
-    "lot_size": 70000,
+    "name": "COAL INDIA LTD",
+    "symbol": "COALINDIA",
+    "fyers_symbol": "NSE:COALINDIA-EQ",
+    "lot_size": 1350,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "IDFC",
-    "fyers_symbol": "NSE:IDFC-EQ",
-    "lot_size": 10000,
+    "name": "AU SMALL FINANCE BANK LTD",
+    "symbol": "AUBANK",
+    "fyers_symbol": "NSE:AUBANK-EQ",
+    "lot_size": 1000,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "IDFCFIRSTB",
-    "fyers_symbol": "NSE:IDFCFIRSTB-EQ",
-    "lot_size": 15000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "INDIAN ENERGY EXC LTD",
     "symbol": "IEX",
     "fyers_symbol": "NSE:IEX-EQ",
     "lot_size": 3750,
@@ -760,238 +468,178 @@
     "is_active": true
   },
   {
-    "symbol": "IGL",
-    "fyers_symbol": "NSE:IGL-EQ",
-    "lot_size": 1375,
+    "name": "INDIAN BANK",
+    "symbol": "INDIANB",
+    "fyers_symbol": "NSE:INDIANB-EQ",
+    "lot_size": 1000,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "INDHOTEL",
-    "fyers_symbol": "NSE:INDHOTEL-EQ",
-    "lot_size": 4022,
+    "name": "CONTAINER CORP OF IND LTD",
+    "symbol": "CONCOR",
+    "fyers_symbol": "NSE:CONCOR-EQ",
+    "lot_size": 1250,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "INDIACEM",
-    "fyers_symbol": "NSE:INDIACEM-EQ",
-    "lot_size": 2900,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "INDIAMART",
-    "fyers_symbol": "NSE:INDIAMART-EQ",
-    "lot_size": 150,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "INDIGO",
-    "fyers_symbol": "NSE:INDIGO-EQ",
-    "lot_size": 300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "INDUSINDBK",
-    "fyers_symbol": "NSE:INDUSINDBK-EQ",
-    "lot_size": 450,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "INDUSTOWER",
-    "fyers_symbol": "NSE:INDUSTOWER-EQ",
-    "lot_size": 2800,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "INFY",
-    "fyers_symbol": "NSE:INFY-EQ",
-    "lot_size": 300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "INTELLECT",
-    "fyers_symbol": "NSE:INTELLECT-EQ",
-    "lot_size": 750,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "INDIAN OIL CORP LTD",
     "symbol": "IOC",
     "fyers_symbol": "NSE:IOC-EQ",
-    "lot_size": 9750,
+    "lot_size": 4875,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "IPCALAB",
-    "fyers_symbol": "NSE:IPCALAB-EQ",
-    "lot_size": 650,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "IRCTC",
-    "fyers_symbol": "NSE:IRCTC-EQ",
-    "lot_size": 875,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ITC",
-    "fyers_symbol": "NSE:ITC-EQ",
-    "lot_size": 1600,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "JINDALSTEL",
-    "fyers_symbol": "NSE:JINDALSTEL-EQ",
-    "lot_size": 1250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "JKCEMENT",
-    "fyers_symbol": "NSE:JKCEMENT-EQ",
-    "lot_size": 250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "JSWSTEEL",
-    "fyers_symbol": "NSE:JSWSTEEL-EQ",
-    "lot_size": 1350,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "JUBLFOOD",
-    "fyers_symbol": "NSE:JUBLFOOD-EQ",
-    "lot_size": 1250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "KOTAKBANK",
-    "fyers_symbol": "NSE:KOTAKBANK-EQ",
-    "lot_size": 400,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "L&TFH",
-    "fyers_symbol": "NSE:L&TFH-EQ",
-    "lot_size": 8924,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "LALPATHLAB",
-    "fyers_symbol": "NSE:LALPATHLAB-EQ",
-    "lot_size": 250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "LAURUSLABS",
-    "fyers_symbol": "NSE:LAURUSLABS-EQ",
-    "lot_size": 900,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "LICHSGFIN",
-    "fyers_symbol": "NSE:LICHSGFIN-EQ",
-    "lot_size": 2000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "LT",
-    "fyers_symbol": "NSE:LT-EQ",
-    "lot_size": 300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "LTI",
-    "fyers_symbol": "NSE:LTI-EQ",
-    "lot_size": 150,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "LTTS",
-    "fyers_symbol": "NSE:LTTS-EQ",
-    "lot_size": 200,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "LUPIN",
-    "fyers_symbol": "NSE:LUPIN-EQ",
-    "lot_size": 850,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "M&M",
-    "fyers_symbol": "NSE:M&M-EQ",
+    "name": "INDUSIND BANK LIMITED",
+    "symbol": "INDUSINDBK",
+    "fyers_symbol": "NSE:INDUSINDBK-EQ",
     "lot_size": 700,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "M&MFIN",
-    "fyers_symbol": "NSE:M&MFIN-EQ",
-    "lot_size": 4000,
+    "name": "CROMPT GREA CON ELEC LTD",
+    "symbol": "CROMPTON",
+    "fyers_symbol": "NSE:CROMPTON-EQ",
+    "lot_size": 1800,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "MANAPPURAM",
-    "fyers_symbol": "NSE:MANAPPURAM-EQ",
-    "lot_size": 6000,
+    "name": "CUMMINS INDIA LTD",
+    "symbol": "CUMMINSIND",
+    "fyers_symbol": "NSE:CUMMINSIND-EQ",
+    "lot_size": 200,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "INDIAN RENEWABLE ENERGY",
+    "symbol": "IREDA",
+    "fyers_symbol": "NSE:IREDA-EQ",
+    "lot_size": 3450,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "AUROBINDO PHARMA LTD",
+    "symbol": "AUROPHARMA",
+    "fyers_symbol": "NSE:AUROPHARMA-EQ",
+    "lot_size": 550,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "DABUR INDIA LTD",
+    "symbol": "DABUR",
+    "fyers_symbol": "NSE:DABUR-EQ",
+    "lot_size": 1250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "INDIAN RAILWAY FIN CORP L",
+    "symbol": "IRFC",
+    "fyers_symbol": "NSE:IRFC-EQ",
+    "lot_size": 4250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "JINDAL STEEL LIMITED",
+    "symbol": "JINDALSTEL",
+    "fyers_symbol": "NSE:JINDALSTEL-EQ",
+    "lot_size": 625,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "DALMIA BHARAT LIMITED",
+    "symbol": "DALBHARAT",
+    "fyers_symbol": "NSE:DALBHARAT-EQ",
+    "lot_size": 325,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "DELHIVERY LIMITED",
+    "symbol": "DELHIVERY",
+    "fyers_symbol": "NSE:DELHIVERY-EQ",
+    "lot_size": 2075,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "JSW ENERGY LIMITED",
+    "symbol": "JSWENERGY",
+    "fyers_symbol": "NSE:JSWENERGY-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "DIVI S LABORATORIES LTD",
+    "symbol": "DIVISLAB",
+    "fyers_symbol": "NSE:DIVISLAB-EQ",
+    "lot_size": 100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "JSW STEEL LIMITED",
+    "symbol": "JSWSTEEL",
+    "fyers_symbol": "NSE:JSWSTEEL-EQ",
+    "lot_size": 675,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "KEI INDUSTRIES LTD.",
+    "symbol": "KEI",
+    "fyers_symbol": "NSE:KEI-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "AVENUE SUPERMARTS LIMITED",
+    "symbol": "DMART",
+    "fyers_symbol": "NSE:DMART-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "L&T FINANCE LIMITED",
+    "symbol": "LTF",
+    "fyers_symbol": "NSE:LTF-EQ",
+    "lot_size": 2250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MARICO LIMITED",
     "symbol": "MARICO",
     "fyers_symbol": "NSE:MARICO-EQ",
     "lot_size": 1200,
@@ -1000,302 +648,367 @@
     "is_active": true
   },
   {
-    "symbol": "MARUTI",
-    "fyers_symbol": "NSE:MARUTI-EQ",
-    "lot_size": 100,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "MCDOWELL-N",
-    "fyers_symbol": "NSE:MCDOWELL-N-EQ",
+    "name": "MULTI COMMODITY EXCHANGE",
+    "symbol": "MCX",
+    "fyers_symbol": "NSE:MCX-EQ",
     "lot_size": 625,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "MCX",
-    "fyers_symbol": "NSE:MCX-EQ",
-    "lot_size": 400,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "METROPOLIS",
-    "fyers_symbol": "NSE:METROPOLIS-EQ",
-    "lot_size": 300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "MFSL",
-    "fyers_symbol": "NSE:MFSL-EQ",
-    "lot_size": 650,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "MGL",
-    "fyers_symbol": "NSE:MGL-EQ",
-    "lot_size": 800,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "MINDTREE",
-    "fyers_symbol": "NSE:MINDTREE-EQ",
-    "lot_size": 200,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "MOTHERSON",
-    "fyers_symbol": "NSE:MOTHERSON-EQ",
-    "lot_size": 6750,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "MPHASIS",
-    "fyers_symbol": "NSE:MPHASIS-EQ",
-    "lot_size": 175,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "MRF",
-    "fyers_symbol": "NSE:MRF-EQ",
-    "lot_size": 10,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "MUTHOOTFIN",
-    "fyers_symbol": "NSE:MUTHOOTFIN-EQ",
-    "lot_size": 375,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "NATIONALUM",
-    "fyers_symbol": "NSE:NATIONALUM-EQ",
-    "lot_size": 4250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "NAUKRI",
-    "fyers_symbol": "NSE:NAUKRI-EQ",
-    "lot_size": 125,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "NAVINFLUOR",
-    "fyers_symbol": "NSE:NAVINFLUOR-EQ",
-    "lot_size": 225,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "NESTLEIND",
-    "fyers_symbol": "NSE:NESTLEIND-EQ",
-    "lot_size": 40,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "NMDC",
-    "fyers_symbol": "NSE:NMDC-EQ",
-    "lot_size": 3350,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "NTPC LTD",
     "symbol": "NTPC",
     "fyers_symbol": "NSE:NTPC-EQ",
-    "lot_size": 5700,
+    "lot_size": 1500,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "OBEROIRLTY",
-    "fyers_symbol": "NSE:OBEROIRLTY-EQ",
-    "lot_size": 700,
+    "name": "BHARAT DYNAMICS LIMITED",
+    "symbol": "BDL",
+    "fyers_symbol": "NSE:BDL-EQ",
+    "lot_size": 350,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "OFSS",
-    "fyers_symbol": "NSE:OFSS-EQ",
-    "lot_size": 200,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ONGC",
-    "fyers_symbol": "NSE:ONGC-EQ",
-    "lot_size": 3850,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "PAGEIND",
-    "fyers_symbol": "NSE:PAGEIND-EQ",
-    "lot_size": 15,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "PEL",
-    "fyers_symbol": "NSE:PEL-EQ",
+    "name": "GODREJ PROPERTIES LTD",
+    "symbol": "GODREJPROP",
+    "fyers_symbol": "NSE:GODREJPROP-EQ",
     "lot_size": 275,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "PERSISTENT",
-    "fyers_symbol": "NSE:PERSISTENT-EQ",
+    "name": "NUVAMA WEALTH MANAGE LTD",
+    "symbol": "NUVAMA",
+    "fyers_symbol": "NSE:NUVAMA-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HDFC LIFE INS CO LTD",
+    "symbol": "HDFCLIFE",
+    "fyers_symbol": "NSE:HDFCLIFE-EQ",
+    "lot_size": 1100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HERO MOTOCORP LIMITED",
+    "symbol": "HEROMOTOCO",
+    "fyers_symbol": "NSE:HEROMOTOCO-EQ",
     "lot_size": 150,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "PETRONET",
-    "fyers_symbol": "NSE:PETRONET-EQ",
-    "lot_size": 3000,
+    "name": "OIL AND NATURAL GAS CORP.",
+    "symbol": "ONGC",
+    "fyers_symbol": "NSE:ONGC-EQ",
+    "lot_size": 2250,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "PFC",
-    "fyers_symbol": "NSE:PFC-EQ",
-    "lot_size": 6200,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "PIDILITIND",
-    "fyers_symbol": "NSE:PIDILITIND-EQ",
-    "lot_size": 250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "PIIND",
-    "fyers_symbol": "NSE:PIIND-EQ",
-    "lot_size": 250,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "PNB",
-    "fyers_symbol": "NSE:PNB-EQ",
-    "lot_size": 16000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "POLYCAB",
-    "fyers_symbol": "NSE:POLYCAB-EQ",
-    "lot_size": 300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "POWERGRID",
-    "fyers_symbol": "NSE:POWERGRID-EQ",
-    "lot_size": 2700,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "PVR",
-    "fyers_symbol": "NSE:PVR-EQ",
-    "lot_size": 407,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "RAIN",
-    "fyers_symbol": "NSE:RAIN-EQ",
-    "lot_size": 3500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "RAMCOCEM",
-    "fyers_symbol": "NSE:RAMCOCEM-EQ",
+    "name": "LAURUS LABS LIMITED",
+    "symbol": "LAURUSLABS",
+    "fyers_symbol": "NSE:LAURUSLABS-EQ",
     "lot_size": 850,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "HINDUSTAN UNILEVER LTD.",
+    "symbol": "HINDUNILVR",
+    "fyers_symbol": "NSE:HINDUNILVR-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HINDUSTAN ZINC LIMITED",
+    "symbol": "HINDZINC",
+    "fyers_symbol": "NSE:HINDZINC-EQ",
+    "lot_size": 1225,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "POWER FIN CORP LTD.",
+    "symbol": "PFC",
+    "fyers_symbol": "NSE:PFC-EQ",
+    "lot_size": 1300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ICICI BANK LTD.",
+    "symbol": "ICICIBANK",
+    "fyers_symbol": "NSE:ICICIBANK-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ICICI LOMBARD GIC LIMITED",
+    "symbol": "ICICIGI",
+    "fyers_symbol": "NSE:ICICIGI-EQ",
+    "lot_size": 325,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "IDFC FIRST BANK LIMITED",
+    "symbol": "IDFCFIRSTB",
+    "fyers_symbol": "NSE:IDFCFIRSTB-EQ",
+    "lot_size": 9275,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "THE INDIAN HOTELS CO. LTD",
+    "symbol": "INDHOTEL",
+    "fyers_symbol": "NSE:INDHOTEL-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "INDUS TOWERS LIMITED",
+    "symbol": "INDUSTOWER",
+    "fyers_symbol": "NSE:INDUSTOWER-EQ",
+    "lot_size": 1700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "INFOSYS LIMITED",
+    "symbol": "INFY",
+    "fyers_symbol": "NSE:INFY-EQ",
+    "lot_size": 400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "LIC HOUSING FINANCE LTD",
+    "symbol": "LICHSGFIN",
+    "fyers_symbol": "NSE:LICHSGFIN-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PI INDUSTRIES LTD",
+    "symbol": "PIIND",
+    "fyers_symbol": "NSE:PIIND-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PNB HOUSING FIN LTD.",
+    "symbol": "PNBHOUSING",
+    "fyers_symbol": "NSE:PNBHOUSING-EQ",
+    "lot_size": 650,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "BRITANNIA INDUSTRIES LTD",
+    "symbol": "BRITANNIA",
+    "fyers_symbol": "NSE:BRITANNIA-EQ",
+    "lot_size": 125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "JUBILANT FOODWORKS LTD",
+    "symbol": "JUBLFOOD",
+    "fyers_symbol": "NSE:JUBLFOOD-EQ",
+    "lot_size": 1250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HITACHI ENERGY INDIA LTD",
+    "symbol": "POWERINDIA",
+    "fyers_symbol": "NSE:POWERINDIA-EQ",
+    "lot_size": 50,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "KAYNES TECHNOLOGY IND LTD",
+    "symbol": "KAYNES",
+    "fyers_symbol": "NSE:KAYNES-EQ",
+    "lot_size": 100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "KOTAK MAHINDRA BANK LTD",
+    "symbol": "KOTAKBANK",
+    "fyers_symbol": "NSE:KOTAKBANK-EQ",
+    "lot_size": 2000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "LIFE INSURA CORP OF INDIA",
+    "symbol": "LICI",
+    "fyers_symbol": "NSE:LICI-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "LODHA DEVELOPERS LIMITED",
+    "symbol": "LODHA",
+    "fyers_symbol": "NSE:LODHA-EQ",
+    "lot_size": 450,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "RBL BANK LIMITED",
     "symbol": "RBLBANK",
     "fyers_symbol": "NSE:RBLBANK-EQ",
-    "lot_size": 5000,
+    "lot_size": 3175,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "CENTRAL DEPO SER (I) LTD",
+    "symbol": "CDSL",
+    "fyers_symbol": "NSE:CDSL-EQ",
+    "lot_size": 475,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MANKIND PHARMA LIMITED",
+    "symbol": "MANKIND",
+    "fyers_symbol": "NSE:MANKIND-EQ",
+    "lot_size": 225,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "LUPIN LIMITED",
+    "symbol": "LUPIN",
+    "fyers_symbol": "NSE:LUPIN-EQ",
+    "lot_size": 425,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MARUTI SUZUKI INDIA LTD.",
+    "symbol": "MARUTI",
+    "fyers_symbol": "NSE:MARUTI-EQ",
+    "lot_size": 50,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "REC LIMITED",
     "symbol": "RECLTD",
     "fyers_symbol": "NSE:RECLTD-EQ",
-    "lot_size": 8000,
+    "lot_size": 1400,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "RELIANCE INDUSTRIES LTD",
     "symbol": "RELIANCE",
     "fyers_symbol": "NSE:RELIANCE-EQ",
-    "lot_size": 250,
+    "lot_size": 500,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "NMDC LTD.",
+    "symbol": "NMDC",
+    "fyers_symbol": "NSE:NMDC-EQ",
+    "lot_size": 6750,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "COFORGE LIMITED",
+    "symbol": "COFORGE",
+    "fyers_symbol": "NSE:COFORGE-EQ",
+    "lot_size": 375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PETRONET LNG LIMITED",
+    "symbol": "PETRONET",
+    "fyers_symbol": "NSE:PETRONET-EQ",
+    "lot_size": 1900,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "STEEL AUTHORITY OF INDIA",
     "symbol": "SAIL",
     "fyers_symbol": "NSE:SAIL-EQ",
-    "lot_size": 6000,
+    "lot_size": 4700,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "POLYCAB INDIA LIMITED",
+    "symbol": "POLYCAB",
+    "fyers_symbol": "NSE:POLYCAB-EQ",
+    "lot_size": 125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SBI CARDS & PAY SER LTD",
     "symbol": "SBICARD",
     "fyers_symbol": "NSE:SBICARD-EQ",
     "lot_size": 800,
@@ -1304,22 +1017,7 @@
     "is_active": true
   },
   {
-    "symbol": "SBILIFE",
-    "fyers_symbol": "NSE:SBILIFE-EQ",
-    "lot_size": 750,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "SBIN",
-    "fyers_symbol": "NSE:SBIN-EQ",
-    "lot_size": 1500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "SHREE CEMENT LIMITED",
     "symbol": "SHREECEM",
     "fyers_symbol": "NSE:SHREECEM-EQ",
     "lot_size": 25,
@@ -1328,110 +1026,799 @@
     "is_active": true
   },
   {
-    "symbol": "SIEMENS",
-    "fyers_symbol": "NSE:SIEMENS-EQ",
-    "lot_size": 275,
+    "name": "DR. REDDY S LABORATORIES",
+    "symbol": "DRREDDY",
+    "fyers_symbol": "NSE:DRREDDY-EQ",
+    "lot_size": 625,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "SHRIRAM FINANCE LIMITED",
+    "symbol": "SHRIRAMFIN",
+    "fyers_symbol": "NSE:SHRIRAMFIN-EQ",
+    "lot_size": 825,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MAX FINANCIAL SERV LTD",
+    "symbol": "MFSL",
+    "fyers_symbol": "NSE:MFSL-EQ",
+    "lot_size": 400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SOLAR INDUSTRIES (I) LTD",
+    "symbol": "SOLARINDS",
+    "fyers_symbol": "NSE:SOLARINDS-EQ",
+    "lot_size": 50,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SAMVRDHNA MTHRSN INTL LTD",
+    "symbol": "MOTHERSON",
+    "fyers_symbol": "NSE:MOTHERSON-EQ",
+    "lot_size": 6150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SAMMAAN CAPITAL LIMITED",
+    "symbol": "SAMMAANCAP",
+    "fyers_symbol": "NSE:SAMMAANCAP-EQ",
+    "lot_size": 4300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SRF LTD",
     "symbol": "SRF",
     "fyers_symbol": "NSE:SRF-EQ",
-    "lot_size": 375,
+    "lot_size": 200,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "SRTRANSFIN",
-    "fyers_symbol": "NSE:SRTRANSFIN-EQ",
-    "lot_size": 600,
+    "name": "SUPREME INDUSTRIES LTD",
+    "symbol": "SUPREMEIND",
+    "fyers_symbol": "NSE:SUPREMEIND-EQ",
+    "lot_size": 175,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "SUNPHARMA",
-    "fyers_symbol": "NSE:SUNPHARMA-EQ",
-    "lot_size": 700,
+    "name": "CHOLAMANDALAM IN & FIN CO",
+    "symbol": "CHOLAFIN",
+    "fyers_symbol": "NSE:CHOLAFIN-EQ",
+    "lot_size": 625,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "SUNTV",
-    "fyers_symbol": "NSE:SUNTV-EQ",
-    "lot_size": 1500,
+    "name": "SWIGGY LIMITED",
+    "symbol": "SWIGGY",
+    "fyers_symbol": "NSE:SWIGGY-EQ",
+    "lot_size": 1300,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "SYNGENE",
-    "fyers_symbol": "NSE:SYNGENE-EQ",
-    "lot_size": 1000,
+    "name": "NATIONAL ALUMINIUM CO LTD",
+    "symbol": "NATIONALUM",
+    "fyers_symbol": "NSE:NATIONALUM-EQ",
+    "lot_size": 3750,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "TATACHEM",
-    "fyers_symbol": "NSE:TATACHEM-EQ",
-    "lot_size": 500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "TATACOMM",
-    "fyers_symbol": "NSE:TATACOMM-EQ",
-    "lot_size": 500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
+    "name": "TATA CONSUMER PRODUCT LTD",
     "symbol": "TATACONSUM",
     "fyers_symbol": "NSE:TATACONSUM-EQ",
+    "lot_size": 550,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ETERNAL LIMITED",
+    "symbol": "ETERNAL",
+    "fyers_symbol": "NSE:ETERNAL-EQ",
+    "lot_size": 2425,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SUN PHARMACEUTICAL IND L",
+    "symbol": "SUNPHARMA",
+    "fyers_symbol": "NSE:SUNPHARMA-EQ",
+    "lot_size": 350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "EXIDE INDUSTRIES LTD",
+    "symbol": "EXIDEIND",
+    "fyers_symbol": "NSE:EXIDEIND-EQ",
+    "lot_size": 1800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TATA STEEL LIMITED",
+    "symbol": "TATASTEEL",
+    "fyers_symbol": "NSE:TATASTEEL-EQ",
+    "lot_size": 5500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TATA CONSULTANCY SERV LT",
+    "symbol": "TCS",
+    "fyers_symbol": "NSE:TCS-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TUBE INVEST OF INDIA LTD",
+    "symbol": "TIINDIA",
+    "fyers_symbol": "NSE:TIINDIA-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "OIL INDIA LTD",
+    "symbol": "OIL",
+    "fyers_symbol": "NSE:OIL-EQ",
+    "lot_size": 1400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HAVELLS INDIA LIMITED",
+    "symbol": "HAVELLS",
+    "fyers_symbol": "NSE:HAVELLS-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TITAN COMPANY LIMITED",
+    "symbol": "TITAN",
+    "fyers_symbol": "NSE:TITAN-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HDFC BANK LTD",
+    "symbol": "HDFCBANK",
+    "fyers_symbol": "NSE:HDFCBANK-EQ",
+    "lot_size": 550,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TORRENT POWER LTD",
+    "symbol": "TORNTPOWER",
+    "fyers_symbol": "NSE:TORNTPOWER-EQ",
+    "lot_size": 425,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TORRENT PHARMACEUTICALS L",
+    "symbol": "TORNTPHARM",
+    "fyers_symbol": "NSE:TORNTPHARM-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TRENT LTD",
+    "symbol": "TRENT",
+    "fyers_symbol": "NSE:TRENT-EQ",
+    "lot_size": 100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TVS MOTOR COMPANY  LTD",
+    "symbol": "TVSMOTOR",
+    "fyers_symbol": "NSE:TVSMOTOR-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "UPL LIMITED",
+    "symbol": "UPL",
+    "fyers_symbol": "NSE:UPL-EQ",
+    "lot_size": 1355,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "INOX WIND LIMITED",
+    "symbol": "INOXWIND",
+    "fyers_symbol": "NSE:INOXWIND-EQ",
+    "lot_size": 3575,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ZYDUS LIFESCIENCES LTD",
+    "symbol": "ZYDUSLIFE",
+    "fyers_symbol": "NSE:ZYDUSLIFE-EQ",
     "lot_size": 900,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "TATAMOTORS",
-    "fyers_symbol": "NSE:TATAMOTORS-EQ",
-    "lot_size": 1425,
+    "name": "KPIT TECHNOLOGIES LIMITED",
+    "symbol": "KPITTECH",
+    "fyers_symbol": "NSE:KPITTECH-EQ",
+    "lot_size": 425,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "TATAPOWER",
-    "fyers_symbol": "NSE:TATAPOWER-EQ",
-    "lot_size": 3375,
+    "name": "PATANJALI FOODS LIMITED",
+    "symbol": "PATANJALI",
+    "fyers_symbol": "NSE:PATANJALI-EQ",
+    "lot_size": 900,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "TATASTEEL",
-    "fyers_symbol": "NSE:TATASTEEL-EQ",
-    "lot_size": 4250,
+    "name": "PG ELECTROPLAST LTD",
+    "symbol": "PGEL",
+    "fyers_symbol": "NSE:PGEL-EQ",
+    "lot_size": 950,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "TCS",
-    "fyers_symbol": "NSE:TCS-EQ",
+    "name": "ITC LTD",
+    "symbol": "ITC",
+    "fyers_symbol": "NSE:ITC-EQ",
+    "lot_size": 1600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PUNJAB NATIONAL BANK",
+    "symbol": "PNB",
+    "fyers_symbol": "NSE:PNB-EQ",
+    "lot_size": 8000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "POWER GRID CORP. LTD.",
+    "symbol": "POWERGRID",
+    "fyers_symbol": "NSE:POWERGRID-EQ",
+    "lot_size": 1900,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HINDALCO  INDUSTRIES  LTD",
+    "symbol": "HINDALCO",
+    "fyers_symbol": "NSE:HINDALCO-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "KFIN TECHNOLOGIES LIMITED",
+    "symbol": "KFINTECH",
+    "fyers_symbol": "NSE:KFINTECH-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PIRAMAL PHARMA LIMITED",
+    "symbol": "PPLPHARMA",
+    "fyers_symbol": "NSE:PPLPHARMA-EQ",
+    "lot_size": 2625,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PREMIER ENERGIES LIMITED",
+    "symbol": "PREMIERENE",
+    "fyers_symbol": "NSE:PREMIERENE-EQ",
+    "lot_size": 575,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PRESTIGE ESTATE LTD",
+    "symbol": "PRESTIGE",
+    "fyers_symbol": "NSE:PRESTIGE-EQ",
+    "lot_size": 450,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "LTIMINDTREE LIMITED",
+    "symbol": "LTM",
+    "fyers_symbol": "NSE:LTM-EQ",
     "lot_size": 150,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
+    "name": "MANAPPURAM FINANCE LTD",
+    "symbol": "MANAPPURAM",
+    "fyers_symbol": "NSE:MANAPPURAM-EQ",
+    "lot_size": 3000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SBI LIFE INSURANCE CO LTD",
+    "symbol": "SBILIFE",
+    "fyers_symbol": "NSE:SBILIFE-EQ",
+    "lot_size": 375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "STATE BANK OF INDIA",
+    "symbol": "SBIN",
+    "fyers_symbol": "NSE:SBIN-EQ",
+    "lot_size": 750,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MAX HEALTHCARE INS LTD",
+    "symbol": "MAXHEALTH",
+    "fyers_symbol": "NSE:MAXHEALTH-EQ",
+    "lot_size": 525,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MAZAGON DOCK SHIPBUIL LTD",
+    "symbol": "MAZDOCK",
+    "fyers_symbol": "NSE:MAZDOCK-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SIEMENS LTD",
+    "symbol": "SIEMENS",
+    "fyers_symbol": "NSE:SIEMENS-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MUTHOOT FINANCE LIMITED",
+    "symbol": "MUTHOOTFIN",
+    "fyers_symbol": "NSE:MUTHOOTFIN-EQ",
+    "lot_size": 275,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "FSN E COMMERCE VENTURES",
+    "symbol": "NYKAA",
+    "fyers_symbol": "NSE:NYKAA-EQ",
+    "lot_size": 3125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "OBEROI REALTY LIMITED",
+    "symbol": "OBEROIRLTY",
+    "fyers_symbol": "NSE:OBEROIRLTY-EQ",
+    "lot_size": 350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ORACLE FIN SERV SOFT LTD.",
+    "symbol": "OFSS",
+    "fyers_symbol": "NSE:OFSS-EQ",
+    "lot_size": 75,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SONA BLW PRECISION FRGS L",
+    "symbol": "SONACOMS",
+    "fyers_symbol": "NSE:SONACOMS-EQ",
+    "lot_size": 1225,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PAGE INDUSTRIES LTD",
+    "symbol": "PAGEIND",
+    "fyers_symbol": "NSE:PAGEIND-EQ",
+    "lot_size": 15,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ONE 97 COMMUNICATIONS LTD",
+    "symbol": "PAYTM",
+    "fyers_symbol": "NSE:PAYTM-EQ",
+    "lot_size": 725,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "THE PHOENIX MILLS LTD",
+    "symbol": "PHOENIXLTD",
+    "fyers_symbol": "NSE:PHOENIXLTD-EQ",
+    "lot_size": 350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PIDILITE INDUSTRIES LTD",
+    "symbol": "PIDILITIND",
+    "fyers_symbol": "NSE:PIDILITIND-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "KALYAN JEWELLERS IND LTD",
+    "symbol": "KALYANKJIL",
+    "fyers_symbol": "NSE:KALYANKJIL-EQ",
+    "lot_size": 1175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TATA POWER CO LTD",
+    "symbol": "TATAPOWER",
+    "fyers_symbol": "NSE:TATAPOWER-EQ",
+    "lot_size": 1450,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "LARSEN & TOUBRO LTD.",
+    "symbol": "LT",
+    "fyers_symbol": "NSE:LT-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "NESTLE INDIA LIMITED",
+    "symbol": "NESTLEIND",
+    "fyers_symbol": "NSE:NESTLEIND-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "ULTRATECH CEMENT LIMITED",
+    "symbol": "ULTRACEMCO",
+    "fyers_symbol": "NSE:ULTRACEMCO-EQ",
+    "lot_size": 50,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TATA ELXSI LIMITED",
+    "symbol": "TATAELXSI",
+    "fyers_symbol": "NSE:TATAELXSI-EQ",
+    "lot_size": 100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "UNION BANK OF INDIA",
+    "symbol": "UNIONBANK",
+    "fyers_symbol": "NSE:UNIONBANK-EQ",
+    "lot_size": 4425,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TATA TECHNOLOGIES LIMITED",
+    "symbol": "TATATECH",
+    "fyers_symbol": "NSE:TATATECH-EQ",
+    "lot_size": 800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "UNITED SPIRITS LIMITED",
+    "symbol": "UNITDSPR",
+    "fyers_symbol": "NSE:UNITDSPR-EQ",
+    "lot_size": 400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "VEDANTA LIMITED",
+    "symbol": "VEDL",
+    "fyers_symbol": "NSE:VEDL-EQ",
+    "lot_size": 1150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "VOLTAS LTD",
+    "symbol": "VOLTAS",
+    "fyers_symbol": "NSE:VOLTAS-EQ",
+    "lot_size": 375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TATA MOTORS PASS VEH LTD",
+    "symbol": "TMPV",
+    "fyers_symbol": "NSE:TMPV-EQ",
+    "lot_size": 800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "UNO MINDA LIMITED",
+    "symbol": "UNOMINDA",
+    "fyers_symbol": "NSE:UNOMINDA-EQ",
+    "lot_size": 550,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "WIPRO LTD",
+    "symbol": "WIPRO",
+    "fyers_symbol": "NSE:WIPRO-EQ",
+    "lot_size": 3000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "YES BANK LIMITED",
+    "symbol": "YESBANK",
+    "fyers_symbol": "NSE:YESBANK-EQ",
+    "lot_size": 31100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "AMBUJA CEMENTS LTD",
+    "symbol": "AMBUJACEM",
+    "fyers_symbol": "NSE:AMBUJACEM-EQ",
+    "lot_size": 1050,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MPHASIS LIMITED",
+    "symbol": "MPHASIS",
+    "fyers_symbol": "NSE:MPHASIS-EQ",
+    "lot_size": 275,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "DLF LIMITED",
+    "symbol": "DLF",
+    "fyers_symbol": "NSE:DLF-EQ",
+    "lot_size": 825,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "INFO EDGE (I) LTD",
+    "symbol": "NAUKRI",
+    "fyers_symbol": "NSE:NAUKRI-EQ",
+    "lot_size": 375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "NBCC (INDIA) LIMITED",
+    "symbol": "NBCC",
+    "fyers_symbol": "NSE:NBCC-EQ",
+    "lot_size": 6500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HINDUSTAN AERONAUTICS LTD",
+    "symbol": "HAL",
+    "fyers_symbol": "NSE:HAL-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HCL TECHNOLOGIES LTD",
+    "symbol": "HCLTECH",
+    "fyers_symbol": "NSE:HCLTECH-EQ",
+    "lot_size": 350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "HSG & URBAN DEV CORPN LTD",
+    "symbol": "HUDCO",
+    "fyers_symbol": "NSE:HUDCO-EQ",
+    "lot_size": 2775,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PERSISTENT SYSTEMS LTD",
+    "symbol": "PERSISTENT",
+    "fyers_symbol": "NSE:PERSISTENT-EQ",
+    "lot_size": 100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "INTERGLOBE AVIATION LTD",
+    "symbol": "INDIGO",
+    "fyers_symbol": "NSE:INDIGO-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "MAHINDRA & MAHINDRA LTD",
+    "symbol": "M&M",
+    "fyers_symbol": "NSE:M&M-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "NHPC LTD",
+    "symbol": "NHPC",
+    "fyers_symbol": "NSE:NHPC-EQ",
+    "lot_size": 6400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "VARUN BEVERAGES LIMITED",
+    "symbol": "VBL",
+    "fyers_symbol": "NSE:VBL-EQ",
+    "lot_size": 1125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "PB FINTECH LIMITED",
+    "symbol": "POLICYBZR",
+    "fyers_symbol": "NSE:POLICYBZR-EQ",
+    "lot_size": 350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "RAIL VIKAS NIGAM LIMITED",
+    "symbol": "RVNL",
+    "fyers_symbol": "NSE:RVNL-EQ",
+    "lot_size": 1525,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "SUZLON ENERGY LIMITED",
+    "symbol": "SUZLON",
+    "fyers_symbol": "NSE:SUZLON-EQ",
+    "lot_size": 9025,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "VODAFONE IDEA LIMITED",
+    "symbol": "IDEA",
+    "fyers_symbol": "NSE:IDEA-EQ",
+    "lot_size": 71475,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "name": "TECH MAHINDRA LIMITED",
     "symbol": "TECHM",
     "fyers_symbol": "NSE:TECHM-EQ",
     "lot_size": 600,
@@ -1440,113 +1827,19 @@
     "is_active": true
   },
   {
-    "symbol": "TITAN",
-    "fyers_symbol": "NSE:TITAN-EQ",
-    "lot_size": 375,
+    "name": "WAAREE ENERGIES LIMITED",
+    "symbol": "WAAREEENER",
+    "fyers_symbol": "NSE:WAAREEENER-EQ",
+    "lot_size": 175,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
   },
   {
-    "symbol": "TORNTPHARM",
-    "fyers_symbol": "NSE:TORNTPHARM-EQ",
-    "lot_size": 500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "TORNTPOWER",
-    "fyers_symbol": "NSE:TORNTPOWER-EQ",
-    "lot_size": 1500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "TRENT",
-    "fyers_symbol": "NSE:TRENT-EQ",
-    "lot_size": 725,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "TVSMOTOR",
-    "fyers_symbol": "NSE:TVSMOTOR-EQ",
-    "lot_size": 700,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "UBL",
-    "fyers_symbol": "NSE:UBL-EQ",
-    "lot_size": 400,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ULTRACEMCO",
-    "fyers_symbol": "NSE:ULTRACEMCO-EQ",
-    "lot_size": 100,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "UPL",
-    "fyers_symbol": "NSE:UPL-EQ",
-    "lot_size": 1300,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "VEDL",
-    "fyers_symbol": "NSE:VEDL-EQ",
-    "lot_size": 1550,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "VOLTAS",
-    "fyers_symbol": "NSE:VOLTAS-EQ",
-    "lot_size": 500,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "WHIRLPOOL",
-    "fyers_symbol": "NSE:WHIRLPOOL-EQ",
-    "lot_size": 350,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "WIPRO",
-    "fyers_symbol": "NSE:WIPRO-EQ",
-    "lot_size": 1000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ZEEL",
-    "fyers_symbol": "NSE:ZEEL-EQ",
-    "lot_size": 3000,
-    "exchange": "NSE",
-    "instrument_type": "EQUITY",
-    "is_active": true
-  },
-  {
-    "symbol": "ZYDUSLIFE",
-    "fyers_symbol": "NSE:ZYDUSLIFE-EQ",
-    "lot_size": 1800,
+    "name": "JIO FIN SERVICES LTD",
+    "symbol": "JIOFIN",
+    "fyers_symbol": "NSE:JIOFIN-EQ",
+    "lot_size": 2350,
     "exchange": "NSE",
     "instrument_type": "EQUITY",
     "is_active": true
