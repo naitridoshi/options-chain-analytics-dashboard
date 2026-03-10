@@ -8,7 +8,7 @@ from libs.platform.modules.option_chain_snapshot.src import (
 )
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src import FyersClientService
-from libs.utils.common.market_state.src import get_market_state_manager
+from libs.utils.common.market_state.src import MarketStateManager
 from libs.utils.config.src.fyers import (
     SNAPSHOT_EXPIRY_COUNT,
     SNAPSHOT_STRIKE_COUNT,
@@ -27,11 +27,16 @@ class SnapshotMergeService:
     """Merges REST option chain data with WebSocket market data into snapshots."""
 
     @classmethod
-    async def capture_with_merged_market_data(cls) -> dict:
+    async def capture_with_merged_market_data(
+        cls, market_state: MarketStateManager
+    ) -> dict:
         """Capture snapshots for all instruments with merged market data.
 
         Fetches option chain via REST API and enriches it with WebSocket market data
         (LTP, avg_price) before storing snapshots.
+
+        Args:
+            market_state: MarketStateManager instance with live WebSocket data
 
         Returns:
             dict: {
@@ -41,8 +46,6 @@ class SnapshotMergeService:
             }
         """
         try:
-            market_state = get_market_state_manager()
-
             # Get all active instruments
             instruments = await InstrumentOperations.get_active_instruments()
             processed = 0
@@ -79,7 +82,7 @@ class SnapshotMergeService:
 
     @classmethod
     async def capture_for_instrument_with_merge(
-        cls, instrument, market_state
+        cls, instrument, market_state: MarketStateManager
     ) -> dict | None:
         """Capture and merge snapshot for a single instrument.
 
@@ -146,18 +149,31 @@ class SnapshotMergeService:
                 )
 
                 # Store enriched snapshot
-                snapshot_result = (
-                    await OptionSnapshotOperations.create_snapshot_transactional(
-                        instrument_id=instrument.id,
-                        expiry_date=candidate["expiry_date"],
-                        is_weekly=bool(candidate.get("is_weekly", True)),
-                        captured_at=captured_at,
-                        spot_price=spot_price,
-                        strike_rows=enriched_rows,
+                try:
+                    snapshot_result = (
+                        await OptionSnapshotOperations.create_snapshot_transactional(
+                            instrument_id=instrument.id,
+                            expiry_date=candidate["expiry_date"],
+                            is_weekly=bool(candidate.get("is_weekly", True)),
+                            captured_at=captured_at,
+                            spot_price=spot_price,
+                            strike_rows=enriched_rows,
+                        )
                     )
-                )
-                snapshots_created += 1
-                strikes_inserted += snapshot_result["strikes_inserted"]
+                    snapshots_created += 1
+                    strikes_inserted += snapshot_result["strikes_inserted"]
+                except Exception as snapshot_error:
+                    # Check if it's a duplicate key error (snapshot already exists)
+                    error_str = str(snapshot_error)
+                    if "UniqueViolation" in error_str or "duplicate key" in error_str:
+                        logger.info(
+                            f"Snapshot already exists - "
+                            f"instrument: {instrument.symbol}, "
+                            f"expiry: {candidate['expiry_date']}, "
+                            f"captured_at: {captured_at} - skipping"
+                        )
+                        continue
+                    raise
 
             if snapshots_created == 0:
                 logger.warning(f"No snapshots created for {instrument.symbol}")
@@ -185,7 +201,7 @@ class SnapshotMergeService:
 
     @classmethod
     def enrich_strike_rows_with_market_data(
-        cls, strike_rows: list[dict], market_state
+        cls, strike_rows: list[dict], market_state: MarketStateManager
     ) -> list[dict]:
         """Enrich strike rows with market data from WebSocket.
 

@@ -2,24 +2,21 @@ import asyncio
 import signal
 import sys
 
-from apps.ingestion.platform.modules.option_chain_market_data.src import (
-    get_market_data_manager,
-)
-from apps.ingestion.platform.modules.snapshot_merge.src import (
+from apps.ingestion.platform.modules.snapshot_merge.src.scheduler import (
     get_snapshot_merge_scheduler,
 )
-from apps.ingestion.platform.modules.symbol_refresh.src import (
+from apps.ingestion.platform.modules.symbol_refresh.src.scheduler import (
     SymbolRefreshManager,
-    symbol_refresh_scheduler,
+    get_symbol_refresh_scheduler,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.events.src import (
     SymbolListRefreshedEvent,
     TokenRefreshedEvent,
-    get_event_dispatcher,
 )
 from libs.utils.common.fyers_client.src import FyersClientService
-from libs.utils.common.market_state.src import get_market_state_manager
+from libs.utils.common.option_symbols.src import build_symbol_to_strike_mapping
+from libs.utils.state.src import AppState
 
 log = CustomLogger("IngestionService")
 logger, listener = log.get_logger()
@@ -29,14 +26,17 @@ listener.start()
 class IngestionService:
     """Main ingestion service orchestrating WebSocket and symbol refresh."""
 
-    def __init__(self):
-        self.market_data_manager = get_market_data_manager()
+    def __init__(self, app_state: AppState):
+        self.app_state = app_state
+        self.market_state = app_state.market_state
+        self.market_data_manager = app_state.market_data_manager
+        self.event_dispatcher = app_state.event_dispatcher
         self.symbol_refresh_manager = SymbolRefreshManager()
-        self.symbol_refresh_scheduler = symbol_refresh_scheduler
-        self.snapshot_merge_scheduler = get_snapshot_merge_scheduler()
-        self.event_dispatcher = get_event_dispatcher()
-        self.market_state = get_market_state_manager()
         self._running = False
+
+        # Schedulers will be created during initialize
+        self._symbol_refresh_scheduler = None
+        self._snapshot_merge_scheduler = None
 
     async def initialize(self) -> None:
         """Initialize ingestion service."""
@@ -71,12 +71,9 @@ class IngestionService:
             if refresh_results:
                 first_result = next((r for r in refresh_results.values() if r), None)
                 if first_result:
-                    # For single-instrument setup, use the first result's mapping
-                    symbol_to_strike = {}
-                    mapping = first_result.get("symbol_mapping", {})
-                    for strike, symbols_dict in mapping.items():
-                        for symbol in symbols_dict.values():
-                            symbol_to_strike[symbol] = strike
+                    symbol_to_strike, _ = build_symbol_to_strike_mapping(
+                        first_result.get("symbol_mapping", {})
+                    )
                     self.market_state.update_symbol_mapping(
                         symbol_to_strike, first_result.get("expiry_date")
                     )
@@ -85,11 +82,16 @@ class IngestionService:
             access_token = await FyersClientService.get_valid_access_token()
             await self.market_data_manager.start(access_token, all_symbols)
 
-            # Start symbol refresh scheduler
-            await self.symbol_refresh_scheduler.start()
+            # Create and start schedulers with injected state
+            self._symbol_refresh_scheduler = get_symbol_refresh_scheduler(
+                self.app_state
+            )
+            self._snapshot_merge_scheduler = get_snapshot_merge_scheduler(
+                self.app_state
+            )
 
-            # Start snapshot merge scheduler
-            await self.snapshot_merge_scheduler.start()
+            await self._symbol_refresh_scheduler.start()
+            await self._snapshot_merge_scheduler.start()
 
             self._running = True
             logger.info("Ingestion service initialized successfully")
@@ -105,9 +107,16 @@ class IngestionService:
         try:
             logger.info("Shutting down ingestion service...")
             self._running = False
-            await self.market_data_manager.stop()
-            await self.symbol_refresh_scheduler.stop()
-            await self.snapshot_merge_scheduler.stop()
+
+            if self.market_data_manager:
+                await self.market_data_manager.stop()
+
+            if self._symbol_refresh_scheduler:
+                await self._symbol_refresh_scheduler.stop()
+
+            if self._snapshot_merge_scheduler:
+                await self._snapshot_merge_scheduler.stop()
+
             logger.info("Ingestion service shutdown complete")
         except Exception as error:
             logger.error(f"Error during shutdown - error: {str(error)}")
@@ -155,20 +164,16 @@ class IngestionService:
             logger.error(f"Error handling symbol refresh - error: {str(error)}")
 
 
-_ingestion_service: IngestionService | None = None
-
-
-def get_ingestion_service() -> IngestionService:
-    """Get or create ingestion service instance."""
-    global _ingestion_service
-    if _ingestion_service is None:
-        _ingestion_service = IngestionService()
-    return _ingestion_service
-
-
 async def run_ingestion() -> None:
     """Run ingestion service."""
-    service = get_ingestion_service()
+    from libs.utils.state.src.factory import create_app_state_with_market_data
+
+    # Create app state with market data manager
+    app_state = await create_app_state_with_market_data()
+
+    # Create ingestion service with injected state
+    service = IngestionService(app_state)
+
     stop_event = asyncio.Event()
 
     def _handle_stop(*_) -> None:

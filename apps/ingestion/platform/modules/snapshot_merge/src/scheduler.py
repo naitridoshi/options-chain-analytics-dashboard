@@ -1,17 +1,16 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from libs.utils.common.config.src import resolve_config
 
 from apps.ingestion.platform.modules.snapshot_merge.src.snapshot_merge_service import (
     SnapshotMergeService,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
+from libs.utils.config.src.fyers import INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS
+from libs.utils.state.src import AppState
 
 log = CustomLogger("SnapshotMergeScheduler")
 logger, listener = log.get_logger()
 listener.start()
-
-_snapshot_merge_scheduler_instance = None
 
 
 class SnapshotMergeScheduler:
@@ -21,15 +20,15 @@ class SnapshotMergeScheduler:
     data with WebSocket market data and store snapshots with market-informed metrics.
     """
 
-    def __init__(self):
+    def __init__(self, app_state: AppState):
+        self._app_state = app_state
         self._scheduler = AsyncIOScheduler()
         self._is_running = False
-        self._config = resolve_config()
 
     async def start(self) -> None:
         """Start the snapshot merge scheduler."""
         try:
-            interval_seconds = self._config.INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS
+            interval_seconds = INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS
 
             logger.info(
                 f"Starting snapshot merge scheduler - interval_seconds: {interval_seconds}"
@@ -73,7 +72,9 @@ class SnapshotMergeScheduler:
         try:
             logger.info("Running snapshot merge job")
 
-            result = await SnapshotMergeService.capture_with_merged_market_data()
+            result = await SnapshotMergeService.capture_with_merged_market_data(
+                market_state=self._app_state.market_state
+            )
 
             logger.info(
                 f"Snapshot merge job completed - "
@@ -91,11 +92,13 @@ class SnapshotMergeScheduler:
         return self._is_running
 
 
-def get_snapshot_merge_scheduler() -> SnapshotMergeScheduler:
-    """Get or create singleton instance of SnapshotMergeScheduler."""
-    global _snapshot_merge_scheduler_instance
+def get_snapshot_merge_scheduler(app_state: AppState) -> SnapshotMergeScheduler:
+    """Create SnapshotMergeScheduler with injected state.
 
-    if _snapshot_merge_scheduler_instance is None:
-        _snapshot_merge_scheduler_instance = SnapshotMergeScheduler()
+    Args:
+        app_state: Application state container
 
-    return _snapshot_merge_scheduler_instance
+    Returns:
+        SnapshotMergeScheduler: New scheduler instance
+    """
+    return SnapshotMergeScheduler(app_state=app_state)

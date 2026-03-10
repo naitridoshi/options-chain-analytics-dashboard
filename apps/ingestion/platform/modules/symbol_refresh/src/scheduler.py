@@ -10,18 +10,15 @@ from apscheduler.events import (
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from apps.ingestion.platform.modules.option_chain_market_data.src import (
-    get_market_data_manager,
-)
-from apps.ingestion.platform.modules.symbol_refresh.src import (
+from apps.ingestion.platform.modules.symbol_refresh.src.symbol_refresh_manager import (
     SymbolRefreshManager,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.events.src import (
     SymbolListRefreshedEvent,
-    get_event_dispatcher,
 )
-from libs.utils.common.market_state.src import get_market_state_manager
+from libs.utils.common.option_symbols.src import build_symbol_to_strike_mapping
+from libs.utils.state.src import AppState
 
 log = CustomLogger("SymbolRefreshScheduler")
 logger, listener = log.get_logger()
@@ -33,13 +30,13 @@ IST = ZoneInfo("Asia/Kolkata")
 class SymbolRefreshScheduler:
     """Scheduler for daily symbol refresh at 8:45 AM IST."""
 
-    def __init__(self):
+    def __init__(self, app_state: AppState):
+        self._app_state = app_state
         self.scheduler = AsyncIOScheduler(timezone=IST)
         self._started = False
         self.refresh_manager = SymbolRefreshManager()
-        self.event_dispatcher = get_event_dispatcher()
-        self.market_state = get_market_state_manager()
-        self.market_data_manager = get_market_data_manager()
+        self.market_state = app_state.market_state
+        self.event_dispatcher = app_state.event_dispatcher
 
     async def tick(self):
         """Execute symbol refresh job."""
@@ -78,17 +75,18 @@ class SymbolRefreshScheduler:
                         (r for r in refresh_results.values() if r), None
                     )
                     if first_result:
-                        symbol_to_strike = {}
-                        mapping = first_result.get("symbol_mapping", {})
-                        for strike, symbols_dict in mapping.items():
-                            for symbol in symbols_dict.values():
-                                symbol_to_strike[symbol] = strike
+                        symbol_to_strike, _ = build_symbol_to_strike_mapping(
+                            first_result.get("symbol_mapping", {})
+                        )
                         self.market_state.update_symbol_mapping(
                             symbol_to_strike, first_result.get("expiry_date")
                         )
 
-                    # Update WebSocket subscriptions
-                    await self.market_data_manager.update_symbols(all_new_symbols)
+                    # Update WebSocket subscriptions if market data manager exists
+                    if self._app_state.market_data_manager:
+                        await self._app_state.market_data_manager.update_symbols(
+                            all_new_symbols
+                        )
 
                     # Fire event for any downstream listeners
                     event = SymbolListRefreshedEvent(
@@ -193,7 +191,7 @@ class SymbolRefreshScheduler:
             )
             raise
 
-    def stop(self):
+    async def stop(self):
         """Stop the symbol refresh scheduler."""
         if not self._started:
             return
@@ -208,20 +206,21 @@ class SymbolRefreshScheduler:
             )
 
 
-# Global instance
+# Global instance for backward compatibility during migration
 _symbol_refresh_scheduler: SymbolRefreshScheduler | None = None
 
 
-def get_symbol_refresh_scheduler() -> SymbolRefreshScheduler:
-    """Get or create the global symbol refresh scheduler.
+def get_symbol_refresh_scheduler(app_state: AppState) -> SymbolRefreshScheduler:
+    """Create SymbolRefreshScheduler with injected state.
+
+    Args:
+        app_state: Application state container
 
     Returns:
-        SymbolRefreshScheduler: The global instance
+        SymbolRefreshScheduler: New scheduler instance
     """
-    global _symbol_refresh_scheduler
-    if _symbol_refresh_scheduler is None:
-        _symbol_refresh_scheduler = SymbolRefreshScheduler()
-    return _symbol_refresh_scheduler
+    return SymbolRefreshScheduler(app_state=app_state)
 
 
-symbol_refresh_scheduler = get_symbol_refresh_scheduler()
+# For backward compatibility - will be removed
+symbol_refresh_scheduler = None  # type: ignore

@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List
+from typing import Callable
 
 
 class Event:
@@ -33,7 +33,7 @@ class EventDispatcher:
     """Simple observer pattern event dispatcher."""
 
     def __init__(self):
-        self._subscribers: Dict[str, List[Callable]] = {}
+        self._subscribers: dict[str, list[Callable]] = {}
 
     def subscribe(self, event_type: str, callback: Callable) -> None:
         """Subscribe to an event type.
@@ -85,19 +85,3 @@ class EventDispatcher:
             for callback in self._subscribers[event.event_type]:
                 if hasattr(callback, "__call__"):
                     callback(event)
-
-
-# Global event dispatcher instance
-_event_dispatcher: EventDispatcher | None = None
-
-
-def get_event_dispatcher() -> EventDispatcher:
-    """Get or create the global event dispatcher.
-
-    Returns:
-        EventDispatcher: The global event dispatcher instance
-    """
-    global _event_dispatcher
-    if _event_dispatcher is None:
-        _event_dispatcher = EventDispatcher()
-    return _event_dispatcher

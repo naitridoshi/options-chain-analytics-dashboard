@@ -6,6 +6,7 @@ from typing import Callable
 
 import httpx
 from fyers_apiv3 import fyersModel
+from fyers_apiv3.FyersWebsocket import data_ws
 
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src.helpers import sha256_hexdigest
@@ -192,24 +193,29 @@ class FyersClientService:
     def create_websocket_client(cls, access_token: str):
         """Create a FYERS WebSocket client for market data.
 
+        Uses the fyers_apiv3.FyersWebsocket.data_ws module as per FYERS SDK.
+
         Args:
-            access_token: Valid FYERS access token
+            access_token: Valid FYERS access token (format: appid:accesstoken)
 
         Returns:
-            FYERS WebSocket client instance
+            data_ws.FyersDataSocket: FYERS WebSocket client instance
         """
         try:
-            from fyers_apiv3 import FyersWebsocket
+            # The access token needs to be in format "appid:accesstoken"
+            full_token = f"{FYERS_APP_ID}:{access_token}"
 
-            client = FyersWebsocket.FyersDataSocket(
-                client_id=FYERS_APP_ID,
-                token=access_token,
+            client = data_ws.FyersDataSocket(
+                access_token=full_token,
                 log_path=FYERS_LOG_PATH,
+                litemode=False,
+                write_to_file=False,
+                reconnect=True,
             )
             logger.info("WebSocket client created")
             return client
         except ImportError:
-            logger.error("fyers_apiv3 FyersWebsocket module not available")
+            logger.error("fyers_apiv3.FyersWebsocket.data_ws module not available")
             raise
 
     @classmethod
@@ -217,14 +223,16 @@ class FyersClientService:
         cls,
         ws_client,
         symbols: list[str],
-        data_type: str = "symbolData",
+        data_type: str = "SymbolUpdate",
     ) -> None:
         """Subscribe to symbols on WebSocket.
 
         Args:
-            ws_client: FYERS WebSocket client
+            ws_client: FYERS WebSocket client (data_ws.FyersDataSocket)
             symbols: List of symbols to subscribe (max 500)
-            data_type: Type of data to subscribe (symbolData for market data)
+            data_type: Type of data to subscribe
+                - "SymbolUpdate": Real-time symbol updates (ltp, volume, etc.)
+                - "DepthData": Market depth data
         """
         try:
             if not symbols:
@@ -237,8 +245,7 @@ class FyersClientService:
                     "Consider chunking subscriptions."
                 )
 
-            payload = {"symbols": symbols, "datatype": data_type}
-            ws_client.subscribe(payload)
+            ws_client.subscribe(symbols=symbols, data_type=data_type)
             logger.info(
                 f"WebSocket subscription requested - symbols: {len(symbols)}, data_type: {data_type}"
             )
@@ -261,8 +268,7 @@ class FyersClientService:
                 logger.warning("Empty symbol list provided for unsubscription")
                 return
 
-            payload = {"symbols": symbols}
-            ws_client.unsubscribe(payload)
+            ws_client.unsubscribe(symbols=symbols)
             logger.info(f"WebSocket unsubscription requested - symbols: {len(symbols)}")
         except Exception as error:
             logger.error(

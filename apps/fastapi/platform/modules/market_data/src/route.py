@@ -1,20 +1,27 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from apps.fastapi.auth.src.basic_auth import verify_basic_auth
 from apps.fastapi.platform.modules.market_data.src.service import (
     LiveMarketDataService,
 )
+from apps.fastapi.src.lifespan import get_app_state
+from libs.utils.state.src import AppState
 
 market_data_route = APIRouter(prefix="/api/v1/market-data", tags=["Market Data"])
 
 
+def get_market_state_from_request(request: Request):
+    """Get market state from request app state."""
+    app_state: AppState = get_app_state(request.app)
+    return app_state.market_state
+
+
 @market_data_route.get("/live")
 async def get_live_market_data(
+    request: Request,
     _: bool = Depends(verify_basic_auth),
-    data_type: str = Query(
-        "all", regex="^(all|symbols|strikes)$", description="Type of data to return"
-    ),
+    data_type: str = "all",
 ) -> JSONResponse:
     """Get live market data from WebSocket stream.
 
@@ -37,20 +44,22 @@ async def get_live_market_data(
     Empty if WebSocket is not yet connected or no data received.
     """
     try:
+        market_state = get_market_state_from_request(request)
+
         if data_type == "symbols":
-            market_data = LiveMarketDataService.get_symbols_only()
+            market_data = LiveMarketDataService.get_symbols_only(market_state)
             return JSONResponse(
                 status_code=200,
                 content={"success": True, "data": market_data},
             )
         elif data_type == "strikes":
-            market_data = LiveMarketDataService.get_strikes_only()
+            market_data = LiveMarketDataService.get_strikes_only(market_state)
             return JSONResponse(
                 status_code=200,
                 content={"success": True, "data": market_data},
             )
         else:  # "all" or default
-            market_data = LiveMarketDataService.get_all_market_data()
+            market_data = LiveMarketDataService.get_all_market_data(market_state)
             return JSONResponse(
                 status_code=200,
                 content={"success": True, "data": market_data},
@@ -68,7 +77,9 @@ async def get_live_market_data(
 
 @market_data_route.get("/live/symbol/{symbol}")
 async def get_live_symbol_data(
-    symbol: str, _: bool = Depends(verify_basic_auth)
+    request: Request,
+    symbol: str,
+    _: bool = Depends(verify_basic_auth),
 ) -> JSONResponse:
     """Get live market data for a specific symbol.
 
@@ -92,7 +103,8 @@ async def get_live_symbol_data(
     Note: Returns null if symbol is not currently tracked.
     """
     try:
-        market_data = LiveMarketDataService.get_symbol_data(symbol)
+        market_state = get_market_state_from_request(request)
+        market_data = LiveMarketDataService.get_symbol_data(symbol, market_state)
 
         if market_data is None:
             return JSONResponse(
@@ -118,7 +130,9 @@ async def get_live_symbol_data(
 
 @market_data_route.get("/live/strike/{strike}")
 async def get_live_strike_data(
-    strike: str, _: bool = Depends(verify_basic_auth)
+    request: Request,
+    strike: str,
+    _: bool = Depends(verify_basic_auth),
 ) -> JSONResponse:
     """Get live market data for a specific strike (CE + PE).
 
@@ -151,7 +165,8 @@ async def get_live_strike_data(
     Note: Returns null if strike is not currently tracked.
     """
     try:
-        market_data = LiveMarketDataService.get_strike_data(strike)
+        market_state = get_market_state_from_request(request)
+        market_data = LiveMarketDataService.get_strike_data(strike, market_state)
 
         if market_data is None:
             return JSONResponse(

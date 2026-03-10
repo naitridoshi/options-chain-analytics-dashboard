@@ -215,19 +215,3 @@ class MarketStateManager:
             "strikes": len(self._strike_state),
             "expiry_date": self._expiry_date,
         }
-
-
-# Global instance
-_market_state_manager: MarketStateManager | None = None
-
-
-def get_market_state_manager() -> MarketStateManager:
-    """Get or create the global market state manager.
-
-    Returns:
-        MarketStateManager: The global instance
-    """
-    global _market_state_manager
-    if _market_state_manager is None:
-        _market_state_manager = MarketStateManager()
-    return _market_state_manager

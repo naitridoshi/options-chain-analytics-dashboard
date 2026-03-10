@@ -1,5 +1,5 @@
 from libs.utils.common.custom_logger.src import CustomLogger
-from libs.utils.common.market_state.src import get_market_state_manager
+from libs.utils.common.market_state.src import MarketStateManager
 
 log = CustomLogger("LiveMarketDataService")
 logger, listener = log.get_logger()
@@ -10,8 +10,11 @@ class LiveMarketDataService:
     """Service for retrieving live market data from in-memory market state."""
 
     @classmethod
-    def get_all_market_data(cls) -> dict:
+    def get_all_market_data(cls, market_state: MarketStateManager) -> dict:
         """Get all live market data (symbols + strikes).
+
+        Args:
+            market_state: MarketStateManager instance
 
         Returns:
             dict: {
@@ -20,8 +23,6 @@ class LiveMarketDataService:
             }
         """
         try:
-            market_state = get_market_state_manager()
-
             # Get symbol-level data
             symbols_data = {}
             for symbol, tick_data in market_state.get_all_symbols().items():
@@ -42,15 +43,16 @@ class LiveMarketDataService:
             raise
 
     @classmethod
-    def get_symbols_only(cls) -> dict:
+    def get_symbols_only(cls, market_state: MarketStateManager) -> dict:
         """Get symbol-level live market data.
+
+        Args:
+            market_state: MarketStateManager instance
 
         Returns:
             dict: {symbol: {ltp, avg_price, volume, oi, bid, ask, last_update}, ...}
         """
         try:
-            market_state = get_market_state_manager()
-
             symbols_data = {}
             for symbol, tick_data in market_state.get_all_symbols().items():
                 symbols_data[symbol] = tick_data.to_dict()
@@ -62,15 +64,16 @@ class LiveMarketDataService:
             raise
 
     @classmethod
-    def get_strikes_only(cls) -> dict:
+    def get_strikes_only(cls, market_state: MarketStateManager) -> dict:
         """Get strike-level live market data (CE + PE combined).
+
+        Args:
+            market_state: MarketStateManager instance
 
         Returns:
             dict: {strike: {CE: {...}, PE: {...}}, ...}
         """
         try:
-            market_state = get_market_state_manager()
-
             strikes_data = {}
             for strike, strike_data in market_state.get_all_strikes().items():
                 strikes_data[strike] = strike_data.to_dict()
@@ -82,17 +85,19 @@ class LiveMarketDataService:
             raise
 
     @classmethod
-    def get_symbol_data(cls, symbol: str) -> dict | None:
+    def get_symbol_data(
+        cls, symbol: str, market_state: MarketStateManager
+    ) -> dict | None:
         """Get live market data for a specific symbol.
 
         Args:
             symbol: Option symbol (e.g., NSE:NIFTY24MAR22000CE)
+            market_state: MarketStateManager instance
 
         Returns:
             dict or None: {ltp, avg_price, volume, oi, bid, ask, last_update} or None if not found
         """
         try:
-            market_state = get_market_state_manager()
             tick_data = market_state.get_symbol_data(symbol)
 
             if not tick_data:
@@ -107,17 +112,19 @@ class LiveMarketDataService:
             raise
 
     @classmethod
-    def get_strike_data(cls, strike: str) -> dict | None:
+    def get_strike_data(
+        cls, strike: str, market_state: MarketStateManager
+    ) -> dict | None:
         """Get live market data for a specific strike (CE + PE).
 
         Args:
             strike: Strike price (e.g., "22000")
+            market_state: MarketStateManager instance
 
         Returns:
             dict or None: {CE: {...}, PE: {...}} or None if not found
         """
         try:
-            market_state = get_market_state_manager()
             strike_data = market_state.get_strike_data(strike)
 
             if not strike_data:

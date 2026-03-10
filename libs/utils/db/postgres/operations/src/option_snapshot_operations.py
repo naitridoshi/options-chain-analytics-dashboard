@@ -532,6 +532,34 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
             }
 
     @classmethod
+    async def get_snapshot_by_instrument_expiry_captured(
+        cls,
+        instrument_id: UUID,
+        captured_at: datetime,
+    ) -> OptionChainSnapshot | None:
+        """Get snapshot by instrument_id and captured_at timestamp.
+
+        Args:
+            instrument_id: Instrument UUID
+            captured_at: Captured at timestamp
+
+        Returns:
+            OptionChainSnapshot or None
+        """
+        async with postgres_connection.get_session() as session:
+            snapshot_repo = get_option_chain_snapshots_repository(session)
+            snapshots = await snapshot_repo.list_ordered(
+                where=[
+                    snapshot_repo.model.instrument_id == instrument_id,
+                    snapshot_repo.model.captured_at == captured_at,
+                ],
+                limit=1,
+            )
+            if not snapshots:
+                return None
+            return snapshots[0]
+
+    @classmethod
     async def get_latest_captured_at_for_today_ist(cls) -> datetime | None:
         now_ist = datetime.now(IST)
         start_of_day_ist = datetime.combine(

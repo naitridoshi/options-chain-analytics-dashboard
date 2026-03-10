@@ -3,7 +3,6 @@ from libs.utils.common.events.src.event_dispatcher import (
     EventDispatcher,
     SymbolListRefreshedEvent,
     TokenRefreshedEvent,
-    get_event_dispatcher,
 )
 
 __all__ = [
@@ -11,5 +10,4 @@ __all__ = [
     "EventDispatcher",
     "TokenRefreshedEvent",
     "SymbolListRefreshedEvent",
-    "get_event_dispatcher",
 ]

@@ -96,6 +96,32 @@
     .fyers-badge.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
     .fyers-badge.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
 
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .live-indicator.connected {
+      background: #0f2e22;
+      border: 1px solid #1b6e4a;
+      color: #7af0b7;
+    }
+    .live-indicator.disconnected {
+      background: #3a1f1f;
+      border: 1px solid #7d3535;
+      color: #ffc4c4;
+    }
+    .live-indicator.connecting {
+      background: #2a2f1f;
+      border: 1px solid #4a5080;
+      color: #a8b8ff;
+    }
+
     .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
     input, button, a.link-btn {
@@ -357,6 +383,13 @@
     .pos { color: var(--good); font-weight: 700; }
     .neg { color: var(--bad); font-weight: 700; }
 
+    .live-value {
+      transition: background-color 0.15s ease;
+    }
+    .live-value.flash {
+      background-color: rgba(39, 196, 246, 0.3);
+    }
+
     tfoot td {
       position: sticky;
       bottom: 0;
@@ -383,6 +416,7 @@
           <div class="symbol-meta">
             <span id="symbolBadge">NIFTY</span>
             <span id="fyersStatusBadge" class="fyers-badge warn">FYERS: CHECKING</span>
+            <span id="liveIndicator" class="live-indicator disconnected" style="display: none;">○ DISCONNECTED</span>
           </div>
           <span class="pill">LATEST SNAPSHOT</span>
         </div>
@@ -414,7 +448,7 @@
               <th class="sp">STRIKE</th>
               <th class="put">VWAP</th>
               <th class="put">LTP</th>
-              <th class="put">PRICE CHG</th>
+            <th class="put">PRICE CHG</th>
               <th class="put">COI</th>
               <th class="put">OI</th>
               <th class="put">COI % CHNG</th>
@@ -451,6 +485,10 @@
     let timerId = null;
     let refreshMs = 5 * 60 * 1000;
     let hasRendered = false;
+    let ws = null;
+    let reconnectAttempts = 0;
+    let strikeToRowMap = {};
+    let symbolToRowMap = {};
 
     function fmt(v) {
       if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
@@ -567,6 +605,157 @@
           <div class="table-skeleton skeleton"></div>
           <div class="table-skeleton skeleton"></div>
         </td></tr>`;
+    }
+
+    function updateLiveIndicator(state) {
+      const el = document.getElementById("liveIndicator");
+      if (!el) return;
+      el.style.display = "inline-flex";
+      if (state === "connected") {
+        el.className = "live-indicator connected";
+        el.textContent = "● LIVE";
+      } else if (state === "connecting") {
+        el.className = "live-indicator connecting";
+        el.textContent = "◐ CONNECTING...";
+      } else {
+        el.className = "live-indicator disconnected";
+        el.textContent = "○ DISCONNECTED";
+      }
+    }
+
+    function flashCell(cell) {
+      cell.classList.add("live-value", "flash");
+      setTimeout(() => {
+        cell.classList.remove("flash");
+      }, 150);
+    }
+
+    function connectWebSocket() {
+      if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+        return;
+      }
+
+      updateLiveIndicator("connecting");
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      ws = new WebSocket(`${protocol}://${window.location.host}/ws/market-data`);
+
+      ws.onopen = () => {
+        console.log("[WS] Connected to live market data stream");
+        updateLiveIndicator("connected");
+        reconnectAttempts = 0;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "market_data" && data.data) {
+            updateLiveData(data.data);
+          }
+        } catch (error) {
+          console.error("[WS] Message parse error:", error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log("[WS] Disconnected");
+        updateLiveIndicator("disconnected");
+        scheduleReconnect();
+      };
+
+      ws.onerror = (error) => {
+        console.error("[WS] Error:", error);
+        updateLiveIndicator("disconnected");
+        scheduleReconnect();
+      };
+    }
+
+    function scheduleReconnect() {
+      if (reconnectAttempts < 10) {
+        reconnectAttempts++;
+        const delay = Math.min(2 ** reconnectAttempts, 30) * 1000;
+        console.log(`[WS] Scheduling reconnect in ${delay}ms`);
+        setTimeout(connectWebSocket, delay);
+      }
+    }
+
+    function updateLiveData(liveData) {
+      if (!liveData || !liveData.strikes) {
+        console.log("[WS] No live data or strikes");
+        return;
+      }
+
+      const strikes = liveData.strikes;
+      const tbody = document.querySelector("#gridTable tbody");
+      if (!tbody) return;
+
+      console.log("[WS] Received strikes:", Object.keys(strikes));
+      console.log("[WS] strikeToRowMap keys:", Object.keys(strikeToRowMap));
+      console.log("[WS] strikeToRowMap size:", Object.keys(strikeToRowMap).length);
+
+      // Check if map is empty (table might not be rendered yet)
+      if (Object.keys(strikeToRowMap).length === 0) {
+        console.log("[WS] strikeToRowMap is empty - table may not be rendered yet");
+        return;
+      }
+
+      for (const [strikePrice, strikeData] of Object.entries(strikes)) {
+        const row = strikeToRowMap[strikePrice];
+        if (!row) {
+          console.log(`[WS] No row found for strike: ${strikePrice}`);
+          continue;
+        }
+        console.log(`[WS] Found row for strike: ${strikePrice}`, strikeData);
+
+        // Update CE data
+        if (strikeData.CE) {
+          const ce = strikeData.CE;
+          const ceLtpEl = row.querySelector(".call-col.ltp-cell");
+          const ceVwapEl = row.querySelector(".call-col.vwap-cell");
+
+          if (ceLtpEl && ce.ltp !== undefined && ce.ltp !== null) {
+            const oldVal = ceLtpEl.textContent;
+            const newVal = fmt2(ce.ltp);
+            if (oldVal !== newVal) {
+              ceLtpEl.textContent = newVal;
+              flashCell(ceLtpEl);
+            }
+          }
+
+          if (ceVwapEl && ce.avg_price !== undefined && ce.avg_price !== null) {
+            const oldVal = ceVwapEl.textContent;
+            const newVal = fmt2(ce.avg_price);
+            if (oldVal !== newVal) {
+              ceVwapEl.textContent = newVal;
+              flashCell(ceVwapEl);
+            }
+          }
+        }
+
+        // Update PE data
+        if (strikeData.PE) {
+          const pe = strikeData.PE;
+          const peLtpEl = row.querySelector(".put-col.ltp-cell");
+          const peVwapEl = row.querySelector(".put-col.vwap-cell");
+
+          if (peLtpEl && pe.ltp !== undefined && pe.ltp !== null) {
+            const oldVal = peLtpEl.textContent;
+            const newVal = fmt2(pe.ltp);
+            if (oldVal !== newVal) {
+              peLtpEl.textContent = newVal;
+              flashCell(peLtpEl);
+            }
+          }
+
+          if (peVwapEl && pe.avg_price !== undefined && pe.avg_price !== null) {
+            const oldVal = peVwapEl.textContent;
+            const newVal = fmt2(pe.avg_price);
+            if (oldVal !== newVal) {
+              peVwapEl.textContent = newVal;
+              flashCell(peVwapEl);
+            }
+          }
+        }
+      }
     }
 
     async function load() {
@@ -693,6 +882,10 @@
         }, null);
       }
 
+      // Reset row maps
+      strikeToRowMap = {};
+      symbolToRowMap = {};
+
       const tbody = document.querySelector("#gridTable tbody");
       tbody.innerHTML = strikes.map((row) => {
         const callCoi = row.call_oi_change ?? 0;
@@ -708,19 +901,20 @@
         const putCoiPctChng = safeDivPct(putCoi, Number(putOi) - Number(putCoi));
 
         const isAtm = atmStrike !== null && Number(row.strike_price) === Number(atmStrike);
+        const strikeFormatted = fmt2(row.strike_price);
 
         return `
-          <tr class="${isAtm ? 'atm-row' : ''}">
+          <tr class="${isAtm ? 'atm-row' : ''}" data-strike="${strikeFormatted}">
             <td class="call-col ${signedClass(callRatio)}">${fmt2(callRatio)}%</td>
             <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}%</td>
             <td class="call-col ${signedClass(callOi)}">${fmt(callOi)}</td>
             <td class="call-col ${signedClass(callCoi)}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
-            <td class="call-col">${fmt2(row.call_ltp)}</td>
-            <td class="call-col">-</td>
-            <td class="sp-cell ${isAtm ? 'atm' : ''}">${fmt2(row.strike_price)}</td>
-            <td class="put-col">-</td>
-            <td class="put-col">${fmt2(row.put_ltp)}</td>
+            <td class="call-col ltp-cell">${fmt2(row.call_ltp)}</td>
+            <td class="call-col vwap-cell live-value">-</td>
+            <td class="sp-cell ${isAtm ? 'atm' : ''}">${strikeFormatted}</td>
+            <td class="put-col vwap-cell live-value">-</td>
+            <td class="put-col ltp-cell">${fmt2(row.put_ltp)}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${signedClass(putCoi)}">${fmt(putCoi)}</td>
             <td class="put-col ${signedClass(putOi)}">${fmt(putOi)}</td>
@@ -729,6 +923,18 @@
           </tr>
         `;
       }).join("");
+
+      // Build row maps for live updates
+      tbody.querySelectorAll("tr").forEach((row) => {
+        const strikeCell = row.querySelector(".sp-cell");
+        if (strikeCell) {
+          // Store strike as integer to match WebSocket data format (e.g., "24000" not "24000.00")
+          const strikePrice = String(parseInt(strikeCell.textContent, 10));
+          strikeToRowMap[strikePrice] = row;
+          console.log(`[Dashboard] Mapped strike: ${strikePrice} (from text: "${strikeCell.textContent}")`);
+        }
+      });
+      console.log(`[Dashboard] Built strikeToRowMap with ${Object.keys(strikeToRowMap).length} entries`);
 
       const callOiSum = latest ? latest.call_oi_sum : null;
       const putOiSum = latest ? latest.put_oi_sum : null;
@@ -741,6 +947,11 @@
       document.getElementById("footPutCoi").textContent = "";
       document.getElementById("footOiPcr").textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
       document.getElementById("footCoiPcr").textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
+
+      // Connect WebSocket for live updates
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connectWebSocket();
+      }
 
       if (timerId) clearTimeout(timerId);
       timerId = setTimeout(load, refreshMs);
