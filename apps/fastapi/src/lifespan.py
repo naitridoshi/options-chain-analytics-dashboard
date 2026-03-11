@@ -83,6 +83,9 @@ async def _initialize_app_state(app: FastAPI) -> AppState:
     # Create app state
     state = AppState()
 
+    # Store app reference for token watcher
+    state._app = app
+
     # Initialize core services
     state.event_dispatcher = EventDispatcher()
     state.market_state = MarketStateManager()
@@ -102,21 +105,45 @@ async def _initialize_app_state(app: FastAPI) -> AppState:
 
     logger.info("Application state initialized")
 
-    # Try to start ingestion (market data + schedulers)
+    # Try to start ingestion immediately if token available
     try:
-        await _start_ingestion(app, state)
+        await start_ingestion(app, state)
+        state.mark_ingestion_started()
+        logger.info("Ingestion started successfully")
     except Exception as error:
         logger.warning(f"Ingestion not started - error: {str(error)}")
         logger.info(
-            "Dashboard will show historical data only. Use /api/v1/fyers/login to enable live data."
+            "Dashboard will show historical data only. "
+            "Token watcher will auto-start ingestion when token is available."
         )
+
+    # Start token watcher (for polling and reconnection)
+    from apps.fastapi.src.token_watcher import TokenWatcher
+
+    state._token_watcher = TokenWatcher(state)
+    await state._token_watcher.start()
+
+    # Subscribe to WebSocket auth errors for reconnection
+    async def handle_ws_auth_error(event):
+        logger.warning("WebSocket auth error detected, marking ingestion for restart")
+        state.mark_ingestion_stopped()
+        # Token watcher will detect and restart ingestion
+
+    state.event_dispatcher.subscribe("WEBSOCKET_AUTH_ERROR", handle_ws_auth_error)
 
     state.mark_initialized()
     return state
 
 
-async def _start_ingestion(app: FastAPI, state: AppState) -> None:
-    """Start ingestion services (WebSocket + schedulers)."""
+async def start_ingestion(app: FastAPI, state: AppState) -> None:
+    """Start ingestion services (WebSocket + schedulers).
+
+    Can be called during startup or later when token becomes available.
+
+    Args:
+        app: FastAPI application instance
+        state: Application state containing all components
+    """
     # Get access token
     access_token = await FyersClientService.get_valid_access_token()
 
@@ -173,6 +200,11 @@ async def _shutdown_app_state(app: FastAPI) -> None:
 
     if not state:
         return
+
+    # Stop token watcher first
+    if hasattr(state, "_token_watcher") and state._token_watcher:
+        await state._token_watcher.stop()
+        logger.info("Token watcher stopped")
 
     # Stop broadcaster
     if state.broadcaster:

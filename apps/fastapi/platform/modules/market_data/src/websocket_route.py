@@ -78,9 +78,9 @@ async def websocket_market_data(websocket: WebSocket):
             # For now, we just keep the connection alive
             # Future: handle subscription messages from client
     except WebSocketDisconnect:
-        broadcaster.disconnect(websocket)
+        await broadcaster.disconnect(websocket)
     except Exception:
-        broadcaster.disconnect(websocket)
+        await broadcaster.disconnect(websocket)
 
 
 @market_data_ws_route.get("/api/v1/market-data/status")

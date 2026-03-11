@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -35,6 +36,14 @@ class AppState:
 
     _initialized: bool = field(default=False, repr=False)
 
+    # Ingestion state tracking
+    _ingestion_running: bool = field(default=False, repr=False)
+    _ingestion_lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False)
+
+    # References for token watcher
+    _app: Any = field(default=None, repr=False)
+    _token_watcher: Any = field(default=None, repr=False)
+
     def is_initialized(self) -> bool:
         """Check if state has been initialized."""
         return self._initialized
@@ -42,6 +51,18 @@ class AppState:
     def mark_initialized(self) -> None:
         """Mark state as initialized."""
         self._initialized = True
+
+    def is_ingestion_running(self) -> bool:
+        """Check if ingestion is currently running."""
+        return self._ingestion_running
+
+    def mark_ingestion_started(self) -> None:
+        """Mark ingestion as started."""
+        self._ingestion_running = True
+
+    def mark_ingestion_stopped(self) -> None:
+        """Mark ingestion as stopped."""
+        self._ingestion_running = False
 
 
 __all__ = ["AppState"]

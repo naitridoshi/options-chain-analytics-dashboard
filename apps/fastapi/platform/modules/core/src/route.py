@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from starlette.responses import RedirectResponse
@@ -54,6 +54,7 @@ async def fyers_token_status(_: bool = Depends(verify_basic_auth)):
 
 @core_route.get("/callback")
 async def fyers_callback(
+    request: Request,
     auth_code: str | None = Query(default=None),
     code: str | None = Query(default=None),
 ):
@@ -67,11 +68,30 @@ async def fyers_callback(
             },
         )
 
+    # Exchange auth code for token and store
     await FyersClientService.exchange_auth_code_and_store(resolved_auth_code)
+
+    # Trigger immediate ingestion start
+    try:
+        from apps.fastapi.src.lifespan import get_app_state
+
+        app_state = get_app_state(request.app)
+
+        if hasattr(app_state, "_token_watcher") and app_state._token_watcher:
+            await app_state._token_watcher.trigger_immediate_check()
+
+        logger.info("FYERS token stored and ingestion triggered")
+
+    except Exception as error:
+        logger.warning(
+            f"Token stored but ingestion trigger failed - error: {str(error)}"
+        )
+        # Don't fail the callback if trigger fails
+
     return JSONResponse(
         status_code=200,
         content={
             "success": True,
-            "message": "FYERS token stored successfully for today.",
+            "message": "FYERS token stored successfully. Ingestion starting.",
         },
     )
