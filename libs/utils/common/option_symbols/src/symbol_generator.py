@@ -1,8 +1,10 @@
 from datetime import date
+from decimal import Decimal
 
 from libs.platform.modules.option_chain_snapshot.src import (
     parse_expiry_candidates,
     parse_option_rows,
+    parse_spot_price,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
 
@@ -19,6 +21,60 @@ class OptionSymbolGenerator:
     """
 
     @classmethod
+    def _find_atm_strike(
+        cls, strike_prices: list[Decimal], spot_price: Decimal
+    ) -> Decimal:
+        """Find the ATM strike (closest to spot price).
+
+        Args:
+            strike_prices: List of available strike prices
+            spot_price: Current spot price
+
+        Returns:
+            Decimal: The strike price closest to spot
+        """
+        return min(strike_prices, key=lambda s: abs(s - spot_price))
+
+    @classmethod
+    def _select_strikes_around_atm(
+        cls,
+        strike_prices: list[Decimal],
+        atm_strike: Decimal,
+        count: int,
+    ) -> list[Decimal]:
+        """Select strikes centered around ATM.
+
+        Selects `count` strikes below ATM and `count` strikes above ATM,
+        plus the ATM strike itself. Total strikes = 2*count + 1.
+
+        Args:
+            strike_prices: List of all available strike prices (sorted)
+            atm_strike: The ATM strike price
+            count: Number of strikes to select ABOVE and BELOW ATM (each)
+
+        Returns:
+            list[Decimal]: Selected strike prices centered around ATM
+        """
+        sorted_strikes = sorted(strike_prices)
+
+        # Find ATM index
+        try:
+            atm_index = sorted_strikes.index(atm_strike)
+        except ValueError:
+            # Fallback: find closest
+            atm_index = min(
+                range(len(sorted_strikes)),
+                key=lambda i: abs(sorted_strikes[i] - atm_strike),
+            )
+
+        # Select `count` strikes below ATM and `count` strikes above ATM
+        # Total strikes = 2*count + 1 (including ATM)
+        start_index = max(0, atm_index - count)
+        end_index = min(len(sorted_strikes), atm_index + count + 1)
+
+        return sorted_strikes[start_index:end_index]
+
+    @classmethod
     def generate_symbols_from_chain(
         cls,
         fyers_symbol: str,
@@ -32,10 +88,13 @@ class OptionSymbolGenerator:
         - optionsChain (not ceChain/peChain)
         - trading_symbol directly from API
 
+        Strikes are selected centered around ATM - with strike_count/2 above
+        and strike_count/2 below the ATM strike.
+
         Args:
             fyers_symbol: Base instrument symbol (e.g., NSE:NIFTY50-INDEX)
             chain_data: Raw FYERS option chain API response
-            strike_count: Number of strikes to process
+            strike_count: Number of strikes to process (centered around ATM)
 
         Returns:
             dict: {
@@ -67,12 +126,50 @@ class OptionSymbolGenerator:
                     f"No option rows found for expiry {expiry_date} in option chain"
                 )
 
-            # Build symbols and mapping
+            # Parse spot price to find ATM
+            try:
+                spot_price = parse_spot_price(chain_data)
+            except ValueError:
+                # Fallback: estimate from first LTP if spot not available
+                spot_price = None
+                logger.warning(
+                    "Could not parse spot price, using first available strike as ATM"
+                )
+
+            # Collect all unique strikes for this expiry
+            unique_strikes: set[Decimal] = set()
+            for row in expiry_rows:
+                strike_price = row.get("strike_price")
+                if strike_price is not None:
+                    unique_strikes.add(strike_price)
+
+            if not unique_strikes:
+                raise ValueError("No valid strike prices found in option chain")
+
+            # Find ATM strike
+            if spot_price is not None:
+                atm_strike = cls._find_atm_strike(list(unique_strikes), spot_price)
+            else:
+                # Fallback: use middle strike
+                sorted_fallback = sorted(unique_strikes)
+                atm_strike = sorted_fallback[len(sorted_fallback) // 2]
+
+            # Select strikes centered around ATM
+            selected_strikes = cls._select_strikes_around_atm(
+                list(unique_strikes), atm_strike, strike_count
+            )
+            selected_strike_strs = {str(int(float(s))) for s in selected_strikes}
+
+            logger.info(
+                f"Selected strikes centered around ATM - "
+                f"atm_strike: {int(float(atm_strike))}, "
+                f"spot_price: {float(spot_price) if spot_price else 'N/A'}, "
+                f"strikes: {[int(float(s)) for s in selected_strikes]}"
+            )
+
+            # Build symbols and mapping for selected strikes only
             symbols: list[str] = []
             symbol_mapping: dict[str, dict[str, str]] = {}
-
-            # Group by strike and limit to strike_count
-            seen_strikes: set[str] = set()
 
             for row in expiry_rows:
                 strike_price = row.get("strike_price")
@@ -84,11 +181,11 @@ class OptionSymbolGenerator:
 
                 strike_str = str(int(float(strike_price)))
 
-                # Limit to strike_count unique strikes
-                if strike_str not in seen_strikes:
-                    if len(seen_strikes) >= strike_count:
-                        continue
-                    seen_strikes.add(strike_str)
+                # Only include strikes in our selected set
+                if strike_str not in selected_strike_strs:
+                    continue
+
+                if strike_str not in symbol_mapping:
                     symbol_mapping[strike_str] = {}
 
                 # Add symbol to mapping

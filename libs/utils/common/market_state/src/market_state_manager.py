@@ -105,6 +105,9 @@ class MarketStateManager:
     ) -> None:
         """Update market data for a symbol.
 
+        Only updates fields that are not None. This preserves existing values
+        when WebSocket messages don't include all fields.
+
         Args:
             symbol: Option symbol
             ltp: Last traded price
@@ -115,19 +118,26 @@ class MarketStateManager:
             ask: Ask price
         """
         try:
-            # Create or update symbol tick data
+            # Create or get symbol tick data
             if symbol not in self._symbol_state:
                 self._symbol_state[symbol] = TickData(symbol=symbol)
 
             tick_data = self._symbol_state[symbol]
-            tick_data.ltp = Decimal(str(ltp)) if ltp is not None else None
-            tick_data.avg_price = (
-                Decimal(str(avg_price)) if avg_price is not None else None
-            )
-            tick_data.volume = volume
-            tick_data.oi = oi
-            tick_data.bid = Decimal(str(bid)) if bid is not None else None
-            tick_data.ask = Decimal(str(ask)) if ask is not None else None
+
+            # Only update fields that are not None (partial update)
+            if ltp is not None:
+                tick_data.ltp = Decimal(str(ltp))
+            if avg_price is not None:
+                tick_data.avg_price = Decimal(str(avg_price))
+            if volume is not None:
+                tick_data.volume = volume
+            if oi is not None:
+                tick_data.oi = oi
+            if bid is not None:
+                tick_data.bid = Decimal(str(bid))
+            if ask is not None:
+                tick_data.ask = Decimal(str(ask))
+
             tick_data.last_update = datetime.now(timezone.utc)
 
             # Update strike state if symbol has strike mapping
@@ -207,6 +217,79 @@ class MarketStateManager:
         self._symbol_to_strike.clear()
         self._expiry_date = None
         logger.info("Market state cleared")
+
+    def initialize_from_option_rows(
+        self,
+        option_rows: list[dict],
+        symbol_mapping: dict[str, dict[str, str]],
+    ) -> int:
+        """Initialize market state from parsed option chain rows.
+
+        This method populates initial data for all symbols from the REST API
+        option chain response. WebSocket updates will then merge with this data.
+
+        Args:
+            option_rows: List of parsed option rows from parse_option_rows()
+            symbol_mapping: Mapping of strike -> {CE: symbol, PE: symbol}
+
+        Returns:
+            int: Number of symbols initialized
+        """
+        initialized = 0
+
+        for row in option_rows:
+            trading_symbol = row.get("trading_symbol")
+            if not trading_symbol:
+                continue
+
+            # Get data from REST API response
+            ltp = row.get("ltp")
+            avg_price = row.get("avg_price")
+            volume = row.get("volume")
+            oi = row.get("open_interest")
+            bid_price = row.get("bid_price")
+            ask_price = row.get("ask_price")
+
+            # Initialize tick data if symbol exists in mapping
+            if trading_symbol not in self._symbol_state:
+                self._symbol_state[trading_symbol] = TickData(symbol=trading_symbol)
+
+            tick_data = self._symbol_state[trading_symbol]
+
+            # Set initial values (these will be updated by WebSocket)
+            if ltp is not None:
+                tick_data.ltp = Decimal(str(ltp))
+            if avg_price is not None:
+                tick_data.avg_price = Decimal(str(avg_price))
+            if volume is not None:
+                tick_data.volume = volume
+            if oi is not None:
+                tick_data.oi = oi
+            if bid_price is not None:
+                tick_data.bid = Decimal(str(bid_price))
+            if ask_price is not None:
+                tick_data.ask = Decimal(str(ask_price))
+
+            tick_data.last_update = datetime.now(timezone.utc)
+            initialized += 1
+
+            # Update strike state
+            strike_str = str(int(float(row.get("strike_price", 0))))
+            option_type = row.get("option_type")
+
+            if strike_str in self._strike_state:
+                if option_type == "CE":
+                    self._strike_state[strike_str].ce_data = tick_data
+                elif option_type == "PE":
+                    self._strike_state[strike_str].pe_data = tick_data
+
+        logger.info(
+            f"Initialized market state from option chain - "
+            f"symbols: {initialized}, "
+            f"strikes: {len(self._strike_state)}"
+        )
+
+        return initialized
 
     def get_state_summary(self) -> dict:
         """Get summary of current state."""

@@ -12,6 +12,10 @@ from apps.ingestion.platform.modules.symbol_refresh.src.scheduler import (
     SymbolRefreshManager,
     get_symbol_refresh_scheduler,
 )
+from libs.platform.modules.option_chain_snapshot.src import (
+    parse_expiry_candidates,
+    parse_option_rows,
+)
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.events.src import EventDispatcher
 from libs.utils.common.fyers_client.src import FyersClientService
@@ -20,10 +24,14 @@ from libs.utils.common.option_symbols.src import build_symbol_to_strike_mapping
 from libs.utils.common.websocket.src.broadcaster import get_broadcaster
 from libs.utils.config.src.fyers import (
     LIVE_DATA_WEBSOCKET_BROADCAST_INTERVAL_MS,
+    SNAPSHOT_STRIKE_COUNT,
 )
 from libs.utils.db.postgres.operations.src import (
     InstrumentOperations,
     ScriptOperations,
+)
+from libs.utils.db.postgres.operations.src.option_chain_dashboard_operations import (
+    warmup_connection_pool,
 )
 from libs.utils.state.src import AppState
 
@@ -59,6 +67,9 @@ async def _initialize_app_state(app: FastAPI) -> AppState:
         INSTRUMENTS_FILE_PATH,
         SCRIPTS_FILE_PATH,
     )
+
+    # Warm up database connection pool to avoid cold start delays
+    await warmup_connection_pool()
 
     # Seed database with instruments
     seed_result = await InstrumentOperations.seed_missing_instruments_from_file(
@@ -172,6 +183,37 @@ async def start_ingestion(app: FastAPI, state: AppState) -> None:
             state.market_state.update_symbol_mapping(
                 symbol_to_strike, first_result.get("expiry_date")
             )
+
+            # Initialize market state with data from option chain REST API
+            # This ensures all symbols have initial data before WebSocket starts
+            try:
+                instruments = await InstrumentOperations.get_active_instruments()
+                for instrument in instruments:
+                    if not instrument.fyers_symbol:
+                        continue
+                    chain_data = await FyersClientService.fetch_option_chain(
+                        symbol=instrument.fyers_symbol,
+                        strike_count=SNAPSHOT_STRIKE_COUNT,
+                    )
+                    expiry_candidates = parse_expiry_candidates(chain_data)
+                    if expiry_candidates:
+                        all_rows = parse_option_rows(chain_data)
+                        expiry_rows = [
+                            row
+                            for row in all_rows
+                            if row["expiry_date"] == expiry_candidates[0]["expiry_date"]
+                        ]
+                        state.market_state.initialize_from_option_rows(
+                            expiry_rows,
+                            first_result.get("symbol_mapping", {}),
+                        )
+                        break  # Only need first instrument for initial data
+                logger.info("Market state initialized with option chain data")
+            except Exception as init_error:
+                logger.warning(
+                    f"Could not initialize market state from option chain - "
+                    f"error: {str(init_error)}"
+                )
 
     # Start market data WebSocket
     await state.market_data_manager.start(access_token, all_symbols)

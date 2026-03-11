@@ -56,8 +56,7 @@ class PostgresConnection:
             except Exception:
                 await session.rollback()
                 raise
-            finally:
-                await session.close()
+            # Note: session.close() is handled automatically by the async with context manager
 
         if context_available:
             try:

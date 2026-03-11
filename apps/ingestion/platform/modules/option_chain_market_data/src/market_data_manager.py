@@ -200,7 +200,31 @@ class OptionChainMarketDataManager:
         """
         self._is_connected = False
         self._reconnect_manager.on_connect_failure()
-        logger.error(f"WebSocket error - error: {str(error)}")
+
+        error_str = str(error).lower()
+
+        # Check for authentication/token errors
+        if any(
+            kw in error_str
+            for kw in ["token", "auth", "unauthorized", "401", "403", "expired"]
+        ):
+            logger.error(f"WebSocket authentication error - error: {str(error)}")
+
+            # Dispatch event to notify token watcher for reconnection
+            if self._event_dispatcher and self._loop:
+                from libs.utils.common.events.src import Event
+
+                asyncio.run_coroutine_threadsafe(
+                    self._event_dispatcher.dispatch_async(
+                        Event(
+                            event_type="WEBSOCKET_AUTH_ERROR",
+                            data={"error": str(error)},
+                        )
+                    ),
+                    self._loop,
+                )
+        else:
+            logger.error(f"WebSocket error - error: {str(error)}")
 
     def _on_message(self, message: dict) -> None:
         """Handle WebSocket message (market tick). Called from WebSocket thread.

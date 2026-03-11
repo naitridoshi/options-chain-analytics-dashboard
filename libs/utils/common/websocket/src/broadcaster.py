@@ -3,6 +3,7 @@ import json
 from typing import TYPE_CHECKING
 
 from fastapi import WebSocket
+from starlette.websockets import WebSocketState
 
 from libs.utils.common.custom_logger.src import CustomLogger
 
@@ -27,6 +28,7 @@ class WebSocketBroadcaster:
         self._broadcast_task: asyncio.Task | None = None
         self._is_running = False
         self._broadcast_interval_ms: int = 1000
+        self._lock = asyncio.Lock()
 
     async def start(
         self,
@@ -68,12 +70,13 @@ class WebSocketBroadcaster:
             self._broadcast_task = None
 
         # Close all connections
-        for connection in self._connections:
-            try:
-                await connection.close()
-            except Exception:
-                pass
-        self._connections.clear()
+        async with self._lock:
+            for connection in self._connections:
+                try:
+                    await connection.close()
+                except Exception:
+                    pass
+            self._connections.clear()
 
         logger.info("WebSocket broadcaster stopped")
 
@@ -84,7 +87,8 @@ class WebSocketBroadcaster:
             websocket: WebSocket connection to add
         """
         await websocket.accept()
-        self._connections.append(websocket)
+        async with self._lock:
+            self._connections.append(websocket)
         logger.info(f"WebSocket client connected - total: {len(self._connections)}")
 
         # Send initial state immediately
@@ -95,17 +99,16 @@ class WebSocketBroadcaster:
             except Exception as error:
                 logger.error(f"Failed to send initial data - error: {str(error)}")
 
-    def disconnect(self, websocket: WebSocket) -> None:
+    async def disconnect(self, websocket: WebSocket) -> None:
         """Remove a WebSocket connection.
 
         Args:
             websocket: WebSocket connection to remove
         """
-        if websocket in self._connections:
-            self._connections.remove(websocket)
-            logger.info(
-                f"WebSocket client disconnected - total: {len(self._connections)}"
-            )
+        async with self._lock:
+            if websocket in self._connections:
+                self._connections.remove(websocket)
+        logger.info(f"WebSocket client disconnected - total: {len(self._connections)}")
 
     def _get_market_data(self) -> dict:
         """Get current market data for broadcast.
@@ -133,6 +136,46 @@ class WebSocketBroadcaster:
             },
         }
 
+    def _is_connection_valid(self, websocket: WebSocket) -> bool:
+        """Check if WebSocket connection is still valid.
+
+        Args:
+            websocket: WebSocket connection to check
+
+        Returns:
+            bool: True if connection is valid, False otherwise
+        """
+        try:
+            return (
+                websocket.client_state == WebSocketState.CONNECTED
+                and websocket.application_state == WebSocketState.CONNECTED
+            )
+        except Exception:
+            return False
+
+    async def _safe_send(self, websocket: WebSocket, message: str) -> bool:
+        """Safely send a message to a WebSocket client.
+
+        Args:
+            websocket: WebSocket connection to send to
+            message: JSON message string to send
+
+        Returns:
+            bool: True if send was successful, False otherwise
+        """
+        try:
+            # Check connection state before sending
+            if not self._is_connection_valid(websocket):
+                return False
+
+            await websocket.send_text(message)
+            return True
+        except Exception:
+            # Any error means the connection is no longer valid
+            # This includes starlette_context errors when running in background tasks
+            # and normal disconnection errors - all should be treated the same way
+            return False
+
     async def _broadcast_loop(self) -> None:
         """Background task that broadcasts market data periodically."""
         while self._is_running:
@@ -141,20 +184,19 @@ class WebSocketBroadcaster:
                     data = self._get_market_data()
                     message = json.dumps(data)
 
-                    # Send to all connections
+                    # Send to all connections (copy list to avoid modification during iteration)
+                    async with self._lock:
+                        connections_snapshot = list(self._connections)
+
                     disconnected = []
-                    for connection in self._connections:
-                        try:
-                            await connection.send_text(message)
-                        except Exception as error:
-                            logger.debug(
-                                f"Failed to send to client - error: {str(error)}"
-                            )
+                    for connection in connections_snapshot:
+                        success = await self._safe_send(connection, message)
+                        if not success:
                             disconnected.append(connection)
 
                     # Remove disconnected clients
                     for conn in disconnected:
-                        self.disconnect(conn)
+                        await self.disconnect(conn)
 
                 await asyncio.sleep(self._broadcast_interval_ms / 1000)
 
