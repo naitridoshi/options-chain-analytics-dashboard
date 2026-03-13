@@ -10,6 +10,10 @@ from libs.utils.common.date_time.src import (
     get_execution_time_in_readable_format,
 )
 from libs.utils.common.fyers_client.src import FyersClientService
+from libs.utils.common.runtime_store.src import (
+    RuntimeStoreHealthService,
+    RuntimeWebSocketTicketService,
+)
 from libs.utils.config.src.fastapi import FASTAPI_APP_ENVIRONMENT
 
 log = CustomLogger("BackendCoreRoute")
@@ -28,14 +32,16 @@ def redirect_to_health():
 
 
 @core_route.get("/health")
-def root():
+async def root():
     logger.info("Backend app health endpoint accessed")
+    runtime_store_status = await RuntimeStoreHealthService.get_status()
     return JSONResponse(
         status_code=200,
         content={
             "success": True,
             "environment": FASTAPI_APP_ENVIRONMENT,
             "uptime": get_execution_time_in_readable_format(start_time=start_time),
+            "runtime_store": runtime_store_status,
         },
     )
 
@@ -50,6 +56,33 @@ def fyers_login(_: bool = Depends(verify_basic_auth)):
 async def fyers_token_status(_: bool = Depends(verify_basic_auth)):
     data = await FyersClientService.get_today_token_status()
     return JSONResponse(status_code=200, content={"success": True, "data": data})
+
+
+@core_route.get("/api/v1/runtime-store/status")
+async def runtime_store_status(_: bool = Depends(verify_basic_auth)):
+    data = await RuntimeStoreHealthService.get_status()
+    return JSONResponse(status_code=200, content={"success": True, "data": data})
+
+
+@core_route.post("/api/v1/market-data/ws-ticket")
+async def issue_market_data_ws_ticket(
+    symbol: str | None = Query(default=None),
+    _: bool = Depends(verify_basic_auth),
+):
+    normalized_symbol = (symbol or "").strip().upper()
+    if not normalized_symbol:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "Missing symbol query parameter"},
+        )
+    ticket = await RuntimeWebSocketTicketService.create_ticket(
+        subject="dashboard",
+        symbol=normalized_symbol,
+    )
+    return JSONResponse(
+        status_code=200,
+        content={"success": True, "data": {"ticket": ticket}},
+    )
 
 
 @core_route.get("/callback")

@@ -10,6 +10,7 @@ from libs.platform.modules.option_chain_snapshot.src import (
 )
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src import FyersClientService
+from libs.utils.common.runtime_store.src import RuntimeSnapshotService
 from libs.utils.config.src.fyers import (
     SNAPSHOT_EXPIRY_COUNT,
     SNAPSHOT_MAX_RETRIES,
@@ -159,6 +160,13 @@ class OptionChainSnapshotService:
                     strike_rows=expiry_rows,
                 )
             )
+            if index == 0:
+                await RuntimeSnapshotService.save_intraday_snapshot(
+                    instrument=instrument,
+                    captured_at=captured_at,
+                    spot_price=spot_price,
+                    strike_rows=expiry_rows,
+                )
             snapshots_created += 1
             strikes_inserted += snapshot_result["strikes_inserted"]
 

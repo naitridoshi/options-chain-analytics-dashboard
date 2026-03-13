@@ -1,0 +1,217 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
+from zoneinfo import ZoneInfo
+
+from libs.platform.modules.option_chain_snapshot.src import (
+    normalize_interval_boundary,
+)
+from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS
+from libs.utils.db.postgres.operations.src.option_snapshot_operations import (
+    OptionSnapshotOperations,
+)
+from libs.utils.db.redis.src import RedisOptionChainSnapshotStore
+
+IST = ZoneInfo("Asia/Kolkata")
+
+
+@dataclass
+class RuntimeSnapshotPayload:
+    instrument: dict
+    market_date: str
+    refresh_seconds: int
+    latest: dict
+    strikes: list[dict]
+
+    def to_dict(self) -> dict:
+        return {
+            "instrument": self.instrument,
+            "market_date": self.market_date,
+            "refresh_seconds": self.refresh_seconds,
+            "latest": self.latest,
+            "strikes": self.strikes,
+        }
+
+
+class RuntimeSnapshotService:
+    @staticmethod
+    async def save_intraday_snapshot(
+        *,
+        instrument,
+        captured_at: datetime,
+        spot_price: Decimal,
+        strike_rows: list[dict],
+    ) -> None:
+        payload = RuntimeSnapshotService.build_runtime_payload(
+            instrument=instrument,
+            captured_at=captured_at,
+            spot_price=spot_price,
+            strike_rows=strike_rows,
+        )
+        await RedisOptionChainSnapshotStore.save_intraday_snapshot(
+            instrument_symbol=instrument.symbol,
+            trade_date=payload.market_date,
+            interval_ts=payload.latest["captured_at"],
+            payload=payload.to_dict(),
+        )
+
+    @staticmethod
+    async def save_previous_day_final_snapshot(
+        *,
+        instrument,
+        captured_at: datetime,
+        spot_price: Decimal,
+        strike_rows: list[dict],
+    ) -> None:
+        payload = RuntimeSnapshotService.build_runtime_payload(
+            instrument=instrument,
+            captured_at=captured_at,
+            spot_price=spot_price,
+            strike_rows=strike_rows,
+        )
+        await RedisOptionChainSnapshotStore.save_previous_day_final_snapshot(
+            instrument_symbol=instrument.symbol,
+            payload=payload.to_dict(),
+        )
+
+    @staticmethod
+    def build_runtime_payload(
+        *,
+        instrument,
+        captured_at: datetime,
+        spot_price: Decimal,
+        strike_rows: list[dict],
+    ) -> RuntimeSnapshotPayload:
+        interval_summary_values, strike_summary_values = (
+            OptionSnapshotOperations._build_summary_payloads(strike_rows)
+        )
+        latest = {
+            "captured_at": captured_at.isoformat(),
+            "spot_price": _as_number(spot_price),
+            "call_oi_change_sum": interval_summary_values["call_oi_change_sum"],
+            "put_oi_change_sum": interval_summary_values["put_oi_change_sum"],
+            "net_oi_change_sum": interval_summary_values["net_oi_change_sum"],
+            "call_oi_sum": interval_summary_values["call_oi_sum"],
+            "put_oi_sum": interval_summary_values["put_oi_sum"],
+            "net_oi_sum": interval_summary_values["net_oi_sum"],
+            "pcr_oi": _as_number(interval_summary_values["pcr_oi"]),
+            "pcr_oi_change": _as_number(interval_summary_values["pcr_oi_change"]),
+            "call_oi_share_pct": _as_number(
+                interval_summary_values["call_oi_share_pct"]
+            ),
+            "put_oi_share_pct": _as_number(interval_summary_values["put_oi_share_pct"]),
+            "call_oi_change_share_pct": _as_number(
+                interval_summary_values["call_oi_change_share_pct"]
+            ),
+            "put_oi_change_share_pct": _as_number(
+                interval_summary_values["put_oi_change_share_pct"]
+            ),
+            "coi_pcr_window": _compute_window_pcr(strike_summary_values, spot_price, 6),
+            "atm_pcr": _compute_atm_pcr(strike_summary_values, spot_price),
+            "strength_pcr": _compute_strength_pcr(strike_summary_values, spot_price),
+        }
+        strikes = [
+            {
+                "strike_price": _as_number(item["strike_price"]),
+                "call_oi_change": item["call_oi_change"],
+                "put_oi_change": item["put_oi_change"],
+                "net_oi_change": item["net_oi_change"],
+                "call_oi": item["call_oi"],
+                "put_oi": item["put_oi"],
+                "net_oi": item["net_oi"],
+                "call_volume": item["call_volume"],
+                "put_volume": item["put_volume"],
+                "call_ltp": _as_number(item["call_ltp"]),
+                "call_ltp_change": _as_number(item["call_ltp_change"]),
+                "put_ltp": _as_number(item["put_ltp"]),
+                "put_ltp_change": _as_number(item["put_ltp_change"]),
+            }
+            for item in strike_summary_values
+        ]
+        normalized = normalize_interval_boundary(captured_at)
+        market_date = normalized.astimezone(IST).date().isoformat()
+
+        return RuntimeSnapshotPayload(
+            instrument={
+                "id": str(instrument.id),
+                "symbol": instrument.symbol,
+                "name": getattr(instrument, "name", None) or instrument.symbol,
+                "exchange": getattr(instrument, "exchange", None),
+                "instrument_type": getattr(instrument, "instrument_type", None),
+                "fyers_symbol": instrument.fyers_symbol,
+            },
+            market_date=market_date,
+            refresh_seconds=SNAPSHOT_INTERVAL_SECONDS,
+            latest=latest,
+            strikes=strikes,
+        )
+
+
+def _as_number(value):
+    if value is None:
+        return None
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
+
+
+def _pcr(put_total: int, call_total: int):
+    if call_total == 0:
+        if put_total == 0:
+            return None
+        return "INF" if put_total > 0 else "-INF"
+    return put_total / call_total
+
+
+def _closest_atm_index(rows: list[dict], spot_price: Decimal) -> int | None:
+    if not rows:
+        return None
+    spot = float(spot_price)
+    return min(
+        range(len(rows)),
+        key=lambda idx: abs(float(rows[idx]["strike_price"]) - spot),
+    )
+
+
+def _sum_range(rows: list[dict], start_idx: int, end_idx: int, field_name: str) -> int:
+    start = max(0, start_idx)
+    end = min(len(rows) - 1, end_idx)
+    if start > end:
+        return 0
+    total = 0
+    for idx in range(start, end + 1):
+        total += int(rows[idx].get(field_name) or 0)
+    return total
+
+
+def _compute_window_pcr(rows: list[dict], spot_price: Decimal, window: int):
+    atm_index = _closest_atm_index(rows, spot_price)
+    if atm_index is None:
+        return None
+    call_total = _sum_range(
+        rows, atm_index - window, atm_index + window, "call_oi_change"
+    )
+    put_total = _sum_range(
+        rows, atm_index - window, atm_index + window, "put_oi_change"
+    )
+    return _pcr(put_total, call_total)
+
+
+def _compute_atm_pcr(rows: list[dict], spot_price: Decimal):
+    atm_index = _closest_atm_index(rows, spot_price)
+    if atm_index is None:
+        return None
+    call_total = _sum_range(rows, atm_index - 1, atm_index, "call_oi_change")
+    put_total = _sum_range(rows, atm_index, atm_index + 1, "put_oi_change")
+    return _pcr(put_total, call_total)
+
+
+def _compute_strength_pcr(rows: list[dict], spot_price: Decimal):
+    atm_index = _closest_atm_index(rows, spot_price)
+    if atm_index is None:
+        return None
+    call_total = _sum_range(rows, atm_index - 4, atm_index, "call_oi_change")
+    put_total = _sum_range(rows, atm_index, atm_index + 4, "put_oi_change")
+    return _pcr(put_total, call_total)
