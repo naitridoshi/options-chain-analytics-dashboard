@@ -3,24 +3,33 @@ from __future__ import annotations
 import argparse
 import asyncio
 import math
+import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, desc, select
 
-from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS
-from libs.utils.db.postgres.models.src.instrument import Instrument
-from libs.utils.db.postgres.models.src.option_chain_interval_summary import (
+BASE_DIR = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, BASE_DIR)
+
+from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS  # noqa: E402
+from libs.utils.db.postgres.models.src.instrument import (  # noqa: E402
+    Instrument,
+)
+from libs.utils.db.postgres.models.src.option_chain_interval_summary import (  # noqa: E402
     OptionChainIntervalSummary,
 )
-from libs.utils.db.postgres.models.src.option_chain_strike_summary import (
+from libs.utils.db.postgres.models.src.option_chain_strike_summary import (  # noqa: E402
     OptionChainStrikeSummary,
 )
-from libs.utils.db.postgres.src.connection import postgres_connection
-from libs.utils.db.redis.src import (
+from libs.utils.db.postgres.src.connection import (  # noqa: E402
+    postgres_connection,
+)
+from libs.utils.db.redis.src import (  # noqa: E402
     RedisLiveMarketStore,
     RedisOptionChainSnapshotStore,
     previous_day_final_snapshot_key,
