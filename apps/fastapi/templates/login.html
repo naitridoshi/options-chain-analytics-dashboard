@@ -158,6 +158,33 @@
       return true;
     }
 
+    async function readJsonResponse(response) {
+      const contentType = (response.headers.get("content-type") || "").toLowerCase();
+      const rawText = await response.text();
+
+      if (!rawText.trim() || !contentType.includes("application/json")) {
+        return {
+          ok: false,
+          status: response.status,
+          body: null,
+        };
+      }
+
+      try {
+        return {
+          ok: true,
+          status: response.status,
+          body: JSON.parse(rawText),
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          status: response.status,
+          body: null,
+        };
+      }
+    }
+
     async function refreshStatus() {
       const statusEl = document.getElementById("tokenStatus");
       if (applyCallbackErrorState()) {
@@ -166,7 +193,16 @@
 
       try {
         const resp = await fetch("/api/v1/fyers/status", { credentials: "include" });
-        const body = await resp.json();
+        const payload = await readJsonResponse(resp);
+        if (!payload.ok) {
+          statusEl.className = "status warn";
+          statusEl.textContent = payload.status === 401
+            ? "Authentication required. Reload the page and sign in again."
+            : "Unable to fetch FYERS status.";
+          return;
+        }
+
+        const body = payload.body || {};
         const data = body.data || {};
         if (resp.ok && data.has_token) {
           statusEl.className = "status ok";
