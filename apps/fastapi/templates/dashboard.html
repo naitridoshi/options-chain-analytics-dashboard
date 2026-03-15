@@ -452,6 +452,11 @@
     let refreshMs = 5 * 60 * 1000;
     let hasRendered = false;
 
+    function scheduleReload(delayMs = refreshMs) {
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(load, delayMs);
+    }
+
     function fmt(v) {
       if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
       return Number(v).toLocaleString();
@@ -523,11 +528,79 @@
       });
     }
 
+    async function readJsonResponse(response) {
+      const contentType = (response.headers.get("content-type") || "").toLowerCase();
+      const rawText = await response.text();
+
+      if (!rawText.trim()) {
+        return {
+          ok: false,
+          status: response.status,
+          error: "empty_body",
+          body: null,
+        };
+      }
+
+      if (!contentType.includes("application/json")) {
+        return {
+          ok: false,
+          status: response.status,
+          error: "non_json",
+          body: null,
+        };
+      }
+
+      try {
+        return {
+          ok: true,
+          status: response.status,
+          error: null,
+          body: JSON.parse(rawText),
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          status: response.status,
+          error: "invalid_json",
+          body: null,
+        };
+      }
+    }
+
+    function getApiErrorMessage(result, fallbackMessage) {
+      if (result.status === 401) {
+        return "Authentication required. Reload the page and sign in again.";
+      }
+
+      if (result.error === "empty_body") {
+        return "API returned an empty response. Retrying automatically.";
+      }
+
+      if (result.error === "non_json") {
+        return "API returned a non-JSON response. Reload the page and try again.";
+      }
+
+      if (result.error === "invalid_json") {
+        return "API returned malformed JSON. Retrying automatically.";
+      }
+
+      return fallbackMessage;
+    }
+
     async function refreshFyersStatus() {
       const statusEl = document.getElementById("fyersStatusBadge");
       try {
         const statusRes = await fetch("/api/v1/fyers/status", { credentials: "include" });
-        const statusBody = await statusRes.json();
+        const statusPayload = await readJsonResponse(statusRes);
+        if (!statusPayload.ok) {
+          statusEl.className = "fyers-badge warn";
+          statusEl.textContent = statusPayload.status === 401
+            ? "FYERS: AUTH REQUIRED"
+            : "FYERS: STATUS ERROR";
+          return;
+        }
+
+        const statusBody = statusPayload.body || {};
         const token = statusBody.data || {};
         if (statusRes.ok && token.has_token) {
           statusEl.className = "fyers-badge ok";
@@ -578,17 +651,30 @@
       refreshFyersStatus().catch(() => {});
 
       let res;
-      let body;
+      let payload;
       try {
         res = await fetch(`/api/v1/dashboard/data?symbol=${encodeURIComponent(symbol)}&timeline_limit=1`, { credentials: "include" });
-        body = await res.json();
+        payload = await readJsonResponse(res);
       } catch (e) {
-        showDataStatus("Dashboard data request failed. Check API logs.");
+        showDataStatus("Dashboard data request failed. Retrying automatically.");
+        scheduleReload(10000);
         return;
       }
 
+      if (!payload.ok) {
+        showDataStatus(getApiErrorMessage(payload, `Dashboard API failed with HTTP ${res.status}`));
+        if (payload.status !== 401) {
+          scheduleReload(10000);
+        }
+        return;
+      }
+
+      const body = payload.body || {};
       if (!res.ok || !body.success) {
-        showDataStatus(`Dashboard API failed with HTTP ${res.status}`);
+        showDataStatus(body.message || `Dashboard API failed with HTTP ${res.status}`);
+        if (res.status !== 401) {
+          scheduleReload(10000);
+        }
         return;
       }
       document.getElementById("dataStatus").style.display = "none";
@@ -742,8 +828,7 @@
       document.getElementById("footOiPcr").textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
       document.getElementById("footCoiPcr").textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
 
-      if (timerId) clearTimeout(timerId);
-      timerId = setTimeout(load, refreshMs);
+      scheduleReload(refreshMs);
     }
 
     load();
