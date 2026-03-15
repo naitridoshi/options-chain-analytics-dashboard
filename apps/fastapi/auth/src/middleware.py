@@ -28,8 +28,12 @@ listener.start()
 async def logging_iterator(response, iterator, class_name: str, start_time: datetime):
     response_body = dict()
     async for chunk in iterator:
-        if loads(chunk.decode("utf-8")).get("is_final"):
-            response_body = loads(chunk.decode("utf-8"))
+        try:
+            payload = loads(chunk.decode("utf-8"))
+            if isinstance(payload, dict) and payload.get("is_final"):
+                response_body = payload
+        except (JSONDecodeError, UnicodeDecodeError, TypeError):
+            pass
         yield chunk
     extra = extra_details_for_req(
         inspect,
@@ -82,16 +86,21 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 )
 
             else:
-                chunks = [chunk async for chunk in response.body_iterator]
-                response.body_iterator = iterate_in_threadpool(iter(chunks))
+                body_iterator = getattr(response, "body_iterator", None)
 
                 # Safely decode for logging (don’t assume there is a chunk)
                 body_text = ""
-                if chunks:
-                    try:
-                        body_text = b"".join(chunks).decode("utf-8", errors="replace")
-                    except Exception:
-                        body_text = "<unable to decode response body>"
+                if body_iterator is not None:
+                    chunks = [chunk async for chunk in body_iterator]
+                    response.body_iterator = iterate_in_threadpool(iter(chunks))
+
+                    if chunks:
+                        try:
+                            body_text = b"".join(chunks).decode(
+                                "utf-8", errors="replace"
+                            )
+                        except Exception:
+                            body_text = "<unable to decode response body>"
 
                 extra = extra_details_for_req(
                     inspect,
