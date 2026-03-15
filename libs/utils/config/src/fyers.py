@@ -5,8 +5,6 @@ FYERS_CLIENT_ID = config["FYERS_CLIENT_ID"]
 FYERS_APP_ID = config["FYERS_APP_ID"]
 FYERS_SECRET_KEY = config["FYERS_SECRET_KEY"]
 FYERS_REDIRECT_URI = config["FYERS_REDIRECT_URI"]
-FYERS_TOTP_KEY = config["FYERS_TOTP_KEY"]
-FYERS_PIN = config["FYERS_PIN"]
 FYERS_LOG_PATH = config.get("FYERS_LOG_PATH", "logs/fyers")
 
 # Snapshot engine configuration

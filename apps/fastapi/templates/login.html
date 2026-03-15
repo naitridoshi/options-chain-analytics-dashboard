@@ -140,8 +140,30 @@
   </div>
 
   <script>
+    function applyCallbackErrorState() {
+      const statusEl = document.getElementById("tokenStatus");
+      const error = new URLSearchParams(window.location.search).get("error");
+
+      if (!error) {
+        return false;
+      }
+
+      statusEl.className = "status warn";
+      if (error === "missing_auth_code") {
+        statusEl.textContent = "FYERS callback did not return an auth code. Try login again.";
+        return true;
+      }
+
+      statusEl.textContent = "FYERS login failed. Try login again.";
+      return true;
+    }
+
     async function refreshStatus() {
       const statusEl = document.getElementById("tokenStatus");
+      if (applyCallbackErrorState()) {
+        return;
+      }
+
       try {
         const resp = await fetch("/api/v1/fyers/status", { credentials: "include" });
         const body = await resp.json();

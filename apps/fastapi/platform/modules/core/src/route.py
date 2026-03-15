@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
@@ -59,19 +61,18 @@ async def fyers_callback(
 ):
     resolved_auth_code = auth_code or code
     if not resolved_auth_code:
-        return JSONResponse(
-            status_code=400,
-            content={
-                "success": False,
-                "message": "Missing auth_code/code in callback query params.",
-            },
+        return RedirectResponse(
+            url=f"/login?{urlencode({'error': 'missing_auth_code'})}",
+            status_code=303,
         )
 
-    await FyersClientService.exchange_auth_code_and_store(resolved_auth_code)
-    return JSONResponse(
-        status_code=200,
-        content={
-            "success": True,
-            "message": "FYERS token stored successfully for today.",
-        },
-    )
+    try:
+        await FyersClientService.exchange_auth_code_and_store(resolved_auth_code)
+    except Exception as error:
+        logger.error(f"FYERS callback failed: {error}")
+        return RedirectResponse(
+            url=f"/login?{urlencode({'error': 'login_failed'})}",
+            status_code=303,
+        )
+
+    return RedirectResponse(url="/dashboard", status_code=303)
