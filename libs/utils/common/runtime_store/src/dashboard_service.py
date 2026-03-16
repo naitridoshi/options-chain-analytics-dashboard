@@ -37,11 +37,15 @@ class RuntimeDashboardService:
                 instrument.symbol
             )
         )
+        live_underlying = await RedisLiveMarketStore.get_live_underlying(
+            instrument.symbol
+        )
         if not latest_snapshot:
             return cls._build_empty_payload(
                 instrument=instrument,
                 trade_date=trade_date,
                 previous_day_final=previous_day_final,
+                live_underlying=live_underlying,
             )
 
         timeline_snapshots = await RedisOptionChainSnapshotStore.get_timeline(
@@ -80,6 +84,19 @@ class RuntimeDashboardService:
                 else:
                     latest_payload["change_pct_from_prev_close"] = None
 
+        if live_underlying and latest_payload:
+            latest_payload["spot_price"] = live_underlying.get(
+                "spot_price", latest_payload.get("spot_price")
+            )
+            if live_underlying.get("change_from_prev_close") is not None:
+                latest_payload["change_from_prev_close"] = live_underlying.get(
+                    "change_from_prev_close"
+                )
+            if live_underlying.get("change_pct_from_prev_close") is not None:
+                latest_payload["change_pct_from_prev_close"] = live_underlying.get(
+                    "change_pct_from_prev_close"
+                )
+
         strikes = await cls._merge_live_market_fields(
             latest_snapshot.get("strikes", []),
         )
@@ -113,10 +130,40 @@ class RuntimeDashboardService:
         instrument=None,
         trade_date: str | None = None,
         previous_day_final: dict | None = None,
+        live_underlying: dict | None = None,
     ) -> dict:
         resolved_instrument = instrument
         if resolved_instrument is None and symbol:
             resolved_instrument = InstrumentCatalogService.get_by_symbol(symbol.upper())
+
+        latest = None
+        if previous_day_final or live_underlying:
+            previous_latest = (previous_day_final or {}).get("latest") or {}
+            latest = {
+                "captured_at": None,
+                "spot_price": previous_latest.get("spot_price"),
+                "prev_close_spot": previous_latest.get("spot_price"),
+                "prev_close_captured_at": previous_latest.get("captured_at"),
+                "prev_close_selection": (previous_day_final or {}).get(
+                    "selection", "latest_previous_market_day"
+                ),
+                "change_from_prev_close": None,
+                "change_pct_from_prev_close": None,
+            }
+            if live_underlying:
+                latest["spot_price"] = live_underlying.get(
+                    "spot_price", latest["spot_price"]
+                )
+                if live_underlying.get("prev_close_spot") is not None:
+                    latest["prev_close_spot"] = live_underlying.get("prev_close_spot")
+                if live_underlying.get("change_from_prev_close") is not None:
+                    latest["change_from_prev_close"] = live_underlying.get(
+                        "change_from_prev_close"
+                    )
+                if live_underlying.get("change_pct_from_prev_close") is not None:
+                    latest["change_pct_from_prev_close"] = live_underlying.get(
+                        "change_pct_from_prev_close"
+                    )
 
         payload = {
             "instrument": cls._serialize_instrument(resolved_instrument)
@@ -125,7 +172,7 @@ class RuntimeDashboardService:
             "market_date": trade_date or datetime.now(IST).date().isoformat(),
             "refresh_seconds": SNAPSHOT_INTERVAL_SECONDS,
             "timeline": [],
-            "latest": None,
+            "latest": latest,
             "strikes": [],
             "source": "redis",
         }

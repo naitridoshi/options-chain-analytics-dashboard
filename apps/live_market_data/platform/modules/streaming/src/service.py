@@ -4,6 +4,7 @@ import asyncio
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from fyers_apiv3.FyersWebsocket import data_ws
 
@@ -21,7 +22,10 @@ from libs.utils.config.src.fyers import (
     LIVE_DATA_SYMBOL_REFRESH_INTERVAL_SECONDS,
     SNAPSHOT_STRIKE_COUNT,
 )
-from libs.utils.db.redis.src import RedisLiveMarketStore
+from libs.utils.db.redis.src import (
+    RedisLiveMarketStore,
+    RedisOptionChainSnapshotStore,
+)
 
 log = CustomLogger("LiveMarketStreamingService")
 logger, listener = log.get_logger()
@@ -36,6 +40,13 @@ class SubscribedOption:
     trading_symbol: str
 
 
+@dataclass
+class UnderlyingSubscription:
+    instrument_symbol: str
+    symbol: str
+    prev_close_spot: float | None
+
+
 class LiveMarketStreamingService:
     def __init__(self) -> None:
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -44,6 +55,7 @@ class LiveMarketStreamingService:
         self._ws_client: data_ws.FyersDataSocket | None = None
         self._ws_thread: threading.Thread | None = None
         self._subscription_map: dict[str, SubscribedOption] = {}
+        self._underlying_map: dict[str, UnderlyingSubscription] = {}
         self._current_symbols: list[str] = []
         self._is_connected = False
         self._last_tick_at: str | None = None
@@ -97,6 +109,7 @@ class LiveMarketStreamingService:
     async def _refresh_subscriptions(self, *, force_restart: bool) -> None:
         instruments = InstrumentCatalogService.get_active_instruments()
         subscription_map: dict[str, SubscribedOption] = {}
+        underlying_map: dict[str, UnderlyingSubscription] = {}
         all_symbols: list[str] = []
 
         for instrument in instruments:
@@ -109,6 +122,13 @@ class LiveMarketStreamingService:
             expiry_candidates = parse_expiry_candidates(chain_data)
             if not expiry_candidates:
                 continue
+            prev_close_spot = await self._get_previous_close_spot(instrument.symbol)
+            underlying_map[instrument.fyers_symbol] = UnderlyingSubscription(
+                instrument_symbol=instrument.symbol,
+                symbol=instrument.fyers_symbol,
+                prev_close_spot=prev_close_spot,
+            )
+            all_symbols.append(instrument.fyers_symbol)
             nearest_expiry = expiry_candidates[0]["expiry_date"]
             rows = [
                 row
@@ -133,6 +153,7 @@ class LiveMarketStreamingService:
         all_symbols = sorted(set(all_symbols))
         symbols_changed = all_symbols != self._current_symbols
         self._subscription_map = subscription_map
+        self._underlying_map = underlying_map
 
         if not all_symbols:
             logger.warning("No symbols available for live websocket subscription")
@@ -220,6 +241,26 @@ class LiveMarketStreamingService:
         if not symbol or not self._loop:
             return
 
+        underlying_subscription = self._underlying_map.get(symbol)
+        if underlying_subscription:
+            payload = _build_underlying_payload(
+                instrument_symbol=underlying_subscription.instrument_symbol,
+                symbol=underlying_subscription.symbol,
+                spot_price=message.get("ltp"),
+                prev_close_spot=underlying_subscription.prev_close_spot,
+                stale_after_seconds=LIVE_DATA_SUBSCRIPTION_STALE_AFTER_SECONDS,
+            )
+            self._last_tick_at = payload["last_update"]
+            future = asyncio.run_coroutine_threadsafe(
+                RedisLiveMarketStore.write_live_underlying(
+                    instrument_symbol=underlying_subscription.instrument_symbol,
+                    payload=payload,
+                ),
+                self._loop,
+            )
+            future.add_done_callback(_log_future_error)
+            return
+
         subscribed_option = self._subscription_map.get(symbol)
         if not subscribed_option:
             return
@@ -246,6 +287,20 @@ class LiveMarketStreamingService:
         )
         future.add_done_callback(_log_future_error)
 
+    async def _get_previous_close_spot(self, instrument_symbol: str) -> float | None:
+        previous_day_final = (
+            await RedisOptionChainSnapshotStore.get_previous_day_final_snapshot(
+                instrument_symbol
+            )
+        )
+        if not previous_day_final:
+            return None
+        latest = previous_day_final.get("latest") or {}
+        spot_price = latest.get("spot_price")
+        if spot_price is None:
+            return None
+        return float(spot_price)
+
 
 def _log_future_error(future) -> None:
     try:
@@ -271,3 +326,45 @@ def _is_fyers_auth_error(error: Exception) -> bool:
 
 def _is_missing_daily_token_error(error: Exception) -> bool:
     return "fyers token for today is missing" in str(error).lower()
+
+
+def _build_underlying_payload(
+    *,
+    instrument_symbol: str,
+    symbol: str,
+    spot_price,
+    prev_close_spot: float | None,
+    stale_after_seconds: int,
+) -> dict:
+    normalized_spot_price = _as_float(spot_price)
+    change_from_prev_close = None
+    change_pct_from_prev_close = None
+    if normalized_spot_price is not None and prev_close_spot is not None:
+        change_from_prev_close = normalized_spot_price - prev_close_spot
+        if prev_close_spot != 0:
+            change_pct_from_prev_close = (
+                change_from_prev_close / prev_close_spot
+            ) * 100
+
+    return {
+        "message_type": "underlying_spot_update",
+        "instrument_symbol": instrument_symbol,
+        "symbol": symbol,
+        "spot_price": normalized_spot_price,
+        "prev_close_spot": prev_close_spot,
+        "change_from_prev_close": change_from_prev_close,
+        "change_pct_from_prev_close": change_pct_from_prev_close,
+        "last_update": datetime.now(timezone.utc).isoformat(),
+        "stale_after_seconds": stale_after_seconds,
+    }
+
+
+def _as_float(value) -> float | None:
+    if value is None:
+        return None
+    try:
+        if isinstance(value, Decimal):
+            return float(value)
+        return float(value)
+    except (TypeError, ValueError):
+        return None

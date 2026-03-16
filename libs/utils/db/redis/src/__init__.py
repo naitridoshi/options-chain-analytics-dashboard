@@ -12,6 +12,7 @@ from libs.utils.db.redis.src.keys import (
     live_channel_key,
     live_market_lock_key,
     live_symbol_key,
+    live_underlying_key,
     previous_day_final_snapshot_key,
     websocket_ticket_key,
 )
@@ -50,6 +51,7 @@ __all__ = [
     "live_app_status_key",
     "live_market_lock_key",
     "live_symbol_key",
+    "live_underlying_key",
     "previous_day_final_snapshot_key",
     "websocket_ticket_key",
 ]

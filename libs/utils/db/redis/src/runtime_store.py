@@ -25,6 +25,7 @@ from libs.utils.db.redis.src.keys import (
     live_app_status_key,
     live_channel_key,
     live_symbol_key,
+    live_underlying_key,
     previous_day_final_snapshot_key,
     rollover_marker_key,
     websocket_ticket_key,
@@ -141,6 +142,27 @@ class RedisLiveMarketStore:
                 continue
             payloads[symbol] = json.loads(value)
         return payloads
+
+    @staticmethod
+    async def write_live_underlying(
+        *,
+        instrument_symbol: str,
+        payload: dict[str, Any],
+    ) -> None:
+        client = await redis_client_manager.get_client()
+        encoded = json.dumps(payload, separators=(",", ":"))
+        await client.set(
+            live_underlying_key(instrument_symbol),
+            encoded,
+            ex=REDIS_LIVE_DATA_TTL_SECONDS,
+        )
+        await client.publish(live_channel_key(instrument_symbol), encoded)
+
+    @staticmethod
+    async def get_live_underlying(instrument_symbol: str) -> dict[str, Any] | None:
+        client = await redis_client_manager.get_client()
+        payload = await client.get(live_underlying_key(instrument_symbol))
+        return json.loads(payload) if payload else None
 
 
 class RedisOptionChainSnapshotStore:
