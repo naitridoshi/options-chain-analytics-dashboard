@@ -997,15 +997,11 @@
         const putOi = row.put_oi ?? 0;
         const strikeKey = String(parseInt(row.strike_price, 10));
         const preservedLive = lastLiveByStrike[strikeKey] || {};
-        const callLiveLtp = row.call_live_ltp !== null && row.call_live_ltp !== undefined
-          ? fmt2(row.call_live_ltp)
-          : (preservedLive.call_ltp || "-");
+        const callLiveLtp = preservedLive.call_ltp || "-";
         const callLiveAvg = row.call_live_avg_price !== null && row.call_live_avg_price !== undefined
           ? fmt2(row.call_live_avg_price)
           : (preservedLive.call_avg || "-");
-        const putLiveLtp = row.put_live_ltp !== null && row.put_live_ltp !== undefined
-          ? fmt2(row.put_live_ltp)
-          : (preservedLive.put_ltp || "-");
+        const putLiveLtp = preservedLive.put_ltp || "-";
         const putLiveAvg = row.put_live_avg_price !== null && row.put_live_avg_price !== undefined
           ? fmt2(row.put_live_avg_price)
           : (preservedLive.put_avg || "-");

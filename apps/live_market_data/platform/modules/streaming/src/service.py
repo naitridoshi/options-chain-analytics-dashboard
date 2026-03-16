@@ -5,10 +5,12 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
+from time import monotonic
 
 from fyers_apiv3.FyersWebsocket import data_ws
 
 from libs.platform.modules.option_chain_snapshot.src import (
+    is_market_open_now,
     parse_expiry_candidates,
     parse_option_rows,
 )
@@ -48,6 +50,8 @@ class UnderlyingSubscription:
 
 
 class LiveMarketStreamingService:
+    _MARKET_STATE_POLL_SECONDS = 5
+
     def __init__(self) -> None:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._task: asyncio.Task | None = None
@@ -59,6 +63,15 @@ class LiveMarketStreamingService:
         self._current_symbols: list[str] = []
         self._is_connected = False
         self._last_tick_at: str | None = None
+        self._last_ws_error_log_at = 0.0
+        self._suppressed_ws_error_count = 0
+        self._last_redis_error_log_at = 0.0
+        self._suppressed_redis_error_count = 0
+        self._redis_failure_count = 0
+        self._redis_retry_after = 0.0
+        self._redis_degraded = False
+        self._next_symbol_refresh_at = 0.0
+        self._market_closed_logged = False
 
     async def start(self) -> None:
         if self._running:
@@ -66,10 +79,16 @@ class LiveMarketStreamingService:
         self._running = True
         self._loop = asyncio.get_running_loop()
         self._task = asyncio.create_task(self._subscription_refresh_loop())
-        try:
-            await self._refresh_subscriptions(force_restart=True)
-        except Exception as error:
-            await self._handle_refresh_error(error, during_startup=True)
+        if is_market_open_now():
+            try:
+                await self._refresh_subscriptions(force_restart=True)
+            except Exception as error:
+                await self._handle_refresh_error(error, during_startup=True)
+        else:
+            self._market_closed_logged = True
+            logger.info(
+                "Live market streaming startup skipped - market closed, waiting for market open"
+            )
         logger.info("Live market streaming service started")
 
     async def stop(self) -> None:
@@ -98,8 +117,25 @@ class LiveMarketStreamingService:
     async def _subscription_refresh_loop(self) -> None:
         while self._running:
             try:
-                await asyncio.sleep(LIVE_DATA_SYMBOL_REFRESH_INTERVAL_SECONDS)
-                await self._refresh_subscriptions(force_restart=False)
+                if not is_market_open_now():
+                    self._pause_socket(clear_symbols=True)
+                    if not self._market_closed_logged:
+                        logger.info(
+                            "Live market streaming paused - market closed, websocket disconnected"
+                        )
+                        self._market_closed_logged = True
+                    await asyncio.sleep(self._MARKET_STATE_POLL_SECONDS)
+                    continue
+
+                self._market_closed_logged = False
+                now = monotonic()
+                force_restart = self._ws_client is None or not self._current_symbols
+                if force_restart or now >= self._next_symbol_refresh_at:
+                    await self._refresh_subscriptions(force_restart=force_restart)
+                    self._next_symbol_refresh_at = (
+                        monotonic() + LIVE_DATA_SYMBOL_REFRESH_INTERVAL_SECONDS
+                    )
+                await asyncio.sleep(self._MARKET_STATE_POLL_SECONDS)
             except asyncio.CancelledError:
                 raise
             except Exception as error:
@@ -208,11 +244,13 @@ class LiveMarketStreamingService:
 
         logger.error(f"Live subscription refresh failed - error: {str(error)}")
 
-    def _pause_socket(self) -> None:
+    def _pause_socket(self, *, clear_symbols: bool = False) -> None:
         if self._ws_client:
             self._ws_client.keep_running = False
             self._ws_client = None
         self._is_connected = False
+        if clear_symbols:
+            self._current_symbols = []
 
     def _on_connect(self) -> None:
         self._is_connected = True
@@ -227,11 +265,25 @@ class LiveMarketStreamingService:
 
     def _on_close(self) -> None:
         self._is_connected = False
-        logger.warning("Live websocket disconnected")
+        _log_throttled(
+            level="warning",
+            message="Live websocket disconnected",
+            last_logged_at_attr="_last_ws_error_log_at",
+            suppressed_count_attr="_suppressed_ws_error_count",
+            owner=self,
+            window_seconds=10,
+        )
 
     def _on_error(self, error: Exception) -> None:
         self._is_connected = False
-        logger.error(f"Live websocket error - error: {str(error)}")
+        _log_throttled(
+            level="error",
+            message=f"Live websocket error - error: {str(error)}",
+            last_logged_at_attr="_last_ws_error_log_at",
+            suppressed_count_attr="_suppressed_ws_error_count",
+            owner=self,
+            window_seconds=10,
+        )
 
     def _on_message(self, message: dict) -> None:
         if not isinstance(message, dict):
@@ -251,14 +303,12 @@ class LiveMarketStreamingService:
                 stale_after_seconds=LIVE_DATA_SUBSCRIPTION_STALE_AFTER_SECONDS,
             )
             self._last_tick_at = payload["last_update"]
-            future = asyncio.run_coroutine_threadsafe(
-                RedisLiveMarketStore.write_live_underlying(
+            self._schedule_live_write(
+                lambda: RedisLiveMarketStore.write_live_underlying(
                     instrument_symbol=underlying_subscription.instrument_symbol,
                     payload=payload,
-                ),
-                self._loop,
+                )
             )
-            future.add_done_callback(_log_future_error)
             return
 
         subscribed_option = self._subscription_map.get(symbol)
@@ -279,15 +329,13 @@ class LiveMarketStreamingService:
         }
         self._last_tick_at = payload["last_update"]
 
-        future = asyncio.run_coroutine_threadsafe(
-            RedisLiveMarketStore.write_live_symbol(
+        self._schedule_live_write(
+            lambda: RedisLiveMarketStore.write_live_symbol(
                 instrument_symbol=subscribed_option.instrument_symbol,
                 symbol=subscribed_option.trading_symbol,
                 payload=payload,
-            ),
-            self._loop,
+            )
         )
-        future.add_done_callback(_log_future_error)
 
     async def _get_previous_close_spot(self, instrument_symbol: str) -> float | None:
         previous_day_final = (
@@ -303,12 +351,72 @@ class LiveMarketStreamingService:
             return None
         return float(spot_price)
 
+    def _schedule_live_write(self, coroutine_factory) -> None:
+        if not self._loop:
+            return
 
-def _log_future_error(future) -> None:
-    try:
-        future.result()
-    except Exception as error:
-        logger.error(f"Failed to write live symbol update - error: {str(error)}")
+        now = monotonic()
+        if now < self._redis_retry_after:
+            return
+
+        coroutine = coroutine_factory()
+        future = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
+        future.add_done_callback(self._handle_live_write_result)
+
+    def _handle_live_write_result(self, future) -> None:
+        try:
+            future.result()
+        except Exception as error:
+            self._handle_redis_write_error(error)
+            return
+
+        if self._redis_degraded:
+            logger.info("Redis live write path recovered")
+        self._redis_degraded = False
+        self._redis_failure_count = 0
+        self._redis_retry_after = 0.0
+
+    def _handle_redis_write_error(self, error: Exception) -> None:
+        self._redis_failure_count += 1
+        backoff_seconds = min(30, 2 ** min(self._redis_failure_count, 4))
+        self._redis_retry_after = monotonic() + backoff_seconds
+        self._redis_degraded = True
+        _log_throttled(
+            level="error",
+            message=(
+                "Failed to write live symbol update - "
+                f"error: {str(error)} - retry_backoff_seconds: {backoff_seconds}"
+            ),
+            last_logged_at_attr="_last_redis_error_log_at",
+            suppressed_count_attr="_suppressed_redis_error_count",
+            owner=self,
+            window_seconds=10,
+        )
+
+
+def _log_throttled(
+    *,
+    level: str,
+    message: str,
+    last_logged_at_attr: str,
+    suppressed_count_attr: str,
+    owner,
+    window_seconds: int,
+) -> None:
+    now = monotonic()
+    last_logged_at = getattr(owner, last_logged_at_attr)
+    suppressed_count = getattr(owner, suppressed_count_attr)
+
+    if now - last_logged_at < window_seconds:
+        setattr(owner, suppressed_count_attr, suppressed_count + 1)
+        return
+
+    suffix = ""
+    if suppressed_count:
+        suffix = f" - suppressed_duplicates: {suppressed_count}"
+    getattr(logger, level)(f"{message}{suffix}")
+    setattr(owner, last_logged_at_attr, now)
+    setattr(owner, suppressed_count_attr, 0)
 
 
 def _is_fyers_auth_error(error: Exception) -> bool:
