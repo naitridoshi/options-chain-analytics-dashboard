@@ -10,6 +10,7 @@ from time import monotonic
 from fyers_apiv3.FyersWebsocket import data_ws
 
 from libs.platform.modules.option_chain_snapshot.src import (
+    is_market_open_now,
     parse_expiry_candidates,
     parse_option_rows,
 )
@@ -49,6 +50,8 @@ class UnderlyingSubscription:
 
 
 class LiveMarketStreamingService:
+    _MARKET_STATE_POLL_SECONDS = 5
+
     def __init__(self) -> None:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._task: asyncio.Task | None = None
@@ -67,6 +70,8 @@ class LiveMarketStreamingService:
         self._redis_failure_count = 0
         self._redis_retry_after = 0.0
         self._redis_degraded = False
+        self._next_symbol_refresh_at = 0.0
+        self._market_closed_logged = False
 
     async def start(self) -> None:
         if self._running:
@@ -74,10 +79,16 @@ class LiveMarketStreamingService:
         self._running = True
         self._loop = asyncio.get_running_loop()
         self._task = asyncio.create_task(self._subscription_refresh_loop())
-        try:
-            await self._refresh_subscriptions(force_restart=True)
-        except Exception as error:
-            await self._handle_refresh_error(error, during_startup=True)
+        if is_market_open_now():
+            try:
+                await self._refresh_subscriptions(force_restart=True)
+            except Exception as error:
+                await self._handle_refresh_error(error, during_startup=True)
+        else:
+            self._market_closed_logged = True
+            logger.info(
+                "Live market streaming startup skipped - market closed, waiting for market open"
+            )
         logger.info("Live market streaming service started")
 
     async def stop(self) -> None:
@@ -106,8 +117,25 @@ class LiveMarketStreamingService:
     async def _subscription_refresh_loop(self) -> None:
         while self._running:
             try:
-                await asyncio.sleep(LIVE_DATA_SYMBOL_REFRESH_INTERVAL_SECONDS)
-                await self._refresh_subscriptions(force_restart=False)
+                if not is_market_open_now():
+                    self._pause_socket(clear_symbols=True)
+                    if not self._market_closed_logged:
+                        logger.info(
+                            "Live market streaming paused - market closed, websocket disconnected"
+                        )
+                        self._market_closed_logged = True
+                    await asyncio.sleep(self._MARKET_STATE_POLL_SECONDS)
+                    continue
+
+                self._market_closed_logged = False
+                now = monotonic()
+                force_restart = self._ws_client is None or not self._current_symbols
+                if force_restart or now >= self._next_symbol_refresh_at:
+                    await self._refresh_subscriptions(force_restart=force_restart)
+                    self._next_symbol_refresh_at = (
+                        monotonic() + LIVE_DATA_SYMBOL_REFRESH_INTERVAL_SECONDS
+                    )
+                await asyncio.sleep(self._MARKET_STATE_POLL_SECONDS)
             except asyncio.CancelledError:
                 raise
             except Exception as error:
@@ -216,11 +244,13 @@ class LiveMarketStreamingService:
 
         logger.error(f"Live subscription refresh failed - error: {str(error)}")
 
-    def _pause_socket(self) -> None:
+    def _pause_socket(self, *, clear_symbols: bool = False) -> None:
         if self._ws_client:
             self._ws_client.keep_running = False
             self._ws_client = None
         self._is_connected = False
+        if clear_symbols:
+            self._current_symbols = []
 
     def _on_connect(self) -> None:
         self._is_connected = True
