@@ -470,9 +470,11 @@
     let reconnectAttempts = 0;
     const strikeToRowMap = {};
     const lastLiveByStrike = {};
+    let lastLiveUnderlying = null;
     let lastLiveUpdateAt = null;
     let liveStaleAfterSeconds = null;
     let websocketTicket = null;
+    let latestPrevCloseSpot = null;
 
     function scheduleReload(delayMs = refreshMs) {
       if (timerId) clearTimeout(timerId);
@@ -513,6 +515,37 @@
         <div class="title">${title}</div>
         <div class="value">${value}</div>
       </div>`;
+    }
+
+    function updateLiveSpotCards(payload) {
+      if (!payload) return;
+      lastLiveUnderlying = {
+        spot_price: payload.spot_price ?? lastLiveUnderlying?.spot_price ?? null,
+        prev_close_spot: payload.prev_close_spot ?? lastLiveUnderlying?.prev_close_spot ?? null,
+        change_from_prev_close: payload.change_from_prev_close ?? lastLiveUnderlying?.change_from_prev_close ?? null,
+        change_pct_from_prev_close: payload.change_pct_from_prev_close ?? lastLiveUnderlying?.change_pct_from_prev_close ?? null,
+      };
+      if (payload.prev_close_spot !== undefined && payload.prev_close_spot !== null) {
+        latestPrevCloseSpot = Number(payload.prev_close_spot);
+      }
+
+      const spotValueEl = document.getElementById("liveSpotValue");
+      const changeValueEl = document.getElementById("liveChangeValue");
+      const changePctValueEl = document.getElementById("liveChangePctValue");
+      if (!spotValueEl || !changeValueEl || !changePctValueEl) return;
+
+      const spotPrice = lastLiveUnderlying?.spot_price;
+      const changeFromPrevClose = lastLiveUnderlying?.change_from_prev_close;
+      const changePctFromPrevClose = lastLiveUnderlying?.change_pct_from_prev_close;
+
+      spotValueEl.textContent = fmt2(spotPrice);
+      spotValueEl.className = `val ${kpiToneClass(spotPrice)}`;
+      changeValueEl.textContent = fmt2(changeFromPrevClose);
+      changeValueEl.className = `val ${kpiToneClass(changeFromPrevClose)}`;
+      changePctValueEl.textContent = changePctFromPrevClose === null || changePctFromPrevClose === undefined
+        ? "-"
+        : `${fmt2(changePctFromPrevClose)}%`;
+      changePctValueEl.className = `val ${kpiToneClass(changePctFromPrevClose)}`;
     }
 
     function kpiToneClass(raw) {
@@ -728,7 +761,15 @@
     }
 
     function applyLiveUpdate(data) {
-      if (!data || !data.strike_price || !data.option_type) return;
+      if (!data) return;
+      if (data.message_type === "underlying_spot_update") {
+        lastLiveUpdateAt = Date.now();
+        liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
+        setLiveStatus("ok");
+        updateLiveSpotCards(data);
+        return;
+      }
+      if (!data.strike_price || !data.option_type) return;
       const strikeKey = String(data.strike_price);
       const row = strikeToRowMap[strikeKey];
       if (!row) return;
@@ -811,6 +852,17 @@
 
       const data = body.data || {};
       const latest = data.latest;
+      lastLiveUnderlying = {
+        spot_price: latest && latest.spot_price !== undefined ? latest.spot_price : lastLiveUnderlying?.spot_price ?? null,
+        prev_close_spot: latest && latest.prev_close_spot !== undefined ? latest.prev_close_spot : lastLiveUnderlying?.prev_close_spot ?? null,
+        change_from_prev_close: latest && latest.change_from_prev_close !== undefined ? latest.change_from_prev_close : lastLiveUnderlying?.change_from_prev_close ?? null,
+        change_pct_from_prev_close: latest && latest.change_pct_from_prev_close !== undefined ? latest.change_pct_from_prev_close : lastLiveUnderlying?.change_pct_from_prev_close ?? null,
+      };
+      latestPrevCloseSpot = latest && latest.prev_close_spot !== undefined && latest.prev_close_spot !== null
+        ? Number(latest.prev_close_spot)
+        : (lastLiveUnderlying?.prev_close_spot !== null && lastLiveUnderlying?.prev_close_spot !== undefined
+          ? Number(lastLiveUnderlying.prev_close_spot)
+          : null);
       const strikes = data.strikes || [];
       refreshMs = (data.refresh_seconds || 300) * 1000;
       const refreshLabel = refreshMs >= 60000
@@ -826,21 +878,26 @@
 
       const leftKpis = [
         {
+          key: "spot",
           label: "SPOT",
-          val: latest ? fmt2(latest.spot_price) : "-",
-          raw: latest ? latest.spot_price : null,
+          val: fmt2(lastLiveUnderlying?.spot_price),
+          raw: lastLiveUnderlying?.spot_price ?? null,
         },
         {
+          key: "change",
           label: "CHANGE",
-          val: latest ? fmt2(latest.change_from_prev_close) : "-",
+          val: fmt2(lastLiveUnderlying?.change_from_prev_close),
           tip: prevCloseSource,
-          raw: latest ? latest.change_from_prev_close : null,
+          raw: lastLiveUnderlying?.change_from_prev_close ?? null,
         },
         {
+          key: "change_pct",
           label: "CHANGE %",
-          val: latest ? `${fmt2(latest.change_pct_from_prev_close)}%` : "-",
+          val: lastLiveUnderlying?.change_pct_from_prev_close === null || lastLiveUnderlying?.change_pct_from_prev_close === undefined
+            ? "-"
+            : `${fmt2(lastLiveUnderlying.change_pct_from_prev_close)}%`,
           tip: prevCloseSource,
-          raw: latest ? latest.change_pct_from_prev_close : null,
+          raw: lastLiveUnderlying?.change_pct_from_prev_close ?? null,
         },
       ];
       const rightKpis = [
@@ -886,7 +943,15 @@
           const labelHtml = item.tip
             ? `<div class="label with-tip">${item.label}<span class="label-tip" tabindex="0">i<span class="label-tip-pop">${escHtml(item.tip)}</span></span></div>`
             : `<div class="label">${item.label}</div>`;
-          return `<div class="kpi">${labelHtml}<div class="val ${kpiToneClass(item.raw)}">${item.val}</div></div>`;
+          const valueId = item.key === "spot"
+            ? "liveSpotValue"
+            : item.key === "change"
+              ? "liveChangeValue"
+              : item.key === "change_pct"
+                ? "liveChangePctValue"
+                : "";
+          const idAttribute = valueId ? ` id="${valueId}"` : "";
+          return `<div class="kpi">${labelHtml}<div${idAttribute} class="val ${kpiToneClass(item.raw)}">${item.val}</div></div>`;
       };
 
       document.getElementById("kpis").innerHTML = `

@@ -25,6 +25,10 @@ def live_symbol_key(symbol: str) -> str:
     return _join("live", "symbol", symbol)
 
 
+def live_underlying_key(instrument_symbol: str) -> str:
+    return _join("live", "underlying", instrument_symbol.upper())
+
+
 def live_channel_key(instrument_symbol: str) -> str:
     return _join("live", "channel", instrument_symbol.upper())
 
