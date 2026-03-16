@@ -144,6 +144,8 @@ class RuntimeSnapshotService:
         strikes = [
             {
                 "strike_price": _as_number(item["strike_price"]),
+                "call_trading_symbol": item.get("call_trading_symbol"),
+                "put_trading_symbol": item.get("put_trading_symbol"),
                 "call_oi_change": item["call_oi_change"],
                 "put_oi_change": item["put_oi_change"],
                 "net_oi_change": item["net_oi_change"],

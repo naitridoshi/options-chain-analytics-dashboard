@@ -39,6 +39,8 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
                 "strike_price": strike_price,
                 "call_option_contract_id": None,
                 "put_option_contract_id": None,
+                "call_trading_symbol": None,
+                "put_trading_symbol": None,
                 "call_oi_change": 0,
                 "put_oi_change": 0,
                 "call_oi": 0,
@@ -54,6 +56,7 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
 
         if option_type == "CE":
             strike_entry["call_option_contract_id"] = row.get("option_contract_id")
+            strike_entry["call_trading_symbol"] = row.get("trading_symbol")
             strike_entry["call_oi_change"] = row_oi_change
             strike_entry["call_oi"] = row_oi
             strike_entry["call_volume"] = row_volume
@@ -64,6 +67,7 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
             call_volume_sum += row_volume
         elif option_type == "PE":
             strike_entry["put_option_contract_id"] = row.get("option_contract_id")
+            strike_entry["put_trading_symbol"] = row.get("trading_symbol")
             strike_entry["put_oi_change"] = row_oi_change
             strike_entry["put_oi"] = row_oi
             strike_entry["put_volume"] = row_volume
@@ -111,6 +115,8 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
                 "strike_price": item["strike_price"],
                 "call_option_contract_id": item["call_option_contract_id"],
                 "put_option_contract_id": item["put_option_contract_id"],
+                "call_trading_symbol": item["call_trading_symbol"],
+                "put_trading_symbol": item["put_trading_symbol"],
                 "call_oi_change": item["call_oi_change"],
                 "put_oi_change": item["put_oi_change"],
                 "net_oi_change": item["put_oi_change"] - item["call_oi_change"],

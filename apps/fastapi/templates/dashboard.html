@@ -469,6 +469,7 @@
     let ws = null;
     let reconnectAttempts = 0;
     const strikeToRowMap = {};
+    const lastLiveByStrike = {};
     let lastLiveUpdateAt = null;
     let liveStaleAfterSeconds = null;
     let websocketTicket = null;
@@ -728,22 +729,27 @@
 
     function applyLiveUpdate(data) {
       if (!data || !data.strike_price || !data.option_type) return;
-      const row = strikeToRowMap[String(data.strike_price)];
+      const strikeKey = String(data.strike_price);
+      const row = strikeToRowMap[strikeKey];
       if (!row) return;
       lastLiveUpdateAt = Date.now();
       liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
       setLiveStatus("ok");
 
       const side = data.option_type === "CE" ? "call" : "put";
+      const strikeState = lastLiveByStrike[strikeKey] || {};
       const ltpCell = row.querySelector(`.${side}-ltp`);
       const avgCell = row.querySelector(`.${side}-avg`);
 
       if (ltpCell && data.ltp !== undefined && data.ltp !== null) {
         ltpCell.textContent = fmt2(data.ltp);
+        strikeState[`${side}_ltp`] = fmt2(data.ltp);
       }
       if (avgCell && data.avg_price !== undefined && data.avg_price !== null) {
         avgCell.textContent = fmt2(data.avg_price);
+        strikeState[`${side}_avg`] = fmt2(data.avg_price);
       }
+      lastLiveByStrike[strikeKey] = strikeState;
     }
 
     function showLoadingState() {
@@ -904,12 +910,40 @@
       }
 
       const tbody = document.querySelector("#gridTable tbody");
+      tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
+        const strikeKey = rowEl.dataset.strike;
+        if (!strikeKey) return;
+        const state = lastLiveByStrike[strikeKey] || {};
+        const callLtp = rowEl.querySelector(".call-ltp")?.textContent;
+        const callAvg = rowEl.querySelector(".call-avg")?.textContent;
+        const putLtp = rowEl.querySelector(".put-ltp")?.textContent;
+        const putAvg = rowEl.querySelector(".put-avg")?.textContent;
+        if (callLtp && callLtp !== "-") state.call_ltp = callLtp;
+        if (callAvg && callAvg !== "-") state.call_avg = callAvg;
+        if (putLtp && putLtp !== "-") state.put_ltp = putLtp;
+        if (putAvg && putAvg !== "-") state.put_avg = putAvg;
+        lastLiveByStrike[strikeKey] = state;
+      });
       Object.keys(strikeToRowMap).forEach((key) => delete strikeToRowMap[key]);
       tbody.innerHTML = strikes.map((row) => {
         const callCoi = row.call_oi_change ?? 0;
         const putCoi = row.put_oi_change ?? 0;
         const callOi = row.call_oi ?? 0;
         const putOi = row.put_oi ?? 0;
+        const strikeKey = String(parseInt(row.strike_price, 10));
+        const preservedLive = lastLiveByStrike[strikeKey] || {};
+        const callLiveLtp = row.call_live_ltp !== null && row.call_live_ltp !== undefined
+          ? fmt2(row.call_live_ltp)
+          : (preservedLive.call_ltp || "-");
+        const callLiveAvg = row.call_live_avg_price !== null && row.call_live_avg_price !== undefined
+          ? fmt2(row.call_live_avg_price)
+          : (preservedLive.call_avg || "-");
+        const putLiveLtp = row.put_live_ltp !== null && row.put_live_ltp !== undefined
+          ? fmt2(row.put_live_ltp)
+          : (preservedLive.put_ltp || "-");
+        const putLiveAvg = row.put_live_avg_price !== null && row.put_live_avg_price !== undefined
+          ? fmt2(row.put_live_avg_price)
+          : (preservedLive.put_avg || "-");
 
         const totalCoi = Number(callCoi) + Number(putCoi);
         const callRatio = safeDivPct(callCoi, totalCoi);
@@ -921,17 +955,17 @@
         const isAtm = atmStrike !== null && Number(row.strike_price) === Number(atmStrike);
 
         return `
-          <tr class="${isAtm ? 'atm-row' : ''}" data-strike="${String(parseInt(row.strike_price, 10))}">
+          <tr class="${isAtm ? 'atm-row' : ''}" data-strike="${strikeKey}">
             <td class="call-col ${signedClass(callRatio)}">${fmt2(callRatio)}%</td>
             <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}%</td>
             <td class="call-col ${signedClass(callOi)}">${fmt(callOi)}</td>
             <td class="call-col ${signedClass(callCoi)}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
-            <td class="call-col call-ltp">${fmt2(row.call_ltp)}</td>
-            <td class="call-col call-avg">-</td>
+            <td class="call-col call-ltp">${callLiveLtp}</td>
+            <td class="call-col call-avg">${callLiveAvg}</td>
             <td class="sp-cell ${isAtm ? 'atm' : ''}">${fmt2(row.strike_price)}</td>
-            <td class="put-col put-avg">-</td>
-            <td class="put-col put-ltp">${fmt2(row.put_ltp)}</td>
+            <td class="put-col put-avg">${putLiveAvg}</td>
+            <td class="put-col put-ltp">${putLiveLtp}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${signedClass(putCoi)}">${fmt(putCoi)}</td>
             <td class="put-col ${signedClass(putOi)}">${fmt(putOi)}</td>
