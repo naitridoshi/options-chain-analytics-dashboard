@@ -10,6 +10,7 @@ from starlette.middleware.base import (
     RequestResponseEndpoint,
 )
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette_context import context, plugins
@@ -18,6 +19,12 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.custom_logger.src.helper import extra_details_for_req
+from libs.utils.config.src.auth import (
+    AUTH_SESSION_COOKIE_NAME,
+    AUTH_SESSION_MAX_AGE_SECONDS,
+    AUTH_SESSION_SECRET,
+    AUTH_SESSION_SECURE,
+)
 
 log = CustomLogger("AppMiddleware")
 
@@ -28,8 +35,12 @@ listener.start()
 async def logging_iterator(response, iterator, class_name: str, start_time: datetime):
     response_body = dict()
     async for chunk in iterator:
-        if loads(chunk.decode("utf-8")).get("is_final"):
-            response_body = loads(chunk.decode("utf-8"))
+        try:
+            payload = loads(chunk.decode("utf-8"))
+            if isinstance(payload, dict) and payload.get("is_final"):
+                response_body = payload
+        except (JSONDecodeError, UnicodeDecodeError, TypeError):
+            pass
         yield chunk
     extra = extra_details_for_req(
         inspect,
@@ -82,16 +93,21 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 )
 
             else:
-                chunks = [chunk async for chunk in response.body_iterator]
-                response.body_iterator = iterate_in_threadpool(iter(chunks))
+                body_iterator = getattr(response, "body_iterator", None)
 
                 # Safely decode for logging (don’t assume there is a chunk)
                 body_text = ""
-                if chunks:
-                    try:
-                        body_text = b"".join(chunks).decode("utf-8", errors="replace")
-                    except Exception:
-                        body_text = "<unable to decode response body>"
+                if body_iterator is not None:
+                    chunks = [chunk async for chunk in body_iterator]
+                    response.body_iterator = iterate_in_threadpool(iter(chunks))
+
+                    if chunks:
+                        try:
+                            body_text = b"".join(chunks).decode(
+                                "utf-8", errors="replace"
+                            )
+                        except Exception:
+                            body_text = "<unable to decode response body>"
 
                 extra = extra_details_for_req(
                     inspect,
@@ -122,6 +138,14 @@ middlewares = [
     Middleware(
         ProxyHeadersMiddleware,
         trusted_hosts="*",  # Trust all hosts to properly extract client IP
+    ),
+    Middleware(
+        SessionMiddleware,
+        secret_key=AUTH_SESSION_SECRET,
+        session_cookie=AUTH_SESSION_COOKIE_NAME,
+        max_age=AUTH_SESSION_MAX_AGE_SECONDS,
+        same_site="lax",
+        https_only=AUTH_SESSION_SECURE,
     ),
     Middleware(
         CORSMiddleware,

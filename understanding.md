@@ -233,9 +233,12 @@ Housekeeping behavior:
 
 ## Auth Model
 
-HTTP auth:
+Browser auth:
 
-- basic auth protects REST routes.
+- browser-facing routes now use session-cookie auth,
+- users sign in on `/login` with configured app credentials,
+- authenticated browser state is stored in a signed session cookie,
+- `/dashboard` redirects to `/login` when no session is present.
 
 Browser websocket auth:
 
@@ -246,9 +249,16 @@ Browser websocket auth:
 FYERS auth:
 
 - FYERS login is still completed through the login flow,
+- browser session auth is required before starting FYERS login,
 - live-data and scheduler depend on the daily token being present,
 - scheduler snapshot flow remains strict,
 - live-data startup is tolerant and retries later.
+
+Operational effect:
+
+- users no longer get browser basic-auth popups for normal dashboard usage,
+- logout is handled explicitly through the app,
+- browser-facing APIs now authenticate through the active session cookie.
 
 ## Legacy PostgreSQL Status
 
@@ -269,6 +279,7 @@ Where PostgreSQL write paths still exist, the repository layer has been hardened
 Useful runtime endpoints:
 
 - `/health`
+- `/login`
 - `/api/v1/runtime-store/status`
 - `/api/v1/market-data/status?symbol=NIFTY`
 - `/api/v1/fyers/status`
@@ -301,6 +312,15 @@ Core FYERS and market settings:
 - `MARKET_OPEN_MINUTE`
 - `MARKET_CLOSE_HOUR`
 - `MARKET_CLOSE_MINUTE`
+
+Auth and session settings:
+
+- `AUTH_USERNAME`
+- `AUTH_PASSWORD`
+- `AUTH_SESSION_SECRET`
+- `AUTH_SESSION_COOKIE_NAME`
+- `AUTH_SESSION_MAX_AGE_SECONDS`
+- `AUTH_SESSION_SECURE`
 
 Core Redis runtime settings:
 
@@ -367,16 +387,18 @@ If live market data app is not started:
    - `python scripts/seed_instruments.py`
 4. Start FastAPI:
    - `python -m apps.fastapi.src`
-5. Complete FYERS login:
+5. Open `/login` and sign in with app credentials.
+6. Complete FYERS login:
    - `/api/v1/fyers/login`
-6. Start scheduler:
+7. Start scheduler:
    - `python -m apps.scheduler.src`
-7. Start live market data app:
+8. Start live market data app:
    - `python -m apps.live_market_data.src`
 
 Why this order:
 
-- FastAPI must be up before login can be completed.
+- FastAPI must be up before app sign-in and FYERS login can be completed.
+- browser session auth must exist before using the FYERS login flow comfortably.
 - Scheduler and live-data both depend on the FYERS daily token.
 - Starting live-data before login is allowed, but it will wait in degraded mode until token is available.
 - Starting scheduler before login will still fail snapshot capture until token exists.
@@ -385,17 +407,19 @@ Why this order:
 
 After startup, verify:
 
-1. FYERS token exists:
+1. Browser session login works:
+   - `/login`
+2. FYERS token exists:
    - `/api/v1/fyers/status`
-2. Redis runtime is healthy:
+3. Redis runtime is healthy:
    - `/api/v1/runtime-store/status`
-3. Live-data app is healthy:
+4. Live-data app is healthy:
    - `/api/v1/market-data/status?symbol=NIFTY`
-4. Dashboard renders snapshot data:
+5. Dashboard renders snapshot data:
    - `/dashboard`
-5. Scheduler is writing Redis snapshots:
+6. Scheduler is writing Redis snapshots:
    - dashboard snapshot time should advance on refresh
-6. Live websocket is updating prices:
+7. Live websocket is updating prices:
    - dashboard live badges should move to connected
 
 ## Practical Summary
@@ -406,3 +430,4 @@ After startup, verify:
 - Dashboard snapshot reads are now Redis-only.
 - Previous-day close reference in Redis prefers exact close time, else latest snapshot of that day.
 - Scheduler and dashboard snapshot runtime are now Redis-native.
+- Browser-facing auth now uses signed session cookies instead of browser basic auth.

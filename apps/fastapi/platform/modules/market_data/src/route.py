@@ -13,7 +13,7 @@ market_data_route = APIRouter(prefix="/api/v1/market-data", tags=["Market Data"]
 @market_data_route.get("/status")
 async def get_market_data_status(
     symbol: str | None = Query(default=None),
-    _: bool = Depends(verify_basic_auth),
+    _: str = Depends(verify_basic_auth),
 ) -> JSONResponse:
     payload = await RuntimeDashboardService.get_dashboard_data(
         symbol=symbol,
