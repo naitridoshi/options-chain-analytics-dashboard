@@ -66,6 +66,7 @@ Redis is used for:
 
 - FYERS daily token storage,
 - current-day intraday option-chain snapshots,
+- current-day trade-date membership tracking,
 - current-day latest snapshot pointer,
 - previous-day final snapshot retention,
 - live symbol market data,
@@ -79,6 +80,7 @@ Important key groups:
 - `fyers:token:*`
 - `snapshots:*`
 - `timelines:*`
+- `timeline-dates:*`
 - `latest:*`
 - `previous-day:final:*`
 - `live:symbol:*`
@@ -175,6 +177,15 @@ The stored Redis payload includes the selection mode:
 - `exact_close_time`
 - `latest_previous_market_day`
 
+## Redis Runtime Safety
+
+The Redis runtime layer has a few important guarantees:
+
+- intraday snapshot writes update the `latest:*` pointer monotonically,
+- an older delayed snapshot cannot overwrite a newer latest snapshot,
+- websocket tickets are consumed atomically and are one-time use,
+- trade dates are tracked in Redis sets and housekeeping does not rely on keyspace scans for normal trade-date discovery.
+
 ## Daily Token Handling
 
 FYERS token is treated as daily auth.
@@ -217,7 +228,8 @@ Housekeeping behavior:
 - periodically checks if market close finalization delay has elapsed,
 - finalizes previous-day close snapshot using exact-close-preferred logic,
 - avoids repeated work using Redis markers,
-- deletes older intraday timelines after finalization.
+- deletes older intraday timelines after finalization,
+- resolves trade dates from Redis-maintained trade-date sets.
 
 ## Auth Model
 
@@ -237,6 +249,20 @@ FYERS auth:
 - live-data and scheduler depend on the daily token being present,
 - scheduler snapshot flow remains strict,
 - live-data startup is tolerant and retries later.
+
+## Legacy PostgreSQL Status
+
+PostgreSQL is no longer part of the scheduler/dashboard runtime path.
+
+Remaining PostgreSQL code is now treated as legacy or compatibility-oriented logic.
+
+Where PostgreSQL write paths still exist, the repository layer has been hardened to reduce uniqueness-race failures by using conflict-safe insert/upsert behavior for:
+
+- FYERS daily tokens,
+- instruments,
+- expiries,
+- option contracts,
+- snapshots.
 
 ## Operational Status and Validation
 

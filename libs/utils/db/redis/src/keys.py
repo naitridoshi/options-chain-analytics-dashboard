@@ -39,6 +39,10 @@ def intraday_timeline_key(instrument_symbol: str, trade_date: str) -> str:
     return _join("timelines", instrument_symbol.upper(), trade_date)
 
 
+def intraday_trade_dates_key(instrument_symbol: str) -> str:
+    return _join("timeline-dates", instrument_symbol.upper())
+
+
 def intraday_latest_snapshot_pointer_key(
     instrument_symbol: str, trade_date: str
 ) -> str:

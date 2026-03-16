@@ -6,8 +6,10 @@ from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from libs.platform.modules.option_chain_snapshot.src import (
-    build_summary_payloads,
     normalize_interval_boundary,
+)
+from libs.platform.modules.option_chain_snapshot.src.runtime_summary import (
+    build_summary_payloads,
 )
 from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
 from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS

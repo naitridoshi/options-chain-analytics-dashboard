@@ -3,11 +3,10 @@ from decimal import Decimal
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from libs.platform.modules.option_chain_snapshot.src import (
+from libs.platform.modules.option_chain_snapshot.src.runtime_summary import (
     build_summary_payloads,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
-from libs.utils.db.postgres.models.src.expiry import Expiry
 from libs.utils.db.postgres.models.src.option_chain_interval_summary import (
     OptionChainIntervalSummary,
 )
@@ -66,19 +65,11 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
             )
             strike_summary_repo = get_option_chain_strike_summaries_repository(session)
 
-            expiry = await expiry_repo.get(
-                [
-                    Expiry.instrument_id == instrument_id,
-                    Expiry.expiry_date == expiry_date,
-                ]
+            expiry = await expiry_repo.get_or_create(
+                instrument_id=instrument_id,
+                expiry_date=expiry_date,
+                is_weekly=is_weekly,
             )
-            if not expiry:
-                expiry = Expiry(
-                    instrument_id=instrument_id,
-                    expiry_date=expiry_date,
-                    is_weekly=is_weekly,
-                )
-                await expiry_repo.add(expiry, commit=False, refresh=False)
 
             existing_contracts = await contract_repo.list_ordered(
                 where=OptionContract.expiry_id == expiry.id,
@@ -89,39 +80,56 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                 for contract in existing_contracts
             }
 
-            contracts_to_create = []
+            contracts_to_create: list[dict] = []
             for row in strike_rows:
                 key = (str(row["strike_price"]), row["option_type"])
                 if key in contract_map:
                     continue
-                contract = OptionContract(
-                    instrument_id=instrument_id,
-                    expiry_id=expiry.id,
-                    strike_price=row["strike_price"],
-                    option_type=row["option_type"],
-                    trading_symbol=row["trading_symbol"],
-                    lot_size=row.get("lot_size"),
+                contracts_to_create.append(
+                    {
+                        "instrument_id": instrument_id,
+                        "expiry_id": expiry.id,
+                        "strike_price": row["strike_price"],
+                        "option_type": row["option_type"],
+                        "trading_symbol": row["trading_symbol"],
+                        "lot_size": row.get("lot_size"),
+                    }
                 )
-                contracts_to_create.append(contract)
-                contract_map[key] = contract
 
             if contracts_to_create:
-                await contract_repo.add_many(
-                    contracts_to_create, commit=False, refresh=False
+                await contract_repo.bulk_insert_ignore_existing(contracts_to_create)
+                existing_contracts = await contract_repo.list_ordered(
+                    where=OptionContract.expiry_id == expiry.id,
+                    limit=10000,
                 )
+                contract_map = {
+                    (str(contract.strike_price), contract.option_type): contract
+                    for contract in existing_contracts
+                }
                 logger.info(
                     "Auto-created option contracts - "
                     f"instrument_id: {instrument_id} - "
                     f"count: {len(contracts_to_create)}",
                 )
 
-            snapshot = OptionChainSnapshot(
+            snapshot, snapshot_created = await snapshot_repo.get_or_create(
                 instrument_id=instrument_id,
                 expiry_id=expiry.id,
                 captured_at=captured_at,
                 spot_price=spot_price,
             )
-            await snapshot_repo.add(snapshot, commit=False, refresh=False)
+            if not snapshot_created:
+                logger.warning(
+                    "Snapshot already exists, skipping duplicate write - "
+                    f"instrument_id: {instrument_id} - "
+                    f"expiry_date: {expiry_date} - "
+                    f"captured_at: {captured_at.isoformat()}"
+                )
+                return {
+                    "snapshot_id": snapshot.id,
+                    "strikes_inserted": 0,
+                    "expiry_id": expiry.id,
+                }
 
             strike_values = []
             summary_rows = []

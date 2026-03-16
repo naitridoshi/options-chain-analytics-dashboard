@@ -21,6 +21,7 @@ from libs.utils.db.redis.src.keys import (
     intraday_latest_snapshot_pointer_key,
     intraday_snapshot_key,
     intraday_timeline_key,
+    intraday_trade_dates_key,
     live_app_status_key,
     live_channel_key,
     live_symbol_key,
@@ -32,6 +33,35 @@ from libs.utils.db.redis.src.keys import (
 log = CustomLogger("RedisRuntimeStore")
 logger, listener = log.get_logger()
 listener.start()
+
+_SAVE_INTRADAY_SNAPSHOT_LUA = """
+redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
+redis.call('ZADD', KEYS[2], ARGV[3], ARGV[4])
+redis.call('EXPIRE', KEYS[2], ARGV[2])
+
+local current_snapshot_key = redis.call('GET', KEYS[3])
+if not current_snapshot_key then
+  redis.call('SET', KEYS[3], KEYS[1], 'EX', ARGV[2])
+  return 1
+end
+
+local current_interval_ts = string.match(current_snapshot_key, '([^:]+)$')
+if (not current_interval_ts) or (ARGV[4] >= current_interval_ts) then
+  redis.call('SET', KEYS[3], KEYS[1], 'EX', ARGV[2])
+  return 1
+end
+
+return 0
+"""
+
+_CONSUME_TICKET_LUA = """
+local payload = redis.call('GET', KEYS[1])
+if not payload then
+  return false
+end
+redis.call('DEL', KEYS[1])
+return payload
+"""
 
 
 @dataclass
@@ -109,16 +139,22 @@ class RedisOptionChainSnapshotStore:
         client = await redis_client_manager.get_client()
         snapshot_key = intraday_snapshot_key(instrument_symbol, trade_date, interval_ts)
         timeline_key = intraday_timeline_key(instrument_symbol, trade_date)
+        trade_dates_key = intraday_trade_dates_key(instrument_symbol)
         latest_key = intraday_latest_snapshot_pointer_key(instrument_symbol, trade_date)
         encoded = json.dumps(payload, separators=(",", ":"))
-        async with client.pipeline(transaction=True) as pipe:
-            await (
-                pipe.set(snapshot_key, encoded, ex=REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS)
-                .zadd(timeline_key, {interval_ts: _to_epoch_score(interval_ts)})
-                .expire(timeline_key, REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS)
-                .set(latest_key, snapshot_key, ex=REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS)
-                .execute()
-            )
+        await client.eval(
+            _SAVE_INTRADAY_SNAPSHOT_LUA,
+            3,
+            snapshot_key,
+            timeline_key,
+            latest_key,
+            encoded,
+            REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS,
+            _to_epoch_score(interval_ts),
+            interval_ts,
+        )
+        await client.sadd(trade_dates_key, trade_date)
+        await client.expire(trade_dates_key, REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS)
 
     @staticmethod
     async def get_latest_snapshot(
@@ -196,6 +232,7 @@ class RedisOptionChainSnapshotStore:
     ) -> int:
         client = await redis_client_manager.get_client()
         timeline_key = intraday_timeline_key(instrument_symbol, trade_date)
+        trade_dates_key = intraday_trade_dates_key(instrument_symbol)
         latest_key = intraday_latest_snapshot_pointer_key(instrument_symbol, trade_date)
         interval_ids = await client.zrange(timeline_key, 0, -1)
         snapshot_keys = [
@@ -203,19 +240,18 @@ class RedisOptionChainSnapshotStore:
             for interval_id in interval_ids
         ]
         keys_to_delete = [timeline_key, latest_key, *snapshot_keys]
-        if not keys_to_delete:
+        removed = 0
+        if keys_to_delete:
+            removed = int(await client.delete(*keys_to_delete))
+        await client.srem(trade_dates_key, trade_date)
+        if removed == 0:
             return 0
-        return int(await client.delete(*keys_to_delete))
+        return removed
 
     @staticmethod
     async def list_trade_dates(instrument_symbol: str) -> list[str]:
         client = await redis_client_manager.get_client()
-        pattern = intraday_timeline_key(instrument_symbol, "*")
-        trade_dates: set[str] = set()
-        async for key in client.scan_iter(match=pattern):
-            parts = key.split(":")
-            if parts:
-                trade_dates.add(parts[-1])
+        trade_dates = await client.smembers(intraday_trade_dates_key(instrument_symbol))
         return sorted(trade_dates)
 
 
@@ -256,10 +292,9 @@ class RedisWebSocketTicketStore:
     async def consume_ticket(ticket: str) -> dict[str, Any] | None:
         client = await redis_client_manager.get_client()
         key = websocket_ticket_key(ticket)
-        payload = await client.get(key)
+        payload = await client.eval(_CONSUME_TICKET_LUA, 1, key)
         if not payload:
             return None
-        await client.delete(key)
         return json.loads(payload)
 
 
