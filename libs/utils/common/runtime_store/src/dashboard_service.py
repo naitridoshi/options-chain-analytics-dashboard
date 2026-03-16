@@ -5,7 +5,10 @@ from zoneinfo import ZoneInfo
 
 from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
 from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS
-from libs.utils.db.redis.src import RedisOptionChainSnapshotStore
+from libs.utils.db.redis.src import (
+    RedisLiveMarketStore,
+    RedisOptionChainSnapshotStore,
+)
 
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -77,6 +80,10 @@ class RuntimeDashboardService:
                 else:
                     latest_payload["change_pct_from_prev_close"] = None
 
+        strikes = await cls._merge_live_market_fields(
+            latest_snapshot.get("strikes", []),
+        )
+
         return {
             "instrument": latest_snapshot.get("instrument")
             or cls._serialize_instrument(instrument),
@@ -86,7 +93,7 @@ class RuntimeDashboardService:
             ),
             "timeline": [item.get("latest", item) for item in timeline_snapshots],
             "latest": latest_payload,
-            "strikes": latest_snapshot.get("strikes", []),
+            "strikes": strikes,
             "source": "redis",
         }
 
@@ -138,3 +145,32 @@ class RuntimeDashboardService:
             "instrument_type": getattr(instrument, "instrument_type", None),
             "fyers_symbol": instrument.fyers_symbol,
         }
+
+    @staticmethod
+    async def _merge_live_market_fields(strikes: list[dict]) -> list[dict]:
+        trading_symbols: list[str] = []
+        for strike in strikes:
+            call_symbol = strike.get("call_trading_symbol")
+            put_symbol = strike.get("put_trading_symbol")
+            if call_symbol:
+                trading_symbols.append(call_symbol)
+            if put_symbol:
+                trading_symbols.append(put_symbol)
+
+        live_payloads = await RedisLiveMarketStore.get_live_symbols(trading_symbols)
+
+        merged_rows: list[dict] = []
+        for strike in strikes:
+            row = dict(strike)
+            call_symbol = row.get("call_trading_symbol")
+            put_symbol = row.get("put_trading_symbol")
+            call_live = live_payloads.get(call_symbol or "")
+            put_live = live_payloads.get(put_symbol or "")
+            row["call_live_ltp"] = call_live.get("ltp") if call_live else None
+            row["call_live_avg_price"] = (
+                call_live.get("avg_price") if call_live else None
+            )
+            row["put_live_ltp"] = put_live.get("ltp") if put_live else None
+            row["put_live_avg_price"] = put_live.get("avg_price") if put_live else None
+            merged_rows.append(row)
+        return merged_rows

@@ -126,6 +126,22 @@ class RedisLiveMarketStore:
         payload = await client.get(live_symbol_key(symbol))
         return json.loads(payload) if payload else None
 
+    @staticmethod
+    async def get_live_symbols(symbols: list[str]) -> dict[str, dict[str, Any]]:
+        normalized_symbols = [symbol for symbol in symbols if symbol]
+        if not normalized_symbols:
+            return {}
+
+        client = await redis_client_manager.get_client()
+        keys = [live_symbol_key(symbol) for symbol in normalized_symbols]
+        values = await client.mget(keys)
+        payloads: dict[str, dict[str, Any]] = {}
+        for symbol, value in zip(normalized_symbols, values, strict=False):
+            if not value:
+                continue
+            payloads[symbol] = json.loads(value)
+        return payloads
+
 
 class RedisOptionChainSnapshotStore:
     @staticmethod
