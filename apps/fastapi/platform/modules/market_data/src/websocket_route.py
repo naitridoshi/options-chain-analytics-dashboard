@@ -1,4 +1,5 @@
-import asyncio
+import json
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -35,14 +36,23 @@ async def websocket_market_data(websocket: WebSocket):
         pubsub = client.pubsub()
         await pubsub.subscribe(live_channel_key(instrument_symbol))
 
-        while True:
-            message = await pubsub.get_message(
-                ignore_subscribe_messages=True,
-                timeout=1.0,
-            )
-            if message and message.get("type") == "message":
-                await websocket.send_text(message["data"])
-            await asyncio.sleep(0.05)
+        async for message in pubsub.listen():
+            if not message or message.get("type") != "message":
+                continue
+
+            raw_payload = message.get("data")
+            if isinstance(raw_payload, bytes):
+                raw_payload = raw_payload.decode()
+
+            relay_forwarded_at = datetime.now(timezone.utc).isoformat()
+            try:
+                payload = json.loads(raw_payload)
+            except (TypeError, json.JSONDecodeError):
+                await websocket.send_text(raw_payload)
+                continue
+
+            payload["relay_forwarded_at"] = relay_forwarded_at
+            await websocket.send_json(payload)
     except WebSocketDisconnect:
         pass
     finally:
