@@ -2,57 +2,75 @@
 
 ## Purpose
 
-This branch introduces a Redis-first runtime architecture for the options dashboard.
+This project now runs as a Redis-first runtime for the options dashboard.
 
 Primary goals:
 
-- keep FastAPI separate from FYERS live ingestion,
-- use a standalone live-data app for websocket ingestion,
-- keep current-day option-chain timeline in Redis,
-- retain only the previous trading day final snapshot,
-- use websocket `ltp` and `avg_price` as live display values,
-- keep REST snapshot `ltp` as fallback on initial dashboard render,
-- preserve PostgreSQL as a phase-1 operational fallback.
+- keep HTTP/API concerns in `apps/fastapi`,
+- keep periodic option-chain snapshot capture in `apps/scheduler`,
+- keep live websocket ingestion in `apps/live_market_data`,
+- store current-day dashboard snapshot data in Redis,
+- store live `ltp` and `avg_price` in Redis,
+- retain one previous-day final snapshot in Redis for next-day comparison,
+- remove PostgreSQL from the scheduler/dashboard runtime path.
 
 ## High-Level Architecture
 
-There are now three runtime layers:
+There are three runnable apps involved in the runtime.
 
 1. `apps/fastapi`
-   - serves the dashboard page,
-   - serves authenticated APIs,
+   - serves dashboard HTML,
+   - serves authenticated REST APIs,
+   - serves browser websocket endpoint,
    - issues short-lived websocket tickets,
-   - reads current-day dashboard state from Redis when available,
-   - falls back to PostgreSQL where transitional support still exists,
-   - subscribes browser clients to Redis-backed websocket channels.
+   - reads dashboard snapshot data from Redis,
+   - does not own live market ingestion,
+   - does not own periodic snapshot scheduling.
 
-2. `apps/live_market_data`
-   - standalone long-running app,
-   - acquires a Redis lock so only one instance owns the live runtime,
-   - refreshes option symbols from FYERS option-chain REST,
-   - connects to FYERS websocket for live symbol updates,
-   - writes live `ltp` / `avg_price` into Redis,
-   - runs housekeeping for rollover and cleanup,
-   - writes heartbeat/status into Redis.
+2. `apps/scheduler`
+   - owns periodic option-chain snapshot capture,
+   - calls FYERS option-chain REST at configured intervals during market hours,
+   - writes snapshot data to Redis for dashboard reads,
+   - no longer depends on PostgreSQL for runtime snapshot capture.
 
-3. Storage
-   - Redis is the primary runtime store.
-   - PostgreSQL is retained in phase 1 for fallback and compatibility.
+3. `apps/live_market_data`
+   - owns live market runtime,
+   - acquires a Redis lock so only one instance is active,
+   - calls FYERS option-chain REST only to derive live option symbols,
+   - connects to FYERS websocket for `SymbolUpdate` ticks,
+   - writes live symbol updates to Redis,
+   - finalizes and cleans up Redis runtime data,
+   - writes heartbeat and runtime status to Redis.
+
+## Ownership Boundaries
+
+The intended ownership model is:
+
+- option-chain REST snapshots for dashboard timeline: `apps/scheduler`
+- FYERS websocket ingestion for live display values: `apps/live_market_data`
+- dashboard/API/websocket serving to browsers: `apps/fastapi`
+
+This separation is important.
+
+- If websocket ingestion has auth or reconnect issues, periodic dashboard snapshot capture should still remain isolated in the scheduler.
+- If scheduler snapshot capture is delayed, live websocket ingestion can still run independently.
+- FastAPI remains a serving layer and does not become the owner of background runtime work.
 
 ## Redis Storage Model
 
-Redis code now lives under:
+Redis code lives under:
 
 - `libs/utils/db/redis/src/`
 
-Key responsibilities:
+Redis is used for:
 
-- token storage,
-- intraday option snapshot storage,
+- FYERS daily token storage,
+- current-day intraday option-chain snapshots,
+- current-day latest snapshot pointer,
 - previous-day final snapshot retention,
 - live symbol market data,
-- websocket tickets,
-- runtime lock,
+- browser websocket tickets,
+- live app lock,
 - live app heartbeat,
 - rollover markers.
 
@@ -72,63 +90,107 @@ Important key groups:
 
 ## Data Flow
 
-### 1. Snapshot flow
+### 1. Snapshot Flow
 
-FastAPI snapshot trigger/scheduler path still captures option-chain REST data.
+Snapshot capture is owned by `apps/scheduler`.
 
-For the nearest expiry:
+Flow:
 
-- option-chain REST response is parsed,
-- PostgreSQL snapshot write still occurs,
-- Redis intraday snapshot payload is also written,
-- Redis payload contains:
-  - latest aggregate metrics,
-  - strike table data,
-  - market date,
-  - refresh interval,
-  - instrument metadata.
+1. Scheduler wakes on configured interval.
+2. It runs only during market hours and weekdays.
+3. It calls the shared snapshot service.
+4. The snapshot service calls FYERS option-chain REST.
+5. The response is parsed into:
+   - latest interval metrics,
+   - strike table rows,
+   - instrument metadata,
+   - normalized capture timestamp.
+6. Snapshot data is written into Redis intraday timeline storage.
+7. Snapshot data is persisted to Redis and used directly by the dashboard runtime.
 
-This payload is what the dashboard prefers when Redis data exists.
+The Redis intraday payload is the data source for:
 
-### 2. Live market flow
+- `/api/v1/dashboard/data`
+- dashboard initial strike table render
+- dashboard snapshot metrics
 
-`apps/live_market_data` performs:
+### 2. Live Market Flow
 
-- load active instruments from JSON instrument catalog,
-- call FYERS option-chain REST to derive active option symbols,
-- connect to FYERS websocket using those symbols,
-- receive `SymbolUpdate` ticks,
-- publish Redis live payloads per instrument channel,
-- store latest live symbol state in Redis.
+Live market ingestion is owned by `apps/live_market_data`.
 
-Live payload includes:
+Flow:
 
-- instrument symbol,
-- option symbol,
-- strike price,
-- option type,
-- live `ltp`,
-- live `avg_price`,
-- last update timestamp,
-- stale-after threshold.
+1. Load active instruments from `data/instruments.json`.
+2. For each active instrument, call FYERS option-chain REST.
+3. Parse the option-chain response to determine the active option trading symbols for the nearest expiry.
+4. Connect to FYERS websocket with those trading symbols.
+5. Receive `SymbolUpdate` ticks.
+6. Write live per-symbol payloads to Redis.
+7. Publish updates on Redis channels for browser websocket consumers.
 
-### 3. Dashboard flow
+Important detail:
 
-Dashboard page behavior:
+- `apps/live_market_data` does use FYERS option-chain REST, but only to derive websocket subscription symbols.
+- It does not own the dashboard snapshot timeline.
 
-1. Load base structure from `/api/v1/dashboard/data`.
-2. Render strike table using snapshot data.
-3. Show snapshot `ltp` values immediately as fallback.
-4. Request a websocket ticket from `/api/v1/market-data/ws-ticket`.
-5. Connect to `/ws/market-data?symbol=...&ticket=...`.
-6. Patch live `ltp` and `avg_price` cells as websocket updates arrive.
-7. Mark live status as connected, stale, or disconnected based on tick freshness.
+### 3. Dashboard Flow
+
+Dashboard flow is now Redis-only for snapshot reads.
+
+Flow:
+
+1. Browser calls `/api/v1/dashboard/data?symbol=...&timeline_limit=...`.
+2. FastAPI resolves the instrument from the instrument catalog.
+3. FastAPI reads the latest snapshot and timeline directly from Redis.
+4. Browser renders strike table and snapshot KPIs from Redis payload.
+5. Browser requests websocket ticket from `/api/v1/market-data/ws-ticket`.
+6. Browser connects to `/ws/market-data?symbol=...&ticket=...`.
+7. Live `ltp` and `avg_price` cells are patched from websocket updates.
+
+The dashboard no longer falls back to PostgreSQL reads.
+
+Operational consequence:
+
+- if Redis has no intraday snapshot for the current market day, the dashboard returns an empty Redis-shaped payload rather than falling back to PostgreSQL.
+
+## Previous-Day Final Snapshot Logic
+
+Redis retains one previous-day final snapshot per instrument.
+
+This is used for:
+
+- previous close spot reference,
+- change from previous close,
+- change percent from previous close.
+
+Selection rule:
+
+1. Prefer the exact snapshot at `MARKET_CLOSE_HOUR:MARKET_CLOSE_MINUTE`.
+2. If that exact timestamp is not present, use the latest snapshot available for that trade date.
+
+This finalization is handled by `apps/live_market_data` housekeeping after market close plus configured delay.
+
+The stored Redis payload includes the selection mode:
+
+- `exact_close_time`
+- `latest_previous_market_day`
+
+## Daily Token Handling
+
+FYERS token is treated as daily auth.
+
+Behavior:
+
+- shared FYERS client token lookup is strict,
+- live market app handles missing token as a recoverable runtime condition,
+- if live-data app starts before daily login, it stays alive and waits for token availability,
+- next refresh cycle reconnects automatically after token is stored.
+
+This avoids crashing the live-data app on server startup before login is completed.
 
 ## Instrument Catalog
 
-Runtime instrument lookup for Redis/live paths is no longer dependent on PostgreSQL.
-
-Instrument metadata is now read from:
+Runtime instrument resolution for Redis and live-data flows uses:
 
 - `data/instruments.json`
 
@@ -136,72 +198,83 @@ through:
 
 - `libs/utils/common/instrument_catalog/src/service.py`
 
-This is used by:
+Used by:
 
 - live symbol subscription refresh,
-- housekeeping cleanup/finalization,
-- Redis dashboard resolution.
-
-FastAPI startup still seeds PostgreSQL from the same JSON file for phase-1 compatibility.
+- runtime dashboard symbol resolution,
+- housekeeping finalization and cleanup.
 
 ## Rollover and Retention
 
 Retention target:
 
-- keep current trading day intraday timeline,
-- keep only previous trading day final snapshot,
-- delete older intraday timelines.
+- keep current-day intraday timeline in Redis,
+- keep one previous-day final snapshot in Redis,
+- delete older intraday trade dates.
 
 Housekeeping behavior:
 
-- periodically checks whether market-close finalization time has passed,
-- saves the latest snapshot of the trade date as previous-day final snapshot,
-- uses Redis markers so finalization and cleanup are not repeated,
-- deletes intraday timelines older than the current trade date.
+- periodically checks if market close finalization delay has elapsed,
+- finalizes previous-day close snapshot using exact-close-preferred logic,
+- avoids repeated work using Redis markers,
+- deletes older intraday timelines after finalization.
 
 ## Auth Model
 
 HTTP auth:
 
-- existing basic auth remains in place for REST endpoints.
+- basic auth protects REST routes.
 
-Websocket auth:
+Browser websocket auth:
 
-- browser cannot reliably send basic auth during websocket upgrade,
-- so FastAPI now issues a short-lived Redis-backed websocket ticket,
-- the websocket endpoint consumes that ticket before accepting the connection.
+- browser websocket upgrade does not rely on basic auth,
+- FastAPI issues a short-lived Redis-backed websocket ticket,
+- websocket endpoint consumes the ticket before accepting the browser connection.
 
-## Operational Status
+FYERS auth:
 
-Useful status endpoints:
+- FYERS login is still completed through the login flow,
+- live-data and scheduler depend on the daily token being present,
+- scheduler snapshot flow remains strict,
+- live-data startup is tolerant and retries later.
+
+## Operational Status and Validation
+
+Useful runtime endpoints:
 
 - `/health`
 - `/api/v1/runtime-store/status`
 - `/api/v1/market-data/status?symbol=NIFTY`
+- `/api/v1/fyers/status`
 
 These expose:
 
 - Redis availability,
 - live app heartbeat presence,
 - live app health evaluation,
-- runtime snapshot availability,
-- websocket readiness.
-
-The live-data app writes heartbeat status into Redis periodically.
-
-## Remaining Transitional Dependencies
-
-The branch is Redis-first, but not fully Redis-only yet.
-
-Still transitional:
-
-- PostgreSQL snapshot write path remains active,
-- FastAPI can still fall back to PostgreSQL dashboard reads when Redis data is absent,
-- token writes can still write through to PostgreSQL depending on config.
-
-This is intentional for safer migration.
+- FYERS token status,
+- runtime snapshot and websocket readiness.
 
 ## Important Configuration
+
+Core FYERS and market settings:
+
+- `FYERS_CLIENT_ID`
+- `FYERS_APP_ID`
+- `FYERS_SECRET_KEY`
+- `FYERS_REDIRECT_URI`
+- `FYERS_TOTP_KEY`
+- `FYERS_PIN`
+- `FYERS_LOG_PATH`
+- `SNAPSHOT_INTERVAL_SECONDS`
+- `SNAPSHOT_STRIKE_COUNT`
+- `SNAPSHOT_EXPIRY_COUNT`
+- `SNAPSHOT_MAX_RETRIES`
+- `SNAPSHOT_RETRY_BASE_DELAY_SECONDS`
+- `MARKET_OPEN_HOUR`
+- `MARKET_OPEN_MINUTE`
+- `MARKET_CLOSE_HOUR`
+- `MARKET_CLOSE_MINUTE`
 
 Core Redis runtime settings:
 
@@ -225,25 +298,85 @@ Live-data specific timing:
 - `LIVE_DATA_SYMBOL_REFRESH_INTERVAL_SECONDS`
 - `LIVE_DATA_SUBSCRIPTION_STALE_AFTER_SECONDS`
 
-## How to Run
+## Required Apps to Start
+
+For the full runtime, these processes are required.
+
+1. Redis
+   - required for tokens, snapshots, live data, status, tickets, and locking.
+
+2. `apps/fastapi`
+   - required for dashboard UI, login flow, APIs, browser websocket endpoint.
+
+3. `apps/scheduler`
+   - required for periodic option-chain REST snapshot capture into Redis.
+
+4. `apps/live_market_data`
+   - required for FYERS websocket live updates, finalization, cleanup, and runtime heartbeat.
+
+If only FastAPI is started:
+
+- dashboard will load,
+- login route will work,
+- but Redis snapshot data may be empty,
+- and live market updates will not run.
+
+If scheduler is not started:
+
+- no current-day snapshot timeline will be written to Redis,
+- dashboard snapshot table and KPIs will remain empty.
+
+If live market data app is not started:
+
+- live websocket updates will not reach Redis,
+- browser live price cells will not update,
+- previous-day finalization and cleanup will not run.
+
+## Recommended Startup Sequence
 
 1. Start Redis.
-2. Start FastAPI:
+2. Run migrations if needed:
+   - `alembic upgrade head`
+3. Seed instruments if needed:
+   - `python scripts/seed_instruments.py`
+4. Start FastAPI:
    - `python -m apps.fastapi.src`
-3. Complete FYERS login:
+5. Complete FYERS login:
    - `/api/v1/fyers/login`
-4. Start live-data app:
+6. Start scheduler:
+   - `python -m apps.scheduler.src`
+7. Start live market data app:
    - `python -m apps.live_market_data.src`
-5. Verify:
+
+Why this order:
+
+- FastAPI must be up before login can be completed.
+- Scheduler and live-data both depend on the FYERS daily token.
+- Starting live-data before login is allowed, but it will wait in degraded mode until token is available.
+- Starting scheduler before login will still fail snapshot capture until token exists.
+
+## Verification Checklist
+
+After startup, verify:
+
+1. FYERS token exists:
+   - `/api/v1/fyers/status`
+2. Redis runtime is healthy:
    - `/api/v1/runtime-store/status`
+3. Live-data app is healthy:
    - `/api/v1/market-data/status?symbol=NIFTY`
+4. Dashboard renders snapshot data:
    - `/dashboard`
+5. Scheduler is writing Redis snapshots:
+   - dashboard snapshot time should advance on refresh
+6. Live websocket is updating prices:
+   - dashboard live badges should move to connected
 
-## Practical Behavior Summary
+## Practical Summary
 
-- FastAPI is no longer the live ingestion owner.
-- Redis is the runtime system of record for current-day dashboard data.
-- Live websocket values are display-only and not intended for DB analytics.
-- Previous-day final snapshot is retained in Redis for next-day context.
-- Current-day timeline exists in Redis and is available for intraday dashboard analytics.
-- PostgreSQL remains present as a migration safety layer.
+- `apps/scheduler` owns option-chain REST snapshot capture.
+- `apps/live_market_data` owns FYERS websocket ingestion and Redis housekeeping.
+- `apps/fastapi` owns serving APIs, dashboard, login, and browser websocket access.
+- Dashboard snapshot reads are now Redis-only.
+- Previous-day close reference in Redis prefers exact close time, else latest snapshot of that day.
+- Scheduler and dashboard snapshot runtime are now Redis-native.

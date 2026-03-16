@@ -53,8 +53,11 @@ class LiveMarketStreamingService:
             return
         self._running = True
         self._loop = asyncio.get_running_loop()
-        await self._refresh_subscriptions(force_restart=True)
         self._task = asyncio.create_task(self._subscription_refresh_loop())
+        try:
+            await self._refresh_subscriptions(force_restart=True)
+        except Exception as error:
+            await self._handle_refresh_error(error, during_startup=True)
         logger.info("Live market streaming service started")
 
     async def stop(self) -> None:
@@ -88,7 +91,7 @@ class LiveMarketStreamingService:
             except asyncio.CancelledError:
                 raise
             except Exception as error:
-                logger.error(f"Live subscription refresh failed - error: {str(error)}")
+                await self._handle_refresh_error(error, during_startup=False)
                 await asyncio.sleep(5)
 
     async def _refresh_subscriptions(self, *, force_restart: bool) -> None:
@@ -161,6 +164,35 @@ class LiveMarketStreamingService:
         self._ws_thread.start()
         logger.info(f"Live websocket started - symbols: {len(symbols)}")
 
+    async def _handle_refresh_error(
+        self,
+        error: Exception,
+        *,
+        during_startup: bool,
+    ) -> None:
+        if _is_fyers_auth_error(error):
+            self._pause_socket()
+            context = "startup" if during_startup else "refresh"
+            if _is_missing_daily_token_error(error):
+                logger.warning(
+                    "FYERS daily token unavailable, live streaming waiting for authentication - "
+                    f"context: {context} - error: {str(error)}"
+                )
+                return
+            logger.error(
+                "FYERS authentication failed, live streaming paused until a valid token is available - "
+                f"context: {context} - error: {str(error)}"
+            )
+            return
+
+        logger.error(f"Live subscription refresh failed - error: {str(error)}")
+
+    def _pause_socket(self) -> None:
+        if self._ws_client:
+            self._ws_client.keep_running = False
+            self._ws_client = None
+        self._is_connected = False
+
     def _on_connect(self) -> None:
         self._is_connected = True
         if self._ws_client and self._current_symbols:
@@ -220,3 +252,22 @@ def _log_future_error(future) -> None:
         future.result()
     except Exception as error:
         logger.error(f"Failed to write live symbol update - error: {str(error)}")
+
+
+def _is_fyers_auth_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return any(
+        marker in message
+        for marker in (
+            "fyers token for today is missing",
+            "access token",
+            "invalid token",
+            "token expired",
+            "unauthorized",
+            "authentication",
+        )
+    )
+
+
+def _is_missing_daily_token_error(error: Exception) -> bool:
+    return "fyers token for today is missing" in str(error).lower()

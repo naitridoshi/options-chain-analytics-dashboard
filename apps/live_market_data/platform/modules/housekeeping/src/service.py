@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 from libs.platform.modules.option_chain_snapshot.src import (
     IST,
@@ -87,15 +87,15 @@ class LiveMarketHousekeepingService:
 
         instruments = InstrumentCatalogService.get_active_instruments()
         for instrument in instruments:
-            latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
+            final_snapshot, selection = await self._resolve_final_snapshot(
                 instrument_symbol=instrument.symbol,
                 trade_date=trade_date,
             )
-            if not latest_snapshot:
+            if not final_snapshot:
                 continue
-            latest = latest_snapshot.get("latest") or {}
+            latest = final_snapshot.get("latest") or {}
             captured_at = latest.get("captured_at")
-            strikes = latest_snapshot.get("strikes") or []
+            strikes = final_snapshot.get("strikes") or []
             spot_price = latest.get("spot_price")
             if not captured_at or spot_price is None or not strikes:
                 continue
@@ -104,12 +104,41 @@ class LiveMarketHousekeepingService:
                 captured_at=datetime.fromisoformat(captured_at),
                 spot_price=spot_price,
                 strike_rows=_inflate_runtime_strikes(strikes),
+                selection=selection,
             )
 
         await RedisRolloverStore.set_marker("finalized", trade_date)
         logger.info(
             f"Finalized previous-day snapshot retention - trade_date: {trade_date}"
         )
+
+    async def _resolve_final_snapshot(
+        self,
+        *,
+        instrument_symbol: str,
+        trade_date: str,
+    ) -> tuple[dict | None, str]:
+        exact_close_utc = datetime.combine(
+            date.fromisoformat(trade_date),
+            time(hour=MARKET_CLOSE_HOUR, minute=MARKET_CLOSE_MINUTE),
+            tzinfo=IST,
+        ).astimezone(timezone.utc)
+        exact_close_snapshot = await RedisOptionChainSnapshotStore.get_snapshot(
+            instrument_symbol=instrument_symbol,
+            trade_date=trade_date,
+            interval_ts=exact_close_utc.isoformat(),
+        )
+        if exact_close_snapshot:
+            return exact_close_snapshot, "exact_close_time"
+
+        latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
+            instrument_symbol=instrument_symbol,
+            trade_date=trade_date,
+        )
+        if latest_snapshot:
+            return latest_snapshot, "latest_previous_market_day"
+
+        return None, "latest_previous_market_day"
 
     async def _cleanup_old_trade_dates(self, *, current_trade_date: str) -> None:
         if await RedisRolloverStore.is_marker_set("cleanup", current_trade_date):

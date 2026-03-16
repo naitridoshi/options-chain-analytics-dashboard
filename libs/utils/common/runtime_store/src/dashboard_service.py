@@ -19,28 +19,32 @@ class RuntimeDashboardService:
         *,
         symbol: str | None = None,
         timeline_limit: int = 100,
-    ) -> dict | None:
+    ) -> dict:
         instrument = await cls._resolve_instrument(symbol)
         if not instrument:
-            return None
+            return cls._build_empty_payload(symbol=symbol)
 
         trade_date = datetime.now(IST).date().isoformat()
         latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
             instrument_symbol=instrument.symbol,
             trade_date=trade_date,
         )
+        previous_day_final = (
+            await RedisOptionChainSnapshotStore.get_previous_day_final_snapshot(
+                instrument.symbol
+            )
+        )
         if not latest_snapshot:
-            return None
+            return cls._build_empty_payload(
+                instrument=instrument,
+                trade_date=trade_date,
+                previous_day_final=previous_day_final,
+            )
 
         timeline_snapshots = await RedisOptionChainSnapshotStore.get_timeline(
             instrument_symbol=instrument.symbol,
             trade_date=trade_date,
             limit=timeline_limit,
-        )
-        previous_day_final = (
-            await RedisOptionChainSnapshotStore.get_previous_day_final_snapshot(
-                instrument.symbol
-            )
         )
 
         latest_payload = dict(latest_snapshot.get("latest") or {})
@@ -50,22 +54,32 @@ class RuntimeDashboardService:
             and not latest_payload.get("prev_close_spot")
         ):
             previous_latest = previous_day_final.get("latest") or {}
-            latest_payload["prev_close_spot"] = previous_latest.get("spot_price")
+            previous_close_spot = previous_latest.get("spot_price")
+            latest_payload["prev_close_spot"] = previous_close_spot
             latest_payload["prev_close_captured_at"] = previous_latest.get(
                 "captured_at"
             )
-            latest_payload["prev_close_selection"] = "previous_day_final_snapshot"
+            latest_payload["prev_close_selection"] = previous_day_final.get(
+                "selection", "latest_previous_market_day"
+            )
+            if (
+                previous_close_spot is not None
+                and latest_payload.get("spot_price") is not None
+            ):
+                change_from_prev_close = float(latest_payload["spot_price"]) - float(
+                    previous_close_spot
+                )
+                latest_payload["change_from_prev_close"] = change_from_prev_close
+                if float(previous_close_spot) != 0:
+                    latest_payload["change_pct_from_prev_close"] = (
+                        change_from_prev_close / float(previous_close_spot)
+                    ) * 100
+                else:
+                    latest_payload["change_pct_from_prev_close"] = None
 
         return {
             "instrument": latest_snapshot.get("instrument")
-            or {
-                "id": str(instrument.id),
-                "symbol": instrument.symbol,
-                "name": getattr(instrument, "name", None) or instrument.symbol,
-                "exchange": getattr(instrument, "exchange", None),
-                "instrument_type": getattr(instrument, "instrument_type", None),
-                "fyers_symbol": instrument.fyers_symbol,
-            },
+            or cls._serialize_instrument(instrument),
             "market_date": latest_snapshot.get("market_date", trade_date),
             "refresh_seconds": latest_snapshot.get(
                 "refresh_seconds", SNAPSHOT_INTERVAL_SECONDS
@@ -83,3 +97,44 @@ class RuntimeDashboardService:
 
         instruments = InstrumentCatalogService.get_active_instruments()
         return instruments[0] if instruments else None
+
+    @classmethod
+    def _build_empty_payload(
+        cls,
+        *,
+        symbol: str | None = None,
+        instrument=None,
+        trade_date: str | None = None,
+        previous_day_final: dict | None = None,
+    ) -> dict:
+        resolved_instrument = instrument
+        if resolved_instrument is None and symbol:
+            resolved_instrument = InstrumentCatalogService.get_by_symbol(symbol.upper())
+
+        payload = {
+            "instrument": cls._serialize_instrument(resolved_instrument)
+            if resolved_instrument
+            else None,
+            "market_date": trade_date or datetime.now(IST).date().isoformat(),
+            "refresh_seconds": SNAPSHOT_INTERVAL_SECONDS,
+            "timeline": [],
+            "latest": None,
+            "strikes": [],
+            "source": "redis",
+        }
+        if previous_day_final:
+            payload["previous_day_final"] = previous_day_final.get("latest")
+        return payload
+
+    @staticmethod
+    def _serialize_instrument(instrument) -> dict | None:
+        if not instrument:
+            return None
+        return {
+            "id": str(getattr(instrument, "id", instrument.symbol)),
+            "symbol": instrument.symbol,
+            "name": getattr(instrument, "name", None) or instrument.symbol,
+            "exchange": getattr(instrument, "exchange", None),
+            "instrument_type": getattr(instrument, "instrument_type", None),
+            "fyers_symbol": instrument.fyers_symbol,
+        }

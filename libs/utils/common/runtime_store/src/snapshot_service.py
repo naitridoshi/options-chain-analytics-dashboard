@@ -6,12 +6,11 @@ from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from libs.platform.modules.option_chain_snapshot.src import (
+    build_summary_payloads,
     normalize_interval_boundary,
 )
+from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
 from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS
-from libs.utils.db.postgres.operations.src.option_snapshot_operations import (
-    OptionSnapshotOperations,
-)
 from libs.utils.db.redis.src import RedisOptionChainSnapshotStore
 
 IST = ZoneInfo("Asia/Kolkata")
@@ -24,15 +23,19 @@ class RuntimeSnapshotPayload:
     refresh_seconds: int
     latest: dict
     strikes: list[dict]
+    selection: str | None = None
 
     def to_dict(self) -> dict:
-        return {
+        payload = {
             "instrument": self.instrument,
             "market_date": self.market_date,
             "refresh_seconds": self.refresh_seconds,
             "latest": self.latest,
             "strikes": self.strikes,
         }
+        if self.selection:
+            payload["selection"] = self.selection
+        return payload
 
 
 class RuntimeSnapshotService:
@@ -64,6 +67,7 @@ class RuntimeSnapshotService:
         captured_at: datetime,
         spot_price: Decimal,
         strike_rows: list[dict],
+        selection: str,
     ) -> None:
         payload = RuntimeSnapshotService.build_runtime_payload(
             instrument=instrument,
@@ -71,10 +75,33 @@ class RuntimeSnapshotService:
             spot_price=spot_price,
             strike_rows=strike_rows,
         )
+        payload.selection = selection
         await RedisOptionChainSnapshotStore.save_previous_day_final_snapshot(
             instrument_symbol=instrument.symbol,
             payload=payload.to_dict(),
         )
+
+    @staticmethod
+    async def get_latest_captured_at_for_today_ist() -> datetime | None:
+        trade_date = datetime.now(IST).date().isoformat()
+        latest_captured_at: datetime | None = None
+
+        for instrument in InstrumentCatalogService.get_active_instruments():
+            latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
+                instrument_symbol=instrument.symbol,
+                trade_date=trade_date,
+            )
+            if not latest_snapshot:
+                continue
+            latest = latest_snapshot.get("latest") or {}
+            captured_at = latest.get("captured_at")
+            if not captured_at:
+                continue
+            captured_at_dt = datetime.fromisoformat(captured_at)
+            if latest_captured_at is None or captured_at_dt > latest_captured_at:
+                latest_captured_at = captured_at_dt
+
+        return latest_captured_at
 
     @staticmethod
     def build_runtime_payload(
@@ -84,8 +111,8 @@ class RuntimeSnapshotService:
         spot_price: Decimal,
         strike_rows: list[dict],
     ) -> RuntimeSnapshotPayload:
-        interval_summary_values, strike_summary_values = (
-            OptionSnapshotOperations._build_summary_payloads(strike_rows)
+        interval_summary_values, strike_summary_values = build_summary_payloads(
+            strike_rows
         )
         latest = {
             "captured_at": captured_at.isoformat(),
@@ -135,7 +162,7 @@ class RuntimeSnapshotService:
 
         return RuntimeSnapshotPayload(
             instrument={
-                "id": str(instrument.id),
+                "id": str(getattr(instrument, "id", instrument.symbol)),
                 "symbol": instrument.symbol,
                 "name": getattr(instrument, "name", None) or instrument.symbol,
                 "exchange": getattr(instrument, "exchange", None),

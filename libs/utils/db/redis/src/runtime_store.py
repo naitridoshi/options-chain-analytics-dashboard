@@ -135,6 +135,19 @@ class RedisOptionChainSnapshotStore:
         return json.loads(payload) if payload else None
 
     @staticmethod
+    async def get_snapshot(
+        *,
+        instrument_symbol: str,
+        trade_date: str,
+        interval_ts: str,
+    ) -> dict[str, Any] | None:
+        client = await redis_client_manager.get_client()
+        payload = await client.get(
+            intraday_snapshot_key(instrument_symbol, trade_date, interval_ts)
+        )
+        return json.loads(payload) if payload else None
+
+    @staticmethod
     async def get_timeline(
         *,
         instrument_symbol: str,
