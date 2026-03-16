@@ -38,9 +38,7 @@ class InstrumentOperations(BaseOperations[Instrument]):
             repo = get_instruments_repository(session)
 
             seen_symbols: set[str] = set()
-            insert_entities: list[Instrument] = []
-            inserted_symbols: list[str] = []
-            skipped_symbols: list[str] = []
+            insert_payloads: list[dict[str, Any]] = []
 
             for instrument_data in instruments:
                 symbol = instrument_data.get("symbol")
@@ -52,17 +50,13 @@ class InstrumentOperations(BaseOperations[Instrument]):
                 if symbol in seen_symbols:
                     continue
                 seen_symbols.add(symbol)
+                insert_payloads.append(instrument_data)
 
-                existing = await repo.get(repo.model.symbol == symbol)
-                if existing:
-                    skipped_symbols.append(symbol)
-                    continue
-
-                insert_entities.append(Instrument(**instrument_data))
-                inserted_symbols.append(symbol)
-
-            if insert_entities:
-                await repo.add_many(insert_entities, commit=False, refresh=False)
+            inserted_symbol_set = await repo.bulk_insert_ignore_existing(
+                insert_payloads
+            )
+            inserted_symbols = sorted(inserted_symbol_set)
+            skipped_symbols = sorted(seen_symbols - inserted_symbol_set)
 
             return {
                 "inserted_symbols": inserted_symbols,

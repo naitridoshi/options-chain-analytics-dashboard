@@ -112,6 +112,48 @@
       line-height: 1.5;
     }
 
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .field input {
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid #27406a;
+      background: #13213b;
+      color: var(--text);
+      padding: 0 12px;
+      font-size: 13px;
+    }
+
+    .form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 720px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     code {
       background: #12213a;
       border: 1px solid #2a4268;
@@ -127,6 +169,22 @@
     <div class="subtitle">Run this once every morning so snapshots and scheduler can access market data for today.</div>
 
     <div id="tokenStatus" class="status warn">Checking token status...</div>
+
+    <form method="post" action="/login">
+      <div class="form-grid">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" type="submit">Sign In</button>
+      </div>
+    </form>
 
     <div class="row">
       <a class="btn" href="/api/v1/fyers/login">Login with FYERS</a>
@@ -149,6 +207,16 @@
       }
 
       statusEl.className = "status warn";
+      if (error === "invalid_credentials") {
+        statusEl.textContent = "Invalid username or password. Try again.";
+        return true;
+      }
+
+      if (error === "auth_required") {
+        statusEl.textContent = "Sign in first, then continue with FYERS login.";
+        return true;
+      }
+
       if (error === "missing_auth_code") {
         statusEl.textContent = "FYERS callback did not return an auth code. Try login again.";
         return true;
@@ -197,7 +265,7 @@
         if (!payload.ok) {
           statusEl.className = "status warn";
           statusEl.textContent = payload.status === 401
-            ? "Authentication required. Reload the page and sign in again."
+            ? "Sign in to continue, then run FYERS login for today."
             : "Unable to fetch FYERS status.";
           return;
         }

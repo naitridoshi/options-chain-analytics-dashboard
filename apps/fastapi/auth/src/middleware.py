@@ -10,6 +10,7 @@ from starlette.middleware.base import (
     RequestResponseEndpoint,
 )
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette_context import context, plugins
@@ -18,6 +19,12 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.custom_logger.src.helper import extra_details_for_req
+from libs.utils.config.src.auth import (
+    AUTH_SESSION_COOKIE_NAME,
+    AUTH_SESSION_MAX_AGE_SECONDS,
+    AUTH_SESSION_SECRET,
+    AUTH_SESSION_SECURE,
+)
 
 log = CustomLogger("AppMiddleware")
 
@@ -131,6 +138,14 @@ middlewares = [
     Middleware(
         ProxyHeadersMiddleware,
         trusted_hosts="*",  # Trust all hosts to properly extract client IP
+    ),
+    Middleware(
+        SessionMiddleware,
+        secret_key=AUTH_SESSION_SECRET,
+        session_cookie=AUTH_SESSION_COOKIE_NAME,
+        max_age=AUTH_SESSION_MAX_AGE_SECONDS,
+        same_site="lax",
+        https_only=AUTH_SESSION_SECURE,
     ),
     Middleware(
         CORSMiddleware,

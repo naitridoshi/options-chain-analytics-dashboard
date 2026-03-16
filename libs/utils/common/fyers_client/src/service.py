@@ -7,13 +7,13 @@ from fyers_apiv3 import fyersModel
 
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src.helpers import sha256_hexdigest
+from libs.utils.common.runtime_store.src import RuntimeTokenService
 from libs.utils.config.src.fyers import (
     FYERS_APP_ID,
     FYERS_LOG_PATH,
     FYERS_REDIRECT_URI,
     FYERS_SECRET_KEY,
 )
-from libs.utils.db.postgres.operations.src import FyersTokenOperations
 
 log = CustomLogger("FyersClientService")
 logger, listener = log.get_logger()
@@ -25,9 +25,9 @@ class FyersClientService:
 
     @classmethod
     async def get_valid_access_token(cls) -> str:
-        token_row = await FyersTokenOperations.get_today_token()
-        if token_row and token_row.access_token:
-            return token_row.access_token
+        token = await RuntimeTokenService.get_today_token()
+        if token and token.access_token:
+            return token.access_token
         raise ValueError(
             "FYERS token for today is missing. Complete login flow via /api/v1/fyers/login."
         )
@@ -46,7 +46,7 @@ class FyersClientService:
     @classmethod
     async def exchange_auth_code_and_store(cls, auth_code: str) -> str:
         access_token = await cls._validate_auth_code(auth_code)
-        await FyersTokenOperations.upsert_today_token(
+        await RuntimeTokenService.upsert_today_token(
             access_token=access_token,
             expires_at=datetime.now(timezone.utc),
         )
@@ -55,28 +55,7 @@ class FyersClientService:
 
     @classmethod
     async def get_today_token_status(cls) -> dict:
-        token_row = await FyersTokenOperations.get_today_token()
-        if not token_row:
-            return {
-                "has_token": False,
-                "token_date": datetime.now(timezone.utc).date().isoformat(),
-                "message": "No token stored for today. Complete /api/v1/fyers/login.",
-            }
-
-        return {
-            "has_token": True,
-            "token_date": token_row.token_date.isoformat(),
-            "created_at": token_row.created_at.isoformat()
-            if getattr(token_row, "created_at", None)
-            else None,
-            "updated_at": token_row.updated_at.isoformat()
-            if getattr(token_row, "updated_at", None)
-            else None,
-            "expires_at": token_row.expires_at.isoformat()
-            if getattr(token_row, "expires_at", None)
-            else None,
-            "message": "FYERS token for today is available.",
-        }
+        return (await RuntimeTokenService.get_today_token_status()).__dict__
 
     @classmethod
     async def fetch_option_chain(

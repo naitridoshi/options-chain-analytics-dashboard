@@ -1,0 +1,52 @@
+from libs.utils.config.src import config
+
+REDIS_ENABLED = str(config.get("REDIS_ENABLED", "false")).lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+REDIS_URL = config.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+REDIS_KEY_PREFIX = config.get("REDIS_KEY_PREFIX", "ocad")
+REDIS_SOCKET_TIMEOUT_SECONDS = float(config.get("REDIS_SOCKET_TIMEOUT_SECONDS", 5.0))
+REDIS_HEALTH_CHECK_INTERVAL_SECONDS = int(
+    config.get("REDIS_HEALTH_CHECK_INTERVAL_SECONDS", 30)
+)
+REDIS_RUNTIME_STORE_USE_POSTGRES_FALLBACK = str(
+    config.get("REDIS_RUNTIME_STORE_USE_POSTGRES_FALLBACK", "true")
+).lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+REDIS_RUNTIME_STORE_WRITE_THROUGH_POSTGRES = str(
+    config.get("REDIS_RUNTIME_STORE_WRITE_THROUGH_POSTGRES", "true")
+).lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
+REDIS_TOKEN_TTL_SECONDS = int(config.get("REDIS_TOKEN_TTL_SECONDS", 60 * 60 * 20))
+REDIS_LIVE_DATA_TTL_SECONDS = int(config.get("REDIS_LIVE_DATA_TTL_SECONDS", 60 * 30))
+REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS = int(
+    config.get("REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS", 60 * 60 * 36)
+)
+REDIS_PREVIOUS_DAY_SNAPSHOT_TTL_SECONDS = int(
+    config.get("REDIS_PREVIOUS_DAY_SNAPSHOT_TTL_SECONDS", 60 * 60 * 72)
+)
+REDIS_LOCK_TTL_SECONDS = int(config.get("REDIS_LOCK_TTL_SECONDS", 90))
+REDIS_ROLLOVER_CHECK_INTERVAL_SECONDS = int(
+    config.get("REDIS_ROLLOVER_CHECK_INTERVAL_SECONDS", 60)
+)
+REDIS_MARKET_CLOSE_FINALIZE_DELAY_SECONDS = int(
+    config.get("REDIS_MARKET_CLOSE_FINALIZE_DELAY_SECONDS", 300)
+)
+REDIS_WEBSOCKET_TICKET_TTL_SECONDS = int(
+    config.get("REDIS_WEBSOCKET_TICKET_TTL_SECONDS", 60)
+)
+REDIS_LIVE_APP_HEARTBEAT_TTL_SECONDS = int(
+    config.get("REDIS_LIVE_APP_HEARTBEAT_TTL_SECONDS", 45)
+)

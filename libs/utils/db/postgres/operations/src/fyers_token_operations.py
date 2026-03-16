@@ -29,19 +29,8 @@ class FyersTokenOperations(BaseOperations[FyersToken]):
         today = datetime.now(timezone.utc).date()
         async with postgres_connection.get_session() as session:
             repo = get_fyers_tokens_repository(session)
-            existing = await repo.get(repo.model.token_date == today)
-            if existing:
-                return await repo.update(
-                    existing,
-                    {
-                        "access_token": access_token,
-                        "expires_at": expires_at,
-                    },
-                    commit=False,
-                )
-            token = FyersToken(
-                access_token=access_token,
+            return await repo.upsert_for_date(
                 token_date=today,
+                access_token=access_token,
                 expires_at=expires_at,
             )
-            return await repo.add(token, commit=False, refresh=False)

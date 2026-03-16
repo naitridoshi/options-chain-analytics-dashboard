@@ -95,6 +95,17 @@
     }
     .fyers-badge.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
     .fyers-badge.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
+    .live-badge {
+      font-size: 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .live-badge.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
+    .live-badge.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
+    .live-badge.pending { background: #2a2f1f; border-color: #4a5080; color: #a8b8ff; }
 
     .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
@@ -383,11 +394,15 @@
           <div class="symbol-meta">
             <span id="symbolBadge">NIFTY</span>
             <span id="fyersStatusBadge" class="fyers-badge warn">FYERS: CHECKING</span>
+            <span id="liveStatusBadge" class="live-badge pending">LIVE: CONNECTING</span>
           </div>
           <span class="pill">LATEST SNAPSHOT</span>
         </div>
         <div class="actions">
           <a class="link-btn" href="/login">FYERS Login</a>
+          <form method="post" action="/logout" style="margin:0;">
+            <button type="submit">Sign Out</button>
+          </form>
         </div>
       </div>
 
@@ -451,6 +466,12 @@
     let timerId = null;
     let refreshMs = 5 * 60 * 1000;
     let hasRendered = false;
+    let ws = null;
+    let reconnectAttempts = 0;
+    const strikeToRowMap = {};
+    let lastLiveUpdateAt = null;
+    let liveStaleAfterSeconds = null;
+    let websocketTicket = null;
 
     function scheduleReload(delayMs = refreshMs) {
       if (timerId) clearTimeout(timerId);
@@ -622,6 +643,109 @@
       el.textContent = message;
     }
 
+    function setLiveStatus(state) {
+      const badge = document.getElementById("liveStatusBadge");
+      if (!badge) return;
+      if (state === "ok") {
+        badge.className = "live-badge ok";
+        badge.textContent = "LIVE: CONNECTED";
+        return;
+      }
+      if (state === "warn") {
+        badge.className = "live-badge warn";
+        badge.textContent = "LIVE: DISCONNECTED";
+        return;
+      }
+      badge.className = "live-badge pending";
+      badge.textContent = "LIVE: CONNECTING";
+    }
+
+    function refreshLiveStatusHeartbeat() {
+      if (!lastLiveUpdateAt || !liveStaleAfterSeconds) return;
+      const elapsedSeconds = (Date.now() - lastLiveUpdateAt) / 1000;
+      if (elapsedSeconds > liveStaleAfterSeconds) {
+        setLiveStatus("warn");
+      }
+    }
+
+    async function ensureWebSocketTicket(symbol) {
+      if (websocketTicket) return websocketTicket;
+      const response = await fetch(`/api/v1/market-data/ws-ticket?symbol=${encodeURIComponent(symbol)}`, {
+        method: "POST",
+        credentials: "include"
+      });
+      const body = await response.json();
+      websocketTicket = body?.data?.ticket || null;
+      return websocketTicket;
+    }
+
+    async function connectWebSocket(symbol) {
+      if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+        return;
+      }
+      const ticket = await ensureWebSocketTicket(symbol);
+      if (!ticket) {
+        setLiveStatus("warn");
+        return;
+      }
+      setLiveStatus("pending");
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      ws = new WebSocket(`${protocol}://${window.location.host}/ws/market-data?symbol=${encodeURIComponent(symbol)}&ticket=${encodeURIComponent(ticket)}`);
+
+      ws.onopen = () => {
+        reconnectAttempts = 0;
+        setLiveStatus("ok");
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          applyLiveUpdate(JSON.parse(event.data));
+        } catch (error) {
+          console.error("Failed to parse live market update", error);
+        }
+      };
+
+      ws.onclose = () => {
+        websocketTicket = null;
+        setLiveStatus("warn");
+        scheduleReconnect(symbol);
+      };
+
+      ws.onerror = () => {
+        websocketTicket = null;
+        setLiveStatus("warn");
+      };
+    }
+
+    function scheduleReconnect(symbol) {
+      if (reconnectAttempts >= 10) return;
+      reconnectAttempts += 1;
+      const delay = Math.min(1000 * (2 ** reconnectAttempts), 30000);
+      setTimeout(() => {
+        connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
+      }, delay);
+    }
+
+    function applyLiveUpdate(data) {
+      if (!data || !data.strike_price || !data.option_type) return;
+      const row = strikeToRowMap[String(data.strike_price)];
+      if (!row) return;
+      lastLiveUpdateAt = Date.now();
+      liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
+      setLiveStatus("ok");
+
+      const side = data.option_type === "CE" ? "call" : "put";
+      const ltpCell = row.querySelector(`.${side}-ltp`);
+      const avgCell = row.querySelector(`.${side}-avg`);
+
+      if (ltpCell && data.ltp !== undefined && data.ltp !== null) {
+        ltpCell.textContent = fmt2(data.ltp);
+      }
+      if (avgCell && data.avg_price !== undefined && data.avg_price !== null) {
+        avgCell.textContent = fmt2(data.avg_price);
+      }
+    }
+
     function showLoadingState() {
       const kpiCardSkeleton = `<div class="kpi"><div class="label skeleton"></div><div class="val skeleton"></div></div>`;
       document.getElementById("kpis").innerHTML = `
@@ -780,6 +904,7 @@
       }
 
       const tbody = document.querySelector("#gridTable tbody");
+      Object.keys(strikeToRowMap).forEach((key) => delete strikeToRowMap[key]);
       tbody.innerHTML = strikes.map((row) => {
         const callCoi = row.call_oi_change ?? 0;
         const putCoi = row.put_oi_change ?? 0;
@@ -796,17 +921,17 @@
         const isAtm = atmStrike !== null && Number(row.strike_price) === Number(atmStrike);
 
         return `
-          <tr class="${isAtm ? 'atm-row' : ''}">
+          <tr class="${isAtm ? 'atm-row' : ''}" data-strike="${String(parseInt(row.strike_price, 10))}">
             <td class="call-col ${signedClass(callRatio)}">${fmt2(callRatio)}%</td>
             <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}%</td>
             <td class="call-col ${signedClass(callOi)}">${fmt(callOi)}</td>
             <td class="call-col ${signedClass(callCoi)}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
-            <td class="call-col">${fmt2(row.call_ltp)}</td>
-            <td class="call-col">-</td>
+            <td class="call-col call-ltp">${fmt2(row.call_ltp)}</td>
+            <td class="call-col call-avg">-</td>
             <td class="sp-cell ${isAtm ? 'atm' : ''}">${fmt2(row.strike_price)}</td>
-            <td class="put-col">-</td>
-            <td class="put-col">${fmt2(row.put_ltp)}</td>
+            <td class="put-col put-avg">-</td>
+            <td class="put-col put-ltp">${fmt2(row.put_ltp)}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${signedClass(putCoi)}">${fmt(putCoi)}</td>
             <td class="put-col ${signedClass(putOi)}">${fmt(putOi)}</td>
@@ -815,6 +940,10 @@
           </tr>
         `;
       }).join("");
+
+      tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
+        strikeToRowMap[rowEl.dataset.strike] = rowEl;
+      });
 
       const callOiSum = latest ? latest.call_oi_sum : null;
       const putOiSum = latest ? latest.put_oi_sum : null;
@@ -828,9 +957,14 @@
       document.getElementById("footOiPcr").textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
       document.getElementById("footCoiPcr").textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
 
-      scheduleReload(refreshMs);
+      connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
+      refreshLiveStatusHeartbeat();
+
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(load, refreshMs);
     }
 
+    setInterval(refreshLiveStatusHeartbeat, 5000);
     load();
   </script>
 </body>

@@ -3,8 +3,10 @@ from decimal import Decimal
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
+from libs.platform.modules.option_chain_snapshot.src.runtime_summary import (
+    build_summary_payloads,
+)
 from libs.utils.common.custom_logger.src import CustomLogger
-from libs.utils.db.postgres.models.src.expiry import Expiry
 from libs.utils.db.postgres.models.src.option_chain_interval_summary import (
     OptionChainIntervalSummary,
 )
@@ -40,146 +42,7 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
 
     @staticmethod
     def _build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
-        def safe_int(value) -> int:
-            if value is None:
-                return 0
-            if isinstance(value, Decimal):
-                return int(value)
-            return int(value)
-
-        def safe_decimal(value) -> Decimal | None:
-            if value is None:
-                return None
-            return Decimal(str(value))
-
-        strike_agg: dict[Decimal, dict] = {}
-        call_oi_change_sum = 0
-        put_oi_change_sum = 0
-        call_oi_sum = 0
-        put_oi_sum = 0
-        call_volume_sum = 0
-        put_volume_sum = 0
-
-        for row in summary_rows:
-            option_type = str(row.get("option_type", "")).upper()
-            row_oi_change = safe_int(row.get("oi_change"))
-            row_oi = safe_int(row.get("open_interest"))
-            row_volume = safe_int(row.get("volume"))
-            row_ltp = safe_decimal(row.get("ltp"))
-            row_ltp_change = safe_decimal(row.get("ltp_change"))
-            strike_price = Decimal(str(row["strike_price"]))
-
-            strike_entry = strike_agg.setdefault(
-                strike_price,
-                {
-                    "strike_price": strike_price,
-                    "call_option_contract_id": None,
-                    "put_option_contract_id": None,
-                    "call_oi_change": 0,
-                    "put_oi_change": 0,
-                    "call_oi": 0,
-                    "put_oi": 0,
-                    "call_volume": 0,
-                    "put_volume": 0,
-                    "call_ltp": None,
-                    "call_ltp_change": None,
-                    "put_ltp": None,
-                    "put_ltp_change": None,
-                },
-            )
-
-            if option_type == "CE":
-                strike_entry["call_option_contract_id"] = row.get("option_contract_id")
-                strike_entry["call_oi_change"] = row_oi_change
-                strike_entry["call_oi"] = row_oi
-                strike_entry["call_volume"] = row_volume
-                strike_entry["call_ltp"] = row_ltp
-                strike_entry["call_ltp_change"] = row_ltp_change
-                call_oi_change_sum += row_oi_change
-                call_oi_sum += row_oi
-                call_volume_sum += row_volume
-            elif option_type == "PE":
-                strike_entry["put_option_contract_id"] = row.get("option_contract_id")
-                strike_entry["put_oi_change"] = row_oi_change
-                strike_entry["put_oi"] = row_oi
-                strike_entry["put_volume"] = row_volume
-                strike_entry["put_ltp"] = row_ltp
-                strike_entry["put_ltp_change"] = row_ltp_change
-                put_oi_change_sum += row_oi_change
-                put_oi_sum += row_oi
-                put_volume_sum += row_volume
-
-        net_oi_change_sum = put_oi_change_sum - call_oi_change_sum
-        net_oi_sum = put_oi_sum - call_oi_sum
-        pcr_oi = Decimal(put_oi_sum) / Decimal(call_oi_sum) if call_oi_sum > 0 else None
-        pcr_oi_change = (
-            Decimal(put_oi_change_sum) / Decimal(call_oi_change_sum)
-            if call_oi_change_sum != 0
-            else None
-        )
-        total_oi_sum = put_oi_sum + call_oi_sum
-        total_oi_change_sum = put_oi_change_sum + call_oi_change_sum
-        call_oi_share_pct = (
-            (Decimal(call_oi_sum) * Decimal("100")) / Decimal(total_oi_sum)
-            if total_oi_sum > 0
-            else None
-        )
-        put_oi_share_pct = (
-            (Decimal(put_oi_sum) * Decimal("100")) / Decimal(total_oi_sum)
-            if total_oi_sum > 0
-            else None
-        )
-        call_oi_change_share_pct = (
-            (Decimal(call_oi_change_sum) * Decimal("100"))
-            / Decimal(total_oi_change_sum)
-            if total_oi_change_sum > 0
-            else None
-        )
-        put_oi_change_share_pct = (
-            (Decimal(put_oi_change_sum) * Decimal("100")) / Decimal(total_oi_change_sum)
-            if total_oi_change_sum > 0
-            else None
-        )
-
-        strike_summaries = []
-        for item in strike_agg.values():
-            strike_summaries.append(
-                {
-                    "strike_price": item["strike_price"],
-                    "call_option_contract_id": item["call_option_contract_id"],
-                    "put_option_contract_id": item["put_option_contract_id"],
-                    "call_oi_change": item["call_oi_change"],
-                    "put_oi_change": item["put_oi_change"],
-                    "net_oi_change": item["put_oi_change"] - item["call_oi_change"],
-                    "call_oi": item["call_oi"],
-                    "put_oi": item["put_oi"],
-                    "net_oi": item["put_oi"] - item["call_oi"],
-                    "call_volume": item["call_volume"],
-                    "put_volume": item["put_volume"],
-                    "call_ltp": item["call_ltp"],
-                    "call_ltp_change": item["call_ltp_change"],
-                    "put_ltp": item["put_ltp"],
-                    "put_ltp_change": item["put_ltp_change"],
-                }
-            )
-
-        interval_summary = {
-            "call_oi_change_sum": call_oi_change_sum,
-            "put_oi_change_sum": put_oi_change_sum,
-            "net_oi_change_sum": net_oi_change_sum,
-            "call_oi_sum": call_oi_sum,
-            "put_oi_sum": put_oi_sum,
-            "net_oi_sum": net_oi_sum,
-            "call_volume_sum": call_volume_sum,
-            "put_volume_sum": put_volume_sum,
-            "pcr_oi": pcr_oi,
-            "pcr_oi_change": pcr_oi_change,
-            "call_oi_share_pct": call_oi_share_pct,
-            "put_oi_share_pct": put_oi_share_pct,
-            "call_oi_change_share_pct": call_oi_change_share_pct,
-            "put_oi_change_share_pct": put_oi_change_share_pct,
-        }
-        return interval_summary, strike_summaries
+        return build_summary_payloads(summary_rows)
 
     @classmethod
     async def create_snapshot_transactional(
@@ -202,19 +65,11 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
             )
             strike_summary_repo = get_option_chain_strike_summaries_repository(session)
 
-            expiry = await expiry_repo.get(
-                [
-                    Expiry.instrument_id == instrument_id,
-                    Expiry.expiry_date == expiry_date,
-                ]
+            expiry = await expiry_repo.get_or_create(
+                instrument_id=instrument_id,
+                expiry_date=expiry_date,
+                is_weekly=is_weekly,
             )
-            if not expiry:
-                expiry = Expiry(
-                    instrument_id=instrument_id,
-                    expiry_date=expiry_date,
-                    is_weekly=is_weekly,
-                )
-                await expiry_repo.add(expiry, commit=False, refresh=False)
 
             existing_contracts = await contract_repo.list_ordered(
                 where=OptionContract.expiry_id == expiry.id,
@@ -225,39 +80,56 @@ class OptionSnapshotOperations(BaseOperations[OptionChainSnapshot]):
                 for contract in existing_contracts
             }
 
-            contracts_to_create = []
+            contracts_to_create: list[dict] = []
             for row in strike_rows:
                 key = (str(row["strike_price"]), row["option_type"])
                 if key in contract_map:
                     continue
-                contract = OptionContract(
-                    instrument_id=instrument_id,
-                    expiry_id=expiry.id,
-                    strike_price=row["strike_price"],
-                    option_type=row["option_type"],
-                    trading_symbol=row["trading_symbol"],
-                    lot_size=row.get("lot_size"),
+                contracts_to_create.append(
+                    {
+                        "instrument_id": instrument_id,
+                        "expiry_id": expiry.id,
+                        "strike_price": row["strike_price"],
+                        "option_type": row["option_type"],
+                        "trading_symbol": row["trading_symbol"],
+                        "lot_size": row.get("lot_size"),
+                    }
                 )
-                contracts_to_create.append(contract)
-                contract_map[key] = contract
 
             if contracts_to_create:
-                await contract_repo.add_many(
-                    contracts_to_create, commit=False, refresh=False
+                await contract_repo.bulk_insert_ignore_existing(contracts_to_create)
+                existing_contracts = await contract_repo.list_ordered(
+                    where=OptionContract.expiry_id == expiry.id,
+                    limit=10000,
                 )
+                contract_map = {
+                    (str(contract.strike_price), contract.option_type): contract
+                    for contract in existing_contracts
+                }
                 logger.info(
                     "Auto-created option contracts - "
                     f"instrument_id: {instrument_id} - "
                     f"count: {len(contracts_to_create)}",
                 )
 
-            snapshot = OptionChainSnapshot(
+            snapshot, snapshot_created = await snapshot_repo.get_or_create(
                 instrument_id=instrument_id,
                 expiry_id=expiry.id,
                 captured_at=captured_at,
                 spot_price=spot_price,
             )
-            await snapshot_repo.add(snapshot, commit=False, refresh=False)
+            if not snapshot_created:
+                logger.warning(
+                    "Snapshot already exists, skipping duplicate write - "
+                    f"instrument_id: {instrument_id} - "
+                    f"expiry_date: {expiry_date} - "
+                    f"captured_at: {captured_at.isoformat()}"
+                )
+                return {
+                    "snapshot_id": snapshot.id,
+                    "strikes_inserted": 0,
+                    "expiry_id": expiry.id,
+                }
 
             strike_values = []
             summary_rows = []
