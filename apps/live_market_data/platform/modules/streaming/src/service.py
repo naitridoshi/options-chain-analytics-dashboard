@@ -5,6 +5,7 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
+from time import monotonic
 
 from fyers_apiv3.FyersWebsocket import data_ws
 
@@ -59,6 +60,13 @@ class LiveMarketStreamingService:
         self._current_symbols: list[str] = []
         self._is_connected = False
         self._last_tick_at: str | None = None
+        self._last_ws_error_log_at = 0.0
+        self._suppressed_ws_error_count = 0
+        self._last_redis_error_log_at = 0.0
+        self._suppressed_redis_error_count = 0
+        self._redis_failure_count = 0
+        self._redis_retry_after = 0.0
+        self._redis_degraded = False
 
     async def start(self) -> None:
         if self._running:
@@ -227,11 +235,25 @@ class LiveMarketStreamingService:
 
     def _on_close(self) -> None:
         self._is_connected = False
-        logger.warning("Live websocket disconnected")
+        _log_throttled(
+            level="warning",
+            message="Live websocket disconnected",
+            last_logged_at_attr="_last_ws_error_log_at",
+            suppressed_count_attr="_suppressed_ws_error_count",
+            owner=self,
+            window_seconds=10,
+        )
 
     def _on_error(self, error: Exception) -> None:
         self._is_connected = False
-        logger.error(f"Live websocket error - error: {str(error)}")
+        _log_throttled(
+            level="error",
+            message=f"Live websocket error - error: {str(error)}",
+            last_logged_at_attr="_last_ws_error_log_at",
+            suppressed_count_attr="_suppressed_ws_error_count",
+            owner=self,
+            window_seconds=10,
+        )
 
     def _on_message(self, message: dict) -> None:
         if not isinstance(message, dict):
@@ -251,14 +273,12 @@ class LiveMarketStreamingService:
                 stale_after_seconds=LIVE_DATA_SUBSCRIPTION_STALE_AFTER_SECONDS,
             )
             self._last_tick_at = payload["last_update"]
-            future = asyncio.run_coroutine_threadsafe(
-                RedisLiveMarketStore.write_live_underlying(
+            self._schedule_live_write(
+                lambda: RedisLiveMarketStore.write_live_underlying(
                     instrument_symbol=underlying_subscription.instrument_symbol,
                     payload=payload,
-                ),
-                self._loop,
+                )
             )
-            future.add_done_callback(_log_future_error)
             return
 
         subscribed_option = self._subscription_map.get(symbol)
@@ -279,15 +299,13 @@ class LiveMarketStreamingService:
         }
         self._last_tick_at = payload["last_update"]
 
-        future = asyncio.run_coroutine_threadsafe(
-            RedisLiveMarketStore.write_live_symbol(
+        self._schedule_live_write(
+            lambda: RedisLiveMarketStore.write_live_symbol(
                 instrument_symbol=subscribed_option.instrument_symbol,
                 symbol=subscribed_option.trading_symbol,
                 payload=payload,
-            ),
-            self._loop,
+            )
         )
-        future.add_done_callback(_log_future_error)
 
     async def _get_previous_close_spot(self, instrument_symbol: str) -> float | None:
         previous_day_final = (
@@ -303,12 +321,72 @@ class LiveMarketStreamingService:
             return None
         return float(spot_price)
 
+    def _schedule_live_write(self, coroutine_factory) -> None:
+        if not self._loop:
+            return
 
-def _log_future_error(future) -> None:
-    try:
-        future.result()
-    except Exception as error:
-        logger.error(f"Failed to write live symbol update - error: {str(error)}")
+        now = monotonic()
+        if now < self._redis_retry_after:
+            return
+
+        coroutine = coroutine_factory()
+        future = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
+        future.add_done_callback(self._handle_live_write_result)
+
+    def _handle_live_write_result(self, future) -> None:
+        try:
+            future.result()
+        except Exception as error:
+            self._handle_redis_write_error(error)
+            return
+
+        if self._redis_degraded:
+            logger.info("Redis live write path recovered")
+        self._redis_degraded = False
+        self._redis_failure_count = 0
+        self._redis_retry_after = 0.0
+
+    def _handle_redis_write_error(self, error: Exception) -> None:
+        self._redis_failure_count += 1
+        backoff_seconds = min(30, 2 ** min(self._redis_failure_count, 4))
+        self._redis_retry_after = monotonic() + backoff_seconds
+        self._redis_degraded = True
+        _log_throttled(
+            level="error",
+            message=(
+                "Failed to write live symbol update - "
+                f"error: {str(error)} - retry_backoff_seconds: {backoff_seconds}"
+            ),
+            last_logged_at_attr="_last_redis_error_log_at",
+            suppressed_count_attr="_suppressed_redis_error_count",
+            owner=self,
+            window_seconds=10,
+        )
+
+
+def _log_throttled(
+    *,
+    level: str,
+    message: str,
+    last_logged_at_attr: str,
+    suppressed_count_attr: str,
+    owner,
+    window_seconds: int,
+) -> None:
+    now = monotonic()
+    last_logged_at = getattr(owner, last_logged_at_attr)
+    suppressed_count = getattr(owner, suppressed_count_attr)
+
+    if now - last_logged_at < window_seconds:
+        setattr(owner, suppressed_count_attr, suppressed_count + 1)
+        return
+
+    suffix = ""
+    if suppressed_count:
+        suffix = f" - suppressed_duplicates: {suppressed_count}"
+    getattr(logger, level)(f"{message}{suffix}")
+    setattr(owner, last_logged_at_attr, now)
+    setattr(owner, suppressed_count_attr, 0)
 
 
 def _is_fyers_auth_error(error: Exception) -> bool:
