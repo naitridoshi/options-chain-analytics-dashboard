@@ -265,6 +265,7 @@ class LiveMarketStreamingService:
         if not subscribed_option:
             return
 
+        received_at = datetime.now(timezone.utc).isoformat()
         payload = {
             "instrument_symbol": subscribed_option.instrument_symbol,
             "symbol": subscribed_option.trading_symbol,
@@ -272,7 +273,8 @@ class LiveMarketStreamingService:
             "option_type": subscribed_option.option_type,
             "ltp": message.get("ltp"),
             "avg_price": message.get("avg_trade_price") or message.get("avg_price"),
-            "last_update": datetime.now(timezone.utc).isoformat(),
+            "source_received_at": received_at,
+            "last_update": received_at,
             "stale_after_seconds": LIVE_DATA_SUBSCRIPTION_STALE_AFTER_SECONDS,
         }
         self._last_tick_at = payload["last_update"]
@@ -337,6 +339,7 @@ def _build_underlying_payload(
     stale_after_seconds: int,
 ) -> dict:
     normalized_spot_price = _as_float(spot_price)
+    received_at = datetime.now(timezone.utc).isoformat()
     change_from_prev_close = None
     change_pct_from_prev_close = None
     if normalized_spot_price is not None and prev_close_spot is not None:
@@ -354,7 +357,8 @@ def _build_underlying_payload(
         "prev_close_spot": prev_close_spot,
         "change_from_prev_close": change_from_prev_close,
         "change_pct_from_prev_close": change_pct_from_prev_close,
-        "last_update": datetime.now(timezone.utc).isoformat(),
+        "source_received_at": received_at,
+        "last_update": received_at,
         "stale_after_seconds": stale_after_seconds,
     }
 

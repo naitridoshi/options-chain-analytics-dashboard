@@ -11,6 +11,7 @@ Primary goals:
 - keep live websocket ingestion in `apps/live_market_data`,
 - store current-day dashboard snapshot data in Redis,
 - store live `ltp` and `avg_price` in Redis,
+- store live underlying spot data in Redis,
 - retain one previous-day final snapshot in Redis for next-day comparison,
 - remove PostgreSQL from the scheduler/dashboard runtime path.
 
@@ -70,6 +71,7 @@ Redis is used for:
 - current-day latest snapshot pointer,
 - previous-day final snapshot retention,
 - live symbol market data,
+- live underlying market data,
 - browser websocket tickets,
 - live app lock,
 - live app heartbeat,
@@ -84,6 +86,7 @@ Important key groups:
 - `latest:*`
 - `previous-day:final:*`
 - `live:symbol:*`
+- `live:underlying:*`
 - `live:channel:*`
 - `websocket:ticket:*`
 - `locks:live-market-data`
@@ -126,14 +129,17 @@ Flow:
 2. For each active instrument, call FYERS option-chain REST.
 3. Parse the option-chain response to determine the active option trading symbols for the nearest expiry.
 4. Connect to FYERS websocket with those trading symbols.
-5. Receive `SymbolUpdate` ticks.
-6. Write live per-symbol payloads to Redis.
-7. Publish updates on Redis channels for browser websocket consumers.
+5. Also subscribe to the instrument underlying symbol itself.
+6. Receive `SymbolUpdate` ticks.
+7. Write live option-symbol payloads to Redis.
+8. Write live underlying spot payloads to Redis.
+9. Publish updates on Redis channels for browser websocket consumers.
 
 Important detail:
 
 - `apps/live_market_data` does use FYERS option-chain REST, but only to derive websocket subscription symbols.
 - It does not own the dashboard snapshot timeline.
+- The live-data app computes underlying `change_from_prev_close` and `change_pct_from_prev_close` using the Redis previous-day final spot snapshot as the base.
 
 ### 3. Dashboard Flow
 
@@ -147,13 +153,41 @@ Flow:
 4. Browser renders strike table and snapshot KPIs from Redis payload.
 5. Browser requests websocket ticket from `/api/v1/market-data/ws-ticket`.
 6. Browser connects to `/ws/market-data?symbol=...&ticket=...`.
-7. Live `ltp` and `avg_price` cells are patched from websocket updates.
+7. Live `ltp`, `avg_price`, `spot`, `change`, and `change %` are patched from websocket updates.
 
 The dashboard no longer falls back to PostgreSQL reads.
 
 Operational consequence:
 
 - if Redis has no intraday snapshot for the current market day, the dashboard returns an empty Redis-shaped payload rather than falling back to PostgreSQL.
+- if a current-day snapshot is missing but live underlying data exists in Redis, the dashboard can still seed spot/change values from live data plus the previous-day final snapshot.
+
+## Dashboard Rendering Rules
+
+The dashboard now splits snapshot values and live values intentionally.
+
+Snapshot-driven:
+
+- strike table structure,
+- OI / COI aggregates,
+- PCR metrics,
+- previous-day reference metadata.
+
+Websocket/live Redis-driven:
+
+- option `LTP`,
+- option `VWAP` (`avg_price`),
+- underlying `spot`,
+- underlying `change`,
+- underlying `change %`.
+
+Important UI behavior:
+
+- option `LTP` is not rendered from option-chain snapshot payload anymore,
+- option `VWAP` is not rendered from snapshot payload,
+- spot/change/change% are not tied to the snapshot refresh cadence anymore,
+- live values are preserved across table/KPI rerenders until the next websocket tick arrives,
+- this avoids blank flashes during dashboard auto-refresh.
 
 ## Previous-Day Final Snapshot Logic
 
@@ -245,6 +279,14 @@ Browser websocket auth:
 - browser websocket upgrade does not rely on basic auth,
 - FastAPI issues a short-lived Redis-backed websocket ticket,
 - websocket endpoint consumes the ticket before accepting the browser connection.
+- websocket ticket consumption is atomic in Redis.
+
+Browser websocket relay:
+
+- FastAPI subscribes to the instrument Redis live channel,
+- Redis Pub/Sub messages are streamed directly to the browser websocket,
+- relay no longer uses a 1-second polling loop,
+- each forwarded payload includes `relay_forwarded_at` for latency inspection.
 
 FYERS auth:
 
@@ -376,6 +418,7 @@ If live market data app is not started:
 
 - live websocket updates will not reach Redis,
 - browser live price cells will not update,
+- browser live spot/change cards will not update,
 - previous-day finalization and cleanup will not run.
 
 ## Recommended Startup Sequence
@@ -421,6 +464,33 @@ After startup, verify:
    - dashboard snapshot time should advance on refresh
 7. Live websocket is updating prices:
    - dashboard live badges should move to connected
+8. Live spot/change values update independently of snapshot refresh:
+   - dashboard KPI cards should move on websocket updates even between snapshot intervals
+9. Option live cells do not flash blank on refresh:
+   - `LTP` and `VWAP` should retain the last websocket-rendered values until the next tick arrives
+
+## Latency Verification
+
+To validate live latency end to end:
+
+1. Start:
+   - `python -m apps.fastapi.src`
+   - `python -m apps.scheduler.src`
+   - `python -m apps.live_market_data.src`
+2. Sign in on `/login`.
+3. Complete FYERS login.
+4. Open `/dashboard`.
+5. Open browser DevTools and inspect the `/ws/market-data` websocket frames.
+6. Compare payload timestamps:
+   - `source_received_at`: when `apps/live_market_data` received the FYERS tick
+   - `relay_forwarded_at`: when FastAPI forwarded the Redis Pub/Sub payload to the browser
+
+Interpretation:
+
+- if `relay_forwarded_at` is close to `source_received_at`, internal relay latency is low,
+- if visible delay still remains high after that, the delay is likely upstream from FYERS tick delivery,
+- option `LTP` and especially `VWAP` depend on fresh trade ticks for that symbol and cannot be forced to update every 3-5 seconds if FYERS does not emit them,
+- underlying `spot/change/change%` should typically move more frequently than option rows.
 
 ## Practical Summary
 
@@ -428,6 +498,7 @@ After startup, verify:
 - `apps/live_market_data` owns FYERS websocket ingestion and Redis housekeeping.
 - `apps/fastapi` owns serving APIs, dashboard, login, and browser websocket access.
 - Dashboard snapshot reads are now Redis-only.
+- Live spot/change/change% and option LTP/VWAP are websocket-driven from Redis live data.
 - Previous-day close reference in Redis prefers exact close time, else latest snapshot of that day.
 - Scheduler and dashboard snapshot runtime are now Redis-native.
 - Browser-facing auth now uses signed session cookies instead of browser basic auth.
