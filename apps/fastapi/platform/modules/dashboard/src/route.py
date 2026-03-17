@@ -1,8 +1,14 @@
+from html import escape
+
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.responses import RedirectResponse
 
-from apps.fastapi.auth.src.basic_auth import get_current_user, verify_basic_auth
+from apps.fastapi.auth.src.basic_auth import (
+    get_current_display_user,
+    get_current_user,
+    verify_basic_auth,
+)
 from apps.fastapi.platform.modules.dashboard.src.service import (
     OptionChainDashboardService,
 )
@@ -12,6 +18,14 @@ from libs.utils.common.constants.src.templates import (
 )
 
 dashboard_route = APIRouter(tags=["Dashboard"])
+
+
+def _render_login_template(current_user: str | None) -> str:
+    display_name = escape(current_user or "")
+    is_authenticated = "true" if current_user else "false"
+    return LOGIN_TEMPLATE_HTML.replace("__AUTH_DISPLAY_NAME__", display_name).replace(
+        "__IS_AUTHENTICATED__", is_authenticated
+    )
 
 
 @dashboard_route.get("/api/v1/dashboard/data")
@@ -29,9 +43,8 @@ async def dashboard_data(
 
 @dashboard_route.get("/login", response_class=HTMLResponse)
 async def fyers_login_page(request: Request):
-    if get_current_user(request):
-        return RedirectResponse(url="/dashboard", status_code=303)
-    return HTMLResponse(LOGIN_TEMPLATE_HTML)
+    current_user = get_current_display_user(request)
+    return HTMLResponse(_render_login_template(current_user))
 
 
 @dashboard_route.get("/dashboard", response_class=HTMLResponse)

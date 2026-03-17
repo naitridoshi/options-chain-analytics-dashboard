@@ -109,7 +109,7 @@ async def session_login(
         )
 
     create_authenticated_session(request, username)
-    return RedirectResponse(url="/dashboard", status_code=303)
+    return RedirectResponse(url="/login?login=success", status_code=303)
 
 
 @core_route.post("/logout")
