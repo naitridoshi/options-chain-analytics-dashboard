@@ -153,6 +153,144 @@
 
     .meta { color: var(--muted); font-size: 11px; }
 
+    .breadth-card {
+      margin-top: 10px;
+      border: 1px solid #284165;
+      border-radius: 8px;
+      background: #0e1829;
+      padding: 10px;
+    }
+
+    .breadth-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .breadth-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      color: #d8e7ff;
+    }
+
+    .breadth-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .breadth-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .breadth-item {
+      border: 1px solid #243b5f;
+      border-radius: 8px;
+      padding: 8px;
+      background: #101c31;
+    }
+
+    .breadth-item .label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .breadth-item .value {
+      margin-top: 4px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .breadth-toggle-row {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .breadth-toggle {
+      background: #13213b;
+      border: 1px solid #27406a;
+      color: #d7e7ff;
+      border-radius: 8px;
+      height: 32px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .breadth-list-wrap {
+      margin-top: 10px;
+      border: 1px solid #243b5f;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0d1729;
+    }
+
+    .breadth-list-wrap[hidden] {
+      display: none;
+    }
+
+    .breadth-list {
+      max-height: 280px;
+      overflow: auto;
+    }
+
+    .breadth-list-head,
+    .breadth-list-row {
+      display: grid;
+      grid-template-columns: minmax(110px, 0.8fr) minmax(220px, 1.8fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(110px, 0.9fr);
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .breadth-list-head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #13213b;
+      border-bottom: 1px solid #284165;
+      font-weight: 800;
+      color: #dbe8ff;
+    }
+
+    .breadth-list-row {
+      border-bottom: 1px solid #172845;
+      color: #d7e4fb;
+    }
+
+    .breadth-list-row:nth-child(odd) {
+      background: #0c1526;
+    }
+
+    .breadth-list-row:nth-child(even) {
+      background: #0e192c;
+    }
+
+    .breadth-list-row:last-child {
+      border-bottom: none;
+    }
+
+    .breadth-script-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .breadth-list-empty {
+      padding: 12px 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     .kpis {
       margin-top: 10px;
       display: grid;
@@ -383,6 +521,11 @@
       .kpis { grid-template-columns: 1fr; }
       .kpi-stack { grid-template-rows: unset; grid-template-columns: repeat(3, minmax(120px, 1fr)); }
       .signal-col { grid-template-rows: unset; grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .breadth-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+      .breadth-list-head,
+      .breadth-list-row {
+        min-width: 780px;
+      }
     }
   </style>
 </head>
@@ -409,6 +552,48 @@
       <div id="dataStatus" class="status warn" style="display:none;"></div>
       <div class="meta-row">
         <div id="meta" class="meta">Market date: -</div>
+      </div>
+
+      <div class="breadth-card">
+        <div class="breadth-head">
+          <div class="breadth-title">Scripts Advance / Decline</div>
+          <div id="breadthMeta" class="breadth-meta">Captured (IST): -</div>
+        </div>
+        <div class="breadth-grid">
+          <div class="breadth-item">
+            <div class="label">Advance</div>
+            <div id="breadthAdvance" class="value pos">-</div>
+          </div>
+          <div class="breadth-item">
+            <div class="label">Decline</div>
+            <div id="breadthDecline" class="value neg">-</div>
+          </div>
+          <div class="breadth-item">
+            <div class="label">Unchanged</div>
+            <div id="breadthUnchanged" class="value">-</div>
+          </div>
+          <div class="breadth-item">
+            <div class="label">A/D Ratio</div>
+            <div id="breadthRatio" class="value">-</div>
+          </div>
+        </div>
+        <div class="breadth-toggle-row">
+          <button id="breadthToggleBtn" class="breadth-toggle" type="button">Show Scripts</button>
+        </div>
+        <div id="breadthListWrap" class="breadth-list-wrap" hidden>
+          <div class="breadth-list">
+            <div class="breadth-list-head">
+              <div>Symbol</div>
+              <div>Name</div>
+              <div>LTP</div>
+              <div>Prev Close</div>
+              <div>Change</div>
+              <div>Change %</div>
+              <div>Trend</div>
+            </div>
+            <div id="breadthListBody"></div>
+          </div>
+        </div>
       </div>
 
       <div class="kpis" id="kpis"></div>
@@ -477,6 +662,7 @@
     let liveStaleAfterSeconds = null;
     let websocketTicket = null;
     let latestPrevCloseSpot = null;
+    let isBreadthListOpen = false;
 
     function scheduleReload(delayMs = refreshMs) {
       if (timerId) clearTimeout(timerId);
@@ -530,6 +716,40 @@
         <div class="title">${title}</div>
         <div class="value">${value}</div>
       </div>`;
+    }
+
+    function setBreadthListOpen(open) {
+      isBreadthListOpen = open;
+      const wrapEl = document.getElementById("breadthListWrap");
+      const buttonEl = document.getElementById("breadthToggleBtn");
+      if (!wrapEl || !buttonEl) return;
+      wrapEl.hidden = !open;
+      buttonEl.textContent = open ? "Hide Scripts" : "Show Scripts";
+    }
+
+    function renderBreadthScriptRows(scripts) {
+      const bodyEl = document.getElementById("breadthListBody");
+      if (!bodyEl) return;
+      if (!Array.isArray(scripts) || scripts.length === 0) {
+        bodyEl.innerHTML = `<div class="breadth-list-empty">No script breadth data available.</div>`;
+        return;
+      }
+
+      bodyEl.innerHTML = scripts.map((item) => {
+        const trend = item.trend || "UNCHANGED";
+        const trendClass = trend === "ADVANCE" ? "pos" : trend === "DECLINE" ? "neg" : "";
+        return `
+          <div class="breadth-list-row">
+            <div>${escHtml(item.symbol || "-")}</div>
+            <div class="breadth-script-name" title="${escHtml(item.name || item.symbol || "-")}">${escHtml(item.name || item.symbol || "-")}</div>
+            <div>${fmt2(item.ltp)}</div>
+            <div>${fmt2(item.previous_close)}</div>
+            <div class="${signedClass(item.change)}">${fmt2Signed(item.change)}</div>
+            <div class="${signedClass(item.change_pct)}">${item.change_pct === null || item.change_pct === undefined ? "-" : `${fmt2(item.change_pct)}%`}</div>
+            <div class="${trendClass}">${escHtml(trend)}</div>
+          </div>
+        `;
+      }).join("");
     }
 
     function updateLiveSpotCards(payload) {
@@ -682,6 +902,37 @@
       } catch (e) {
         statusEl.className = "fyers-badge warn";
         statusEl.textContent = "FYERS: STATUS ERROR";
+      }
+    }
+
+    async function refreshAdvanceDecline() {
+      try {
+        const response = await fetch("/api/v1/script-snapshot/advance-decline", {
+          credentials: "include"
+        });
+        const result = await readJsonResponse(response);
+        if (!result.ok || response.status === 401) {
+          return;
+        }
+
+        const payload = result.body || {};
+        const data = payload.data || {};
+        const advance = Number(data.advance_count || 0);
+        const decline = Number(data.decline_count || 0);
+        const unchanged = Number(data.unchanged_count || 0);
+        const ratio = decline === 0
+          ? (advance === 0 ? "-" : "∞")
+          : (advance / decline).toFixed(2);
+
+        document.getElementById("breadthAdvance").textContent = fmt(advance);
+        document.getElementById("breadthDecline").textContent = fmt(decline);
+        document.getElementById("breadthUnchanged").textContent = fmt(unchanged);
+        document.getElementById("breadthRatio").textContent = ratio;
+        document.getElementById("breadthMeta").textContent =
+          `Captured (IST): ${toIST(data.captured_at)}`;
+        renderBreadthScriptRows(data.scripts || []);
+      } catch (error) {
+        // Keep the dashboard usable even if breadth fetch fails.
       }
     }
 
@@ -851,6 +1102,7 @@
         showLoadingState();
       }
       refreshFyersStatus().catch(() => {});
+      refreshAdvanceDecline().catch(() => {});
 
       let res;
       let payload;
@@ -1118,6 +1370,10 @@
 
     setInterval(refreshLiveStatusHeartbeat, 5000);
     setInterval(flushPendingOptionUpdates, LIVE_OPTION_FLUSH_MS);
+    document.getElementById("breadthToggleBtn")?.addEventListener("click", () => {
+      setBreadthListOpen(!isBreadthListOpen);
+    });
+    setBreadthListOpen(false);
     load();
   </script>
 </body>

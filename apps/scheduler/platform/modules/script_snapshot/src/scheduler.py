@@ -19,6 +19,7 @@ from libs.platform.modules.option_chain_snapshot.src import (
 from libs.utils.common.constants.src.custom_logger import Colors
 from libs.utils.common.custom_logger.src import CustomLogger, color_string
 from libs.utils.common.enums.src.custom_logger import LogType
+from libs.utils.common.runtime_store.src import RuntimeScriptSnapshotService
 from libs.utils.config.src.fyers import (
     MARKET_CLOSE_HOUR,
     MARKET_CLOSE_MINUTE,
@@ -26,7 +27,6 @@ from libs.utils.config.src.fyers import (
     MARKET_OPEN_MINUTE,
     SCRIPTS_SNAPSHOT_INTERVAL_SECONDS,
 )
-from libs.utils.db.postgres.operations.src import ScriptSnapshotOperations
 
 log = CustomLogger("ScriptSnapshotScheduler")
 logger, listener = log.get_logger()
@@ -110,7 +110,7 @@ class ScriptSnapshotScheduler:
             return
         now_ist = datetime.now(IST)
         latest_captured_at = (
-            await ScriptSnapshotOperations.get_latest_captured_at_for_today_ist()
+            await RuntimeScriptSnapshotService.get_latest_captured_at_for_today_ist()
         )
         candidate_start_ist = now_ist
         run_immediately_on_startup = False

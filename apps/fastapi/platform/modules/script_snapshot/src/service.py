@@ -1,20 +1,19 @@
 import asyncio
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from libs.platform.modules.option_chain_snapshot.src import (
     normalize_interval_boundary,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src import FyersClientService
+from libs.utils.common.runtime_store.src import RuntimeScriptSnapshotService
+from libs.utils.common.script_catalog.src import ScriptCatalogService
 from libs.utils.config.src.fyers import (
     SCRIPTS_SNAPSHOT_INTERVAL_SECONDS,
     SNAPSHOT_MAX_RETRIES,
     SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
-)
-from libs.utils.db.postgres.operations.src import (
-    ScriptOperations,
-    ScriptSnapshotOperations,
 )
 
 log = CustomLogger("ScriptSnapshotService")
@@ -42,34 +41,48 @@ class ScriptSnapshotService:
         cls._status.is_running = True
         cls._status.last_run_at = datetime.now(timezone.utc).isoformat()
         try:
-            scripts = await ScriptOperations.get_active_scripts()
+            scripts = ScriptCatalogService.get_active_scripts()
             captured_at = normalize_interval_boundary(
                 datetime.now(timezone.utc),
                 interval_seconds=SCRIPTS_SNAPSHOT_INTERVAL_SECONDS,
             )
-            previous_close_map = await ScriptSnapshotOperations.get_previous_close_reference_map_for_scripts(
-                script_ids=[script.id for script in scripts],
-                captured_at_utc=captured_at,
+            previous_close_map = (
+                await RuntimeScriptSnapshotService.get_previous_close_reference_map(
+                    captured_at_utc=captured_at,
+                )
             )
 
-            snapshot_rows = []
+            snapshot_rows: list[dict] = []
             processed = 0
             for script in scripts:
                 ltp = await cls.fetch_ltp_with_retries(script)
+                previous_close = previous_close_map.get(script.symbol)
+                change = None
+                change_pct = None
+                if previous_close is not None:
+                    previous_close_decimal = Decimal(str(previous_close))
+                    change = ltp - previous_close_decimal
+                    if previous_close_decimal != 0:
+                        change_pct = (change / previous_close_decimal) * Decimal("100")
                 snapshot_rows.append(
                     {
-                        "script_id": script.id,
-                        "captured_at": captured_at,
+                        "symbol": script.symbol,
+                        "name": script.name,
+                        "fyers_symbol": script.fyers_symbol,
                         "ltp": ltp,
-                        "previous_close": previous_close_map.get(script.id),
+                        "previous_close": Decimal(str(previous_close))
+                        if previous_close is not None
+                        else None,
+                        "change": change,
+                        "change_pct": change_pct,
                     }
                 )
                 processed += 1
-            snapshots_created = (
-                await ScriptSnapshotOperations.create_script_snapshots_bulk(
-                    snapshots=snapshot_rows
-                )
+            await RuntimeScriptSnapshotService.save_intraday_snapshot(
+                captured_at=captured_at,
+                script_rows=snapshot_rows,
             )
+            snapshots_created = len(snapshot_rows)
 
             cls._status.last_success_at = datetime.now(timezone.utc).isoformat()
             cls._status.last_error = None
@@ -105,4 +118,4 @@ class ScriptSnapshotService:
 
     @classmethod
     async def get_advance_decline(cls) -> dict:
-        return await ScriptSnapshotOperations.get_latest_advance_decline()
+        return await RuntimeScriptSnapshotService.get_latest_advance_decline()
