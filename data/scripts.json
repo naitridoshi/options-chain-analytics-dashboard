@@ -1,0 +1,1554 @@
+[
+  {
+    "symbol": "AARTIIND",
+    "fyers_symbol": "NSE:AARTIIND-EQ",
+    "lot_size": 850,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ABB",
+    "fyers_symbol": "NSE:ABB-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ABBOTINDIA",
+    "fyers_symbol": "NSE:ABBOTINDIA-EQ",
+    "lot_size": 40,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ABCAPITAL",
+    "fyers_symbol": "NSE:ABCAPITAL-EQ",
+    "lot_size": 5400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ABFRL",
+    "fyers_symbol": "NSE:ABFRL-EQ",
+    "lot_size": 2600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ACC",
+    "fyers_symbol": "NSE:ACC-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ADANIENT",
+    "fyers_symbol": "NSE:ADANIENT-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ADANIPORTS",
+    "fyers_symbol": "NSE:ADANIPORTS-EQ",
+    "lot_size": 625,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ALKEM",
+    "fyers_symbol": "NSE:ALKEM-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "AMARAJABAT",
+    "fyers_symbol": "NSE:AMARAJABAT-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "AMBUJACEM",
+    "fyers_symbol": "NSE:AMBUJACEM-EQ",
+    "lot_size": 1800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "APOLLOHOSP",
+    "fyers_symbol": "NSE:APOLLOHOSP-EQ",
+    "lot_size": 125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "APOLLOTYRE",
+    "fyers_symbol": "NSE:APOLLOTYRE-EQ",
+    "lot_size": 3500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ASHOKLEY",
+    "fyers_symbol": "NSE:ASHOKLEY-EQ",
+    "lot_size": 5000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ASIANPAINT",
+    "fyers_symbol": "NSE:ASIANPAINT-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ASTRAL",
+    "fyers_symbol": "NSE:ASTRAL-EQ",
+    "lot_size": 275,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ATUL",
+    "fyers_symbol": "NSE:ATUL-EQ",
+    "lot_size": 75,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "AUBANK",
+    "fyers_symbol": "NSE:AUBANK-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "AUROPHARMA",
+    "fyers_symbol": "NSE:AUROPHARMA-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "AXISBANK",
+    "fyers_symbol": "NSE:AXISBANK-EQ",
+    "lot_size": 1200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BAJAJ-AUTO",
+    "fyers_symbol": "NSE:BAJAJ-AUTO-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BAJAJFINSV",
+    "fyers_symbol": "NSE:BAJAJFINSV-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BAJFINANCE",
+    "fyers_symbol": "NSE:BAJFINANCE-EQ",
+    "lot_size": 125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BALKRISIND",
+    "fyers_symbol": "NSE:BALKRISIND-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BALRAMCHIN",
+    "fyers_symbol": "NSE:BALRAMCHIN-EQ",
+    "lot_size": 1600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BANDHANBNK",
+    "fyers_symbol": "NSE:BANDHANBNK-EQ",
+    "lot_size": 1800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BANKBARODA",
+    "fyers_symbol": "NSE:BANKBARODA-EQ",
+    "lot_size": 5850,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BATAINDIA",
+    "fyers_symbol": "NSE:BATAINDIA-EQ",
+    "lot_size": 275,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BEL",
+    "fyers_symbol": "NSE:BEL-EQ",
+    "lot_size": 5700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BERGEPAINT",
+    "fyers_symbol": "NSE:BERGEPAINT-EQ",
+    "lot_size": 1100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BHARATFORG",
+    "fyers_symbol": "NSE:BHARATFORG-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BHARTIARTL",
+    "fyers_symbol": "NSE:BHARTIARTL-EQ",
+    "lot_size": 950,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BHEL",
+    "fyers_symbol": "NSE:BHEL-EQ",
+    "lot_size": 10500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BIOCON",
+    "fyers_symbol": "NSE:BIOCON-EQ",
+    "lot_size": 2300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BOSCHLTD",
+    "fyers_symbol": "NSE:BOSCHLTD-EQ",
+    "lot_size": 50,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BPCL",
+    "fyers_symbol": "NSE:BPCL-EQ",
+    "lot_size": 1800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BRITANNIA",
+    "fyers_symbol": "NSE:BRITANNIA-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "BSOFT",
+    "fyers_symbol": "NSE:BSOFT-EQ",
+    "lot_size": 1300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CANBK",
+    "fyers_symbol": "NSE:CANBK-EQ",
+    "lot_size": 2700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CANFINHOME",
+    "fyers_symbol": "NSE:CANFINHOME-EQ",
+    "lot_size": 975,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CHAMBLFERT",
+    "fyers_symbol": "NSE:CHAMBLFERT-EQ",
+    "lot_size": 1500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CHOLAFIN",
+    "fyers_symbol": "NSE:CHOLAFIN-EQ",
+    "lot_size": 1250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CIPLA",
+    "fyers_symbol": "NSE:CIPLA-EQ",
+    "lot_size": 650,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "COALINDIA",
+    "fyers_symbol": "NSE:COALINDIA-EQ",
+    "lot_size": 4200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "COFORGE",
+    "fyers_symbol": "NSE:COFORGE-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "COLPAL",
+    "fyers_symbol": "NSE:COLPAL-EQ",
+    "lot_size": 350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CONCOR",
+    "fyers_symbol": "NSE:CONCOR-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "COROMANDEL",
+    "fyers_symbol": "NSE:COROMANDEL-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CROMPTON",
+    "fyers_symbol": "NSE:CROMPTON-EQ",
+    "lot_size": 1500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CUB",
+    "fyers_symbol": "NSE:CUB-EQ",
+    "lot_size": 5000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "CUMMINSIND",
+    "fyers_symbol": "NSE:CUMMINSIND-EQ",
+    "lot_size": 600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "DABUR",
+    "fyers_symbol": "NSE:DABUR-EQ",
+    "lot_size": 1250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "DALBHARAT",
+    "fyers_symbol": "NSE:DALBHARAT-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "DEEPAKNTR",
+    "fyers_symbol": "NSE:DEEPAKNTR-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "DELTACORP",
+    "fyers_symbol": "NSE:DELTACORP-EQ",
+    "lot_size": 2300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "DIVISLAB",
+    "fyers_symbol": "NSE:DIVISLAB-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "DIXON",
+    "fyers_symbol": "NSE:DIXON-EQ",
+    "lot_size": 125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "DLF",
+    "fyers_symbol": "NSE:DLF-EQ",
+    "lot_size": 1650,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "DRREDDY",
+    "fyers_symbol": "NSE:DRREDDY-EQ",
+    "lot_size": 125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "EICHERMOT",
+    "fyers_symbol": "NSE:EICHERMOT-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ESCORTS",
+    "fyers_symbol": "NSE:ESCORTS-EQ",
+    "lot_size": 275,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "EXIDEIND",
+    "fyers_symbol": "NSE:EXIDEIND-EQ",
+    "lot_size": 3600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "FEDERALBNK",
+    "fyers_symbol": "NSE:FEDERALBNK-EQ",
+    "lot_size": 5000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "FSL",
+    "fyers_symbol": "NSE:FSL-EQ",
+    "lot_size": 5200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GAIL",
+    "fyers_symbol": "NSE:GAIL-EQ",
+    "lot_size": 9150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GLENMARK",
+    "fyers_symbol": "NSE:GLENMARK-EQ",
+    "lot_size": 1150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GMRINFRA",
+    "fyers_symbol": "NSE:GMRINFRA-EQ",
+    "lot_size": 22500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GNFC",
+    "fyers_symbol": "NSE:GNFC-EQ",
+    "lot_size": 1300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GODREJCP",
+    "fyers_symbol": "NSE:GODREJCP-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GODREJPROP",
+    "fyers_symbol": "NSE:GODREJPROP-EQ",
+    "lot_size": 325,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GRANULES",
+    "fyers_symbol": "NSE:GRANULES-EQ",
+    "lot_size": 2000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GRASIM",
+    "fyers_symbol": "NSE:GRASIM-EQ",
+    "lot_size": 475,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GSPL",
+    "fyers_symbol": "NSE:GSPL-EQ",
+    "lot_size": null,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "GUJGASLTD",
+    "fyers_symbol": "NSE:GUJGASLTD-EQ",
+    "lot_size": 1250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HAL",
+    "fyers_symbol": "NSE:HAL-EQ",
+    "lot_size": 475,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HAVELLS",
+    "fyers_symbol": "NSE:HAVELLS-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HCLTECH",
+    "fyers_symbol": "NSE:HCLTECH-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HDFC",
+    "fyers_symbol": "NSE:HDFC-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HDFCAMC",
+    "fyers_symbol": "NSE:HDFCAMC-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HDFCBANK",
+    "fyers_symbol": "NSE:HDFCBANK-EQ",
+    "lot_size": 550,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HDFCLIFE",
+    "fyers_symbol": "NSE:HDFCLIFE-EQ",
+    "lot_size": 1100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HEROMOTOCO",
+    "fyers_symbol": "NSE:HEROMOTOCO-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HINDALCO",
+    "fyers_symbol": "NSE:HINDALCO-EQ",
+    "lot_size": 1075,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HINDCOPPER",
+    "fyers_symbol": "NSE:HINDCOPPER-EQ",
+    "lot_size": 4300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HINDPETRO",
+    "fyers_symbol": "NSE:HINDPETRO-EQ",
+    "lot_size": 2700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HINDUNILVR",
+    "fyers_symbol": "NSE:HINDUNILVR-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "HONAUT",
+    "fyers_symbol": "NSE:HONAUT-EQ",
+    "lot_size": 15,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IBULHSGFIN",
+    "fyers_symbol": "NSE:IBULHSGFIN-EQ",
+    "lot_size": 4000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ICICIBANK",
+    "fyers_symbol": "NSE:ICICIBANK-EQ",
+    "lot_size": 1375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ICICIGI",
+    "fyers_symbol": "NSE:ICICIGI-EQ",
+    "lot_size": 425,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ICICIPRULI",
+    "fyers_symbol": "NSE:ICICIPRULI-EQ",
+    "lot_size": 1500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IDEA",
+    "fyers_symbol": "NSE:IDEA-EQ",
+    "lot_size": 70000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IDFC",
+    "fyers_symbol": "NSE:IDFC-EQ",
+    "lot_size": 10000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IDFCFIRSTB",
+    "fyers_symbol": "NSE:IDFCFIRSTB-EQ",
+    "lot_size": 15000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IEX",
+    "fyers_symbol": "NSE:IEX-EQ",
+    "lot_size": 3750,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IGL",
+    "fyers_symbol": "NSE:IGL-EQ",
+    "lot_size": 1375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "INDHOTEL",
+    "fyers_symbol": "NSE:INDHOTEL-EQ",
+    "lot_size": 4022,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "INDIACEM",
+    "fyers_symbol": "NSE:INDIACEM-EQ",
+    "lot_size": 2900,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "INDIAMART",
+    "fyers_symbol": "NSE:INDIAMART-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "INDIGO",
+    "fyers_symbol": "NSE:INDIGO-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "INDUSINDBK",
+    "fyers_symbol": "NSE:INDUSINDBK-EQ",
+    "lot_size": 450,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "INDUSTOWER",
+    "fyers_symbol": "NSE:INDUSTOWER-EQ",
+    "lot_size": 2800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "INFY",
+    "fyers_symbol": "NSE:INFY-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "INTELLECT",
+    "fyers_symbol": "NSE:INTELLECT-EQ",
+    "lot_size": 750,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IOC",
+    "fyers_symbol": "NSE:IOC-EQ",
+    "lot_size": 9750,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IPCALAB",
+    "fyers_symbol": "NSE:IPCALAB-EQ",
+    "lot_size": 650,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "IRCTC",
+    "fyers_symbol": "NSE:IRCTC-EQ",
+    "lot_size": 875,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ITC",
+    "fyers_symbol": "NSE:ITC-EQ",
+    "lot_size": 1600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "JINDALSTEL",
+    "fyers_symbol": "NSE:JINDALSTEL-EQ",
+    "lot_size": 1250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "JKCEMENT",
+    "fyers_symbol": "NSE:JKCEMENT-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "JSWSTEEL",
+    "fyers_symbol": "NSE:JSWSTEEL-EQ",
+    "lot_size": 1350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "JUBLFOOD",
+    "fyers_symbol": "NSE:JUBLFOOD-EQ",
+    "lot_size": 1250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "KOTAKBANK",
+    "fyers_symbol": "NSE:KOTAKBANK-EQ",
+    "lot_size": 400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "L&TFH",
+    "fyers_symbol": "NSE:L&TFH-EQ",
+    "lot_size": 8924,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "LALPATHLAB",
+    "fyers_symbol": "NSE:LALPATHLAB-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "LAURUSLABS",
+    "fyers_symbol": "NSE:LAURUSLABS-EQ",
+    "lot_size": 900,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "LICHSGFIN",
+    "fyers_symbol": "NSE:LICHSGFIN-EQ",
+    "lot_size": 2000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "LT",
+    "fyers_symbol": "NSE:LT-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "LTI",
+    "fyers_symbol": "NSE:LTI-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "LTTS",
+    "fyers_symbol": "NSE:LTTS-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "LUPIN",
+    "fyers_symbol": "NSE:LUPIN-EQ",
+    "lot_size": 850,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "M&M",
+    "fyers_symbol": "NSE:M&M-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "M&MFIN",
+    "fyers_symbol": "NSE:M&MFIN-EQ",
+    "lot_size": 4000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MANAPPURAM",
+    "fyers_symbol": "NSE:MANAPPURAM-EQ",
+    "lot_size": 6000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MARICO",
+    "fyers_symbol": "NSE:MARICO-EQ",
+    "lot_size": 1200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MARUTI",
+    "fyers_symbol": "NSE:MARUTI-EQ",
+    "lot_size": 100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MCDOWELL-N",
+    "fyers_symbol": "NSE:MCDOWELL-N-EQ",
+    "lot_size": 625,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MCX",
+    "fyers_symbol": "NSE:MCX-EQ",
+    "lot_size": 400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "METROPOLIS",
+    "fyers_symbol": "NSE:METROPOLIS-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MFSL",
+    "fyers_symbol": "NSE:MFSL-EQ",
+    "lot_size": 650,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MGL",
+    "fyers_symbol": "NSE:MGL-EQ",
+    "lot_size": 800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MINDTREE",
+    "fyers_symbol": "NSE:MINDTREE-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MOTHERSON",
+    "fyers_symbol": "NSE:MOTHERSON-EQ",
+    "lot_size": 6750,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MPHASIS",
+    "fyers_symbol": "NSE:MPHASIS-EQ",
+    "lot_size": 175,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MRF",
+    "fyers_symbol": "NSE:MRF-EQ",
+    "lot_size": 10,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "MUTHOOTFIN",
+    "fyers_symbol": "NSE:MUTHOOTFIN-EQ",
+    "lot_size": 375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "NATIONALUM",
+    "fyers_symbol": "NSE:NATIONALUM-EQ",
+    "lot_size": 4250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "NAUKRI",
+    "fyers_symbol": "NSE:NAUKRI-EQ",
+    "lot_size": 125,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "NAVINFLUOR",
+    "fyers_symbol": "NSE:NAVINFLUOR-EQ",
+    "lot_size": 225,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "NESTLEIND",
+    "fyers_symbol": "NSE:NESTLEIND-EQ",
+    "lot_size": 40,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "NMDC",
+    "fyers_symbol": "NSE:NMDC-EQ",
+    "lot_size": 3350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "NTPC",
+    "fyers_symbol": "NSE:NTPC-EQ",
+    "lot_size": 5700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "OBEROIRLTY",
+    "fyers_symbol": "NSE:OBEROIRLTY-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "OFSS",
+    "fyers_symbol": "NSE:OFSS-EQ",
+    "lot_size": 200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ONGC",
+    "fyers_symbol": "NSE:ONGC-EQ",
+    "lot_size": 3850,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PAGEIND",
+    "fyers_symbol": "NSE:PAGEIND-EQ",
+    "lot_size": 15,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PEL",
+    "fyers_symbol": "NSE:PEL-EQ",
+    "lot_size": 275,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PERSISTENT",
+    "fyers_symbol": "NSE:PERSISTENT-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PETRONET",
+    "fyers_symbol": "NSE:PETRONET-EQ",
+    "lot_size": 3000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PFC",
+    "fyers_symbol": "NSE:PFC-EQ",
+    "lot_size": 6200,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PIDILITIND",
+    "fyers_symbol": "NSE:PIDILITIND-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PIIND",
+    "fyers_symbol": "NSE:PIIND-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PNB",
+    "fyers_symbol": "NSE:PNB-EQ",
+    "lot_size": 16000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "POLYCAB",
+    "fyers_symbol": "NSE:POLYCAB-EQ",
+    "lot_size": 300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "POWERGRID",
+    "fyers_symbol": "NSE:POWERGRID-EQ",
+    "lot_size": 2700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "PVR",
+    "fyers_symbol": "NSE:PVR-EQ",
+    "lot_size": 407,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "RAIN",
+    "fyers_symbol": "NSE:RAIN-EQ",
+    "lot_size": 3500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "RAMCOCEM",
+    "fyers_symbol": "NSE:RAMCOCEM-EQ",
+    "lot_size": 850,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "RBLBANK",
+    "fyers_symbol": "NSE:RBLBANK-EQ",
+    "lot_size": 5000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "RECLTD",
+    "fyers_symbol": "NSE:RECLTD-EQ",
+    "lot_size": 8000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "RELIANCE",
+    "fyers_symbol": "NSE:RELIANCE-EQ",
+    "lot_size": 250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SAIL",
+    "fyers_symbol": "NSE:SAIL-EQ",
+    "lot_size": 6000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SBICARD",
+    "fyers_symbol": "NSE:SBICARD-EQ",
+    "lot_size": 800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SBILIFE",
+    "fyers_symbol": "NSE:SBILIFE-EQ",
+    "lot_size": 750,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SBIN",
+    "fyers_symbol": "NSE:SBIN-EQ",
+    "lot_size": 1500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SHREECEM",
+    "fyers_symbol": "NSE:SHREECEM-EQ",
+    "lot_size": 25,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SIEMENS",
+    "fyers_symbol": "NSE:SIEMENS-EQ",
+    "lot_size": 275,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SRF",
+    "fyers_symbol": "NSE:SRF-EQ",
+    "lot_size": 375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SRTRANSFIN",
+    "fyers_symbol": "NSE:SRTRANSFIN-EQ",
+    "lot_size": 600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SUNPHARMA",
+    "fyers_symbol": "NSE:SUNPHARMA-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SUNTV",
+    "fyers_symbol": "NSE:SUNTV-EQ",
+    "lot_size": 1500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "SYNGENE",
+    "fyers_symbol": "NSE:SYNGENE-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TATACHEM",
+    "fyers_symbol": "NSE:TATACHEM-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TATACOMM",
+    "fyers_symbol": "NSE:TATACOMM-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TATACONSUM",
+    "fyers_symbol": "NSE:TATACONSUM-EQ",
+    "lot_size": 900,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TATAMOTORS",
+    "fyers_symbol": "NSE:TATAMOTORS-EQ",
+    "lot_size": 1425,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TATAPOWER",
+    "fyers_symbol": "NSE:TATAPOWER-EQ",
+    "lot_size": 3375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TATASTEEL",
+    "fyers_symbol": "NSE:TATASTEEL-EQ",
+    "lot_size": 4250,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TCS",
+    "fyers_symbol": "NSE:TCS-EQ",
+    "lot_size": 150,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TECHM",
+    "fyers_symbol": "NSE:TECHM-EQ",
+    "lot_size": 600,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TITAN",
+    "fyers_symbol": "NSE:TITAN-EQ",
+    "lot_size": 375,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TORNTPHARM",
+    "fyers_symbol": "NSE:TORNTPHARM-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TORNTPOWER",
+    "fyers_symbol": "NSE:TORNTPOWER-EQ",
+    "lot_size": 1500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TRENT",
+    "fyers_symbol": "NSE:TRENT-EQ",
+    "lot_size": 725,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "TVSMOTOR",
+    "fyers_symbol": "NSE:TVSMOTOR-EQ",
+    "lot_size": 700,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "UBL",
+    "fyers_symbol": "NSE:UBL-EQ",
+    "lot_size": 400,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ULTRACEMCO",
+    "fyers_symbol": "NSE:ULTRACEMCO-EQ",
+    "lot_size": 100,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "UPL",
+    "fyers_symbol": "NSE:UPL-EQ",
+    "lot_size": 1300,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "VEDL",
+    "fyers_symbol": "NSE:VEDL-EQ",
+    "lot_size": 1550,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "VOLTAS",
+    "fyers_symbol": "NSE:VOLTAS-EQ",
+    "lot_size": 500,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "WHIRLPOOL",
+    "fyers_symbol": "NSE:WHIRLPOOL-EQ",
+    "lot_size": 350,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "WIPRO",
+    "fyers_symbol": "NSE:WIPRO-EQ",
+    "lot_size": 1000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ZEEL",
+    "fyers_symbol": "NSE:ZEEL-EQ",
+    "lot_size": 3000,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  },
+  {
+    "symbol": "ZYDUSLIFE",
+    "fyers_symbol": "NSE:ZYDUSLIFE-EQ",
+    "lot_size": 1800,
+    "exchange": "NSE",
+    "instrument_type": "EQUITY",
+    "is_active": true
+  }
+]

@@ -14,8 +14,21 @@ _snapshot_interval_minutes_fallback = int(config.get("SNAPSHOT_INTERVAL_MINUTES"
 SNAPSHOT_INTERVAL_SECONDS = int(
     config.get("SNAPSHOT_INTERVAL_SECONDS", _snapshot_interval_minutes_fallback * 60)
 )
-if SNAPSHOT_INTERVAL_SECONDS <= 0:
-    raise ValueError("SNAPSHOT_INTERVAL_SECONDS must be greater than 0")
+INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS = int(
+    config.get(
+        "INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS",
+        config.get(
+            "SNAPSHOT_INTERVAL_SECONDS", _snapshot_interval_minutes_fallback * 60
+        ),
+    )
+)
+SCRIPTS_SNAPSHOT_INTERVAL_SECONDS = int(
+    config.get("SCRIPTS_SNAPSHOT_INTERVAL_SECONDS", 15)
+)
+if INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS <= 0:
+    raise ValueError("INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS must be greater than 0")
+if SCRIPTS_SNAPSHOT_INTERVAL_SECONDS <= 0:
+    raise ValueError("SCRIPTS_SNAPSHOT_INTERVAL_SECONDS must be greater than 0")
 SNAPSHOT_MAX_RETRIES = int(config.get("SNAPSHOT_MAX_RETRIES", 3))
 SNAPSHOT_RETRY_BASE_DELAY_SECONDS = int(
     config.get("SNAPSHOT_RETRY_BASE_DELAY_SECONDS", 3)

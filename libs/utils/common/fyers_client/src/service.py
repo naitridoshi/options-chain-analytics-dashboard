@@ -1,6 +1,7 @@
 import asyncio
 import os
 from datetime import datetime, timezone
+from decimal import Decimal
 
 import httpx
 from fyers_apiv3 import fyersModel
@@ -87,6 +88,46 @@ class FyersClientService:
         if response.get("s") == "error":
             raise ValueError(f"FYERS optionchain failed: {response}")
         return response
+
+    @classmethod
+    def _extract_quote_ltp(cls, response: dict) -> Decimal:
+        data = response.get("d") or response.get("data") or response
+        rows = []
+        if isinstance(data, list):
+            rows = data
+        elif isinstance(data, dict):
+            rows = data.get("d") or data.get("data") or data.get("quotes") or [data]
+
+        if not isinstance(rows, list) or not rows:
+            raise ValueError(f"Unable to parse FYERS quote response: {response}")
+
+        payload = rows[0]
+        values = payload.get("v") if isinstance(payload, dict) else None
+        if not isinstance(values, dict):
+            values = payload if isinstance(payload, dict) else {}
+
+        ltp = values.get("lp") or values.get("ltp") or values.get("last_price")
+        if ltp is None:
+            raise ValueError(f"FYERS quote response missing ltp: {response}")
+        return Decimal(str(ltp))
+
+    @classmethod
+    async def fetch_quote(cls, *, symbol: str) -> Decimal:
+        access_token = await cls.get_valid_access_token()
+        os.makedirs(FYERS_LOG_PATH, exist_ok=True)
+        model = fyersModel.FyersModel(
+            client_id=FYERS_APP_ID,
+            token=access_token,
+            is_async=False,
+            log_path=FYERS_LOG_PATH,
+        )
+        payload = {"symbols": symbol}
+        response = await asyncio.to_thread(model.quotes, payload)
+        if not isinstance(response, dict):
+            raise ValueError("FYERS quotes response is not a dictionary")
+        if response.get("s") == "error":
+            raise ValueError(f"FYERS quotes failed: {response}")
+        return cls._extract_quote_ltp(response)
 
     @classmethod
     async def _validate_auth_code(cls, auth_code: str) -> str:

@@ -1,6 +1,4 @@
 from sqlalchemy import insert, select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.sql import func
 
 from libs.utils.db.postgres.models.src import (
     Expiry,
@@ -11,6 +9,8 @@ from libs.utils.db.postgres.models.src import (
     OptionChainStrike,
     OptionChainStrikeSummary,
     OptionContract,
+    Script,
+    ScriptPriceSnapshot,
 )
 from libs.utils.db.postgres.src.base_repository import BaseRepository
 
@@ -61,74 +61,6 @@ class OptionChainStrikeRepository(BaseRepository):
         ]
 
 
-class ExpiryRepository(BaseRepository):
-    async def get_or_create(
-        self,
-        *,
-        instrument_id,
-        expiry_date,
-        is_weekly: bool,
-    ):
-        stmt = (
-            pg_insert(self.model)
-            .values(
-                instrument_id=instrument_id,
-                expiry_date=expiry_date,
-                is_weekly=is_weekly,
-            )
-            .on_conflict_do_nothing(index_elements=["instrument_id", "expiry_date"])
-        )
-        await self.session.execute(stmt)
-        return await self.get(
-            [
-                self.model.instrument_id == instrument_id,
-                self.model.expiry_date == expiry_date,
-            ]
-        )
-
-
-class FyersTokenRepository(BaseRepository):
-    async def upsert_for_date(
-        self,
-        *,
-        token_date,
-        access_token: str,
-        expires_at,
-    ):
-        stmt = (
-            pg_insert(self.model)
-            .values(
-                token_date=token_date,
-                access_token=access_token,
-                expires_at=expires_at,
-            )
-            .on_conflict_do_update(
-                index_elements=["token_date"],
-                set_={
-                    "access_token": access_token,
-                    "expires_at": expires_at,
-                    "updated_at": func.now(),
-                },
-            )
-        )
-        await self.session.execute(stmt)
-        return await self.get(self.model.token_date == token_date)
-
-
-class InstrumentRepository(BaseRepository):
-    async def bulk_insert_ignore_existing(self, values: list[dict]):
-        if not values:
-            return set()
-        stmt = (
-            pg_insert(self.model)
-            .values(values)
-            .on_conflict_do_nothing(index_elements=["symbol"])
-            .returning(self.model.symbol)
-        )
-        result = await self.session.execute(stmt)
-        return set(result.scalars().all())
-
-
 class OptionChainIntervalSummaryRepository(BaseRepository):
     async def get_existing_snapshot_ids(self, snapshot_ids: list):
         if not snapshot_ids:
@@ -151,68 +83,20 @@ class OptionChainStrikeSummaryRepository(BaseRepository):
         return set(result.scalars().all())
 
 
-class OptionContractRepository(BaseRepository):
-    async def bulk_insert_ignore_existing(self, values: list[dict]) -> None:
-        if not values:
-            return
-        stmt = (
-            pg_insert(self.model)
-            .values(values)
-            .on_conflict_do_nothing(
-                index_elements=["expiry_id", "strike_price", "option_type"]
-            )
-        )
-        await self.session.execute(stmt)
-
-
-class OptionChainSnapshotRepository(BaseRepository):
-    async def get_or_create(
-        self,
-        *,
-        instrument_id,
-        expiry_id,
-        captured_at,
-        spot_price,
-    ):
-        stmt = (
-            pg_insert(self.model)
-            .values(
-                instrument_id=instrument_id,
-                expiry_id=expiry_id,
-                captured_at=captured_at,
-                spot_price=spot_price,
-            )
-            .on_conflict_do_nothing(
-                index_elements=["instrument_id", "expiry_id", "captured_at"]
-            )
-            .returning(self.model.id)
-        )
-        result = await self.session.execute(stmt)
-        created = result.scalar_one_or_none() is not None
-        snapshot = await self.get(
-            [
-                self.model.instrument_id == instrument_id,
-                self.model.expiry_id == expiry_id,
-                self.model.captured_at == captured_at,
-            ]
-        )
-        return snapshot, created
-
-
 def get_expiries_repository(session):
-    return ExpiryRepository(Expiry, session)
+    return BaseRepository(Expiry, session)
 
 
 def get_fyers_tokens_repository(session):
-    return FyersTokenRepository(FyersToken, session)
+    return BaseRepository(FyersToken, session)
 
 
 def get_instruments_repository(session):
-    return InstrumentRepository(Instrument, session)
+    return BaseRepository(Instrument, session)
 
 
 def get_option_chain_snapshots_repository(session):
-    return OptionChainSnapshotRepository(OptionChainSnapshot, session)
+    return BaseRepository(OptionChainSnapshot, session)
 
 
 def get_option_chain_interval_summaries_repository(session):
@@ -228,4 +112,12 @@ def get_option_chain_strike_summaries_repository(session):
 
 
 def get_option_contracts_repository(session):
-    return OptionContractRepository(OptionContract, session)
+    return BaseRepository(OptionContract, session)
+
+
+def get_scripts_repository(session):
+    return BaseRepository(Script, session)
+
+
+def get_script_price_snapshots_repository(session):
+    return BaseRepository(ScriptPriceSnapshot, session)
