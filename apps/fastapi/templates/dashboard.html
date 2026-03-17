@@ -468,8 +468,10 @@
     let hasRendered = false;
     let ws = null;
     let reconnectAttempts = 0;
+    const LIVE_OPTION_FLUSH_MS = 1000;
     const optionSymbolToRowMeta = {};
     const lastLiveByOptionSymbol = {};
+    const pendingLiveByOptionSymbol = {};
     let lastLiveUnderlying = null;
     let lastLiveUpdateAt = null;
     let liveStaleAfterSeconds = null;
@@ -783,27 +785,43 @@
         return;
       }
       const optionSymbol = normalizeSymbolKey(data.symbol);
-      const rowMeta = optionSymbolToRowMeta[optionSymbol];
-      if (!rowMeta) return;
       lastLiveUpdateAt = Date.now();
       liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
       setLiveStatus("ok");
 
-      const side = rowMeta.side;
-      const liveState = lastLiveByOptionSymbol[optionSymbol] || {};
-      const row = rowMeta.row;
-      const ltpCell = row.querySelector(`.${side}-ltp`);
-      const avgCell = row.querySelector(`.${side}-avg`);
+      const pendingState = pendingLiveByOptionSymbol[optionSymbol] || {};
+      if (data.ltp !== undefined && data.ltp !== null) {
+        pendingState.ltp = fmt2(data.ltp);
+      }
+      if (data.avg_price !== undefined && data.avg_price !== null) {
+        pendingState.avg = fmt2(data.avg_price);
+      }
+      pendingLiveByOptionSymbol[optionSymbol] = pendingState;
+    }
 
-      if (ltpCell && data.ltp !== undefined && data.ltp !== null) {
-        ltpCell.textContent = fmt2(data.ltp);
-        liveState.ltp = fmt2(data.ltp);
-      }
-      if (avgCell && data.avg_price !== undefined && data.avg_price !== null) {
-        avgCell.textContent = fmt2(data.avg_price);
-        liveState.avg = fmt2(data.avg_price);
-      }
-      lastLiveByOptionSymbol[optionSymbol] = liveState;
+    function flushPendingOptionUpdates() {
+      Object.entries(pendingLiveByOptionSymbol).forEach(([optionSymbol, pendingState]) => {
+        const rowMeta = optionSymbolToRowMeta[optionSymbol];
+        if (!rowMeta) return;
+
+        const side = rowMeta.side;
+        const row = rowMeta.row;
+        const liveState = lastLiveByOptionSymbol[optionSymbol] || {};
+        const ltpCell = row.querySelector(`.${side}-ltp`);
+        const avgCell = row.querySelector(`.${side}-avg`);
+
+        if (ltpCell && pendingState.ltp !== undefined) {
+          ltpCell.textContent = pendingState.ltp;
+          liveState.ltp = pendingState.ltp;
+        }
+        if (avgCell && pendingState.avg !== undefined) {
+          avgCell.textContent = pendingState.avg;
+          liveState.avg = pendingState.avg;
+        }
+
+        lastLiveByOptionSymbol[optionSymbol] = liveState;
+        delete pendingLiveByOptionSymbol[optionSymbol];
+      });
     }
 
     function showLoadingState() {
@@ -1077,6 +1095,7 @@
           optionSymbolToRowMeta[putSymbol] = { row: rowEl, side: "put" };
         }
       });
+      flushPendingOptionUpdates();
 
       const callOiSum = latest ? latest.call_oi_sum : null;
       const putOiSum = latest ? latest.put_oi_sum : null;
@@ -1098,6 +1117,7 @@
     }
 
     setInterval(refreshLiveStatusHeartbeat, 5000);
+    setInterval(flushPendingOptionUpdates, LIVE_OPTION_FLUSH_MS);
     load();
   </script>
 </body>
