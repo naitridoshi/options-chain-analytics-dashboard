@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from time import monotonic
+from zoneinfo import ZoneInfo
 
 from fyers_apiv3.FyersWebsocket import data_ws
 
@@ -32,6 +33,7 @@ from libs.utils.db.redis.src import (
 log = CustomLogger("LiveMarketStreamingService")
 logger, listener = log.get_logger()
 listener.start()
+IST = ZoneInfo("Asia/Kolkata")
 
 
 @dataclass
@@ -151,13 +153,6 @@ class LiveMarketStreamingService:
         for instrument in instruments:
             if not instrument.fyers_symbol:
                 continue
-            chain_data = await FyersClientService.fetch_option_chain(
-                symbol=instrument.fyers_symbol,
-                strike_count=SNAPSHOT_STRIKE_COUNT,
-            )
-            expiry_candidates = parse_expiry_candidates(chain_data)
-            if not expiry_candidates:
-                continue
             prev_close_spot = await self._get_previous_close_spot(instrument.symbol)
             underlying_map[_normalize_symbol_key(instrument.fyers_symbol)] = (
                 UnderlyingSubscription(
@@ -167,13 +162,24 @@ class LiveMarketStreamingService:
                 )
             )
             all_symbols.append(instrument.fyers_symbol)
-            nearest_expiry = expiry_candidates[0]["expiry_date"]
-            rows = [
-                row
-                for row in parse_option_rows(chain_data)
-                if row["expiry_date"] == nearest_expiry
-            ]
-            rows = _dedupe_rows_by_strike_and_option_type(rows)
+
+            rows = await self._get_snapshot_subscription_rows(instrument.symbol)
+            if not rows:
+                chain_data = await FyersClientService.fetch_option_chain(
+                    symbol=instrument.fyers_symbol,
+                    strike_count=SNAPSHOT_STRIKE_COUNT,
+                )
+                expiry_candidates = parse_expiry_candidates(chain_data)
+                if not expiry_candidates:
+                    continue
+                nearest_expiry = expiry_candidates[0]["expiry_date"]
+                rows = [
+                    row
+                    for row in parse_option_rows(chain_data)
+                    if row["expiry_date"] == nearest_expiry
+                ]
+                rows = _dedupe_rows_by_strike_and_option_type(rows)
+
             for row in rows:
                 trading_symbol = row.get("trading_symbol")
                 strike_price = row.get("strike_price")
@@ -357,6 +363,45 @@ class LiveMarketStreamingService:
         if spot_price is None:
             return None
         return float(spot_price)
+
+    async def _get_snapshot_subscription_rows(
+        self,
+        instrument_symbol: str,
+    ) -> list[dict]:
+        trade_date = datetime.now(IST).date().isoformat()
+        latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
+            instrument_symbol=instrument_symbol,
+            trade_date=trade_date,
+        )
+        if not latest_snapshot:
+            return []
+
+        rows: list[dict] = []
+        for strike in latest_snapshot.get("strikes", []):
+            strike_price = strike.get("strike_price")
+            if strike_price is None:
+                continue
+
+            call_symbol = strike.get("call_trading_symbol")
+            if call_symbol:
+                rows.append(
+                    {
+                        "trading_symbol": call_symbol,
+                        "strike_price": strike_price,
+                        "option_type": "CE",
+                    }
+                )
+
+            put_symbol = strike.get("put_trading_symbol")
+            if put_symbol:
+                rows.append(
+                    {
+                        "trading_symbol": put_symbol,
+                        "strike_price": strike_price,
+                        "option_type": "PE",
+                    }
+                )
+        return rows
 
     def _schedule_live_write(self, coroutine_factory) -> None:
         if not self._loop:
