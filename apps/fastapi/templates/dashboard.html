@@ -663,6 +663,7 @@
     let websocketTicket = null;
     let latestPrevCloseSpot = null;
     let isBreadthListOpen = false;
+    let latestBreadthScripts = [];
 
     function scheduleReload(delayMs = refreshMs) {
       if (timerId) clearTimeout(timerId);
@@ -725,6 +726,9 @@
       if (!wrapEl || !buttonEl) return;
       wrapEl.hidden = !open;
       buttonEl.textContent = open ? "Hide Scripts" : "Show Scripts";
+      if (open) {
+        renderBreadthScriptRows(latestBreadthScripts);
+      }
     }
 
     function renderBreadthScriptRows(scripts) {
@@ -930,7 +934,10 @@
         document.getElementById("breadthRatio").textContent = ratio;
         document.getElementById("breadthMeta").textContent =
           `Captured (IST): ${toIST(data.captured_at)}`;
-        renderBreadthScriptRows(data.scripts || []);
+        latestBreadthScripts = Array.isArray(data.scripts) ? data.scripts : [];
+        if (isBreadthListOpen) {
+          renderBreadthScriptRows(latestBreadthScripts);
+        }
       } catch (error) {
         // Keep the dashboard usable even if breadth fetch fails.
       }
@@ -1102,7 +1109,6 @@
         showLoadingState();
       }
       refreshFyersStatus().catch(() => {});
-      refreshAdvanceDecline().catch(() => {});
 
       let res;
       let payload;
@@ -1363,6 +1369,9 @@
 
       connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
       refreshLiveStatusHeartbeat();
+      setTimeout(() => {
+        refreshAdvanceDecline().catch(() => {});
+      }, 0);
 
       if (timerId) clearTimeout(timerId);
       timerId = setTimeout(load, refreshMs);
