@@ -17,6 +17,7 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
         return Decimal(str(value))
 
     strike_agg: dict[Decimal, dict] = {}
+    seen_contract_keys: set[tuple[Decimal, str]] = set()
     call_oi_change_sum = 0
     put_oi_change_sum = 0
     call_oi_sum = 0
@@ -26,12 +27,18 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
 
     for row in summary_rows:
         option_type = str(row.get("option_type", "")).upper()
+        if option_type not in {"CE", "PE"}:
+            continue
         row_oi_change = safe_int(row.get("oi_change"))
         row_oi = safe_int(row.get("open_interest"))
         row_volume = safe_int(row.get("volume"))
         row_ltp = safe_decimal(row.get("ltp"))
         row_ltp_change = safe_decimal(row.get("ltp_change"))
         strike_price = Decimal(str(row["strike_price"]))
+        contract_key = (strike_price, option_type)
+        if contract_key in seen_contract_keys:
+            continue
+        seen_contract_keys.add(contract_key)
 
         strike_entry = strike_agg.setdefault(
             strike_price,

@@ -173,6 +173,7 @@ class LiveMarketStreamingService:
                 for row in parse_option_rows(chain_data)
                 if row["expiry_date"] == nearest_expiry
             ]
+            rows = _dedupe_rows_by_strike_and_option_type(rows)
             for row in rows:
                 trading_symbol = row.get("trading_symbol")
                 strike_price = row.get("strike_price")
@@ -498,3 +499,19 @@ def _normalize_strike_key(value) -> str:
     if "." in normalized:
         normalized = normalized.rstrip("0").rstrip(".")
     return normalized or "0"
+
+
+def _dedupe_rows_by_strike_and_option_type(rows: list[dict]) -> list[dict]:
+    deduped_rows: list[dict] = []
+    seen_keys: set[tuple[str, str]] = set()
+    for row in rows:
+        option_type = str(row.get("option_type", "")).upper()
+        strike_price = row.get("strike_price")
+        if not option_type or strike_price is None:
+            continue
+        row_key = (_normalize_strike_key(strike_price), option_type)
+        if row_key in seen_keys:
+            continue
+        seen_keys.add(row_key)
+        deduped_rows.append(row)
+    return deduped_rows
