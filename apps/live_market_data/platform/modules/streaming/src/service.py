@@ -159,10 +159,12 @@ class LiveMarketStreamingService:
             if not expiry_candidates:
                 continue
             prev_close_spot = await self._get_previous_close_spot(instrument.symbol)
-            underlying_map[instrument.fyers_symbol] = UnderlyingSubscription(
-                instrument_symbol=instrument.symbol,
-                symbol=instrument.fyers_symbol,
-                prev_close_spot=prev_close_spot,
+            underlying_map[_normalize_symbol_key(instrument.fyers_symbol)] = (
+                UnderlyingSubscription(
+                    instrument_symbol=instrument.symbol,
+                    symbol=instrument.fyers_symbol,
+                    prev_close_spot=prev_close_spot,
+                )
             )
             all_symbols.append(instrument.fyers_symbol)
             nearest_expiry = expiry_candidates[0]["expiry_date"]
@@ -177,12 +179,14 @@ class LiveMarketStreamingService:
                 option_type = row.get("option_type")
                 if not trading_symbol or strike_price is None or not option_type:
                     continue
-                strike_key = str(int(float(strike_price)))
-                subscription_map[trading_symbol] = SubscribedOption(
-                    instrument_symbol=instrument.symbol,
-                    strike_price=strike_key,
-                    option_type=option_type,
-                    trading_symbol=trading_symbol,
+                strike_key = _normalize_strike_key(strike_price)
+                subscription_map[_normalize_symbol_key(trading_symbol)] = (
+                    SubscribedOption(
+                        instrument_symbol=instrument.symbol,
+                        strike_price=strike_key,
+                        option_type=option_type,
+                        trading_symbol=trading_symbol,
+                    )
                 )
                 all_symbols.append(trading_symbol)
 
@@ -292,8 +296,9 @@ class LiveMarketStreamingService:
         symbol = message.get("symbol")
         if not symbol or not self._loop:
             return
+        normalized_symbol = _normalize_symbol_key(symbol)
 
-        underlying_subscription = self._underlying_map.get(symbol)
+        underlying_subscription = self._underlying_map.get(normalized_symbol)
         if underlying_subscription:
             payload = _build_underlying_payload(
                 instrument_symbol=underlying_subscription.instrument_symbol,
@@ -311,12 +316,13 @@ class LiveMarketStreamingService:
             )
             return
 
-        subscribed_option = self._subscription_map.get(symbol)
+        subscribed_option = self._subscription_map.get(normalized_symbol)
         if not subscribed_option:
             return
 
         received_at = datetime.now(timezone.utc).isoformat()
         payload = {
+            "message_type": "option_quote_update",
             "instrument_symbol": subscribed_option.instrument_symbol,
             "symbol": subscribed_option.trading_symbol,
             "strike_price": subscribed_option.strike_price,
@@ -480,3 +486,15 @@ def _as_float(value) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _normalize_symbol_key(symbol: str) -> str:
+    return str(symbol).strip().upper()
+
+
+def _normalize_strike_key(value) -> str:
+    decimal_value = Decimal(str(value))
+    normalized = format(decimal_value.normalize(), "f")
+    if "." in normalized:
+        normalized = normalized.rstrip("0").rstrip(".")
+    return normalized or "0"

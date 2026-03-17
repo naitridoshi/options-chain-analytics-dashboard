@@ -115,32 +115,46 @@ class RedisLiveMarketStore:
         payload: dict[str, Any],
     ) -> None:
         client = await redis_client_manager.get_client()
+        normalized_symbol = _normalize_symbol_key(symbol)
         encoded = json.dumps(payload, separators=(",", ":"))
         await client.set(
-            live_symbol_key(symbol), encoded, ex=REDIS_LIVE_DATA_TTL_SECONDS
+            live_symbol_key(normalized_symbol),
+            encoded,
+            ex=REDIS_LIVE_DATA_TTL_SECONDS,
         )
         await client.publish(live_channel_key(instrument_symbol), encoded)
 
     @staticmethod
     async def get_live_symbol(symbol: str) -> dict[str, Any] | None:
         client = await redis_client_manager.get_client()
-        payload = await client.get(live_symbol_key(symbol))
+        payload = await client.get(live_symbol_key(_normalize_symbol_key(symbol)))
         return json.loads(payload) if payload else None
 
     @staticmethod
     async def get_live_symbols(symbols: list[str]) -> dict[str, dict[str, Any]]:
-        normalized_symbols = [symbol for symbol in symbols if symbol]
-        if not normalized_symbols:
+        requested_symbols = [symbol for symbol in symbols if symbol]
+        if not requested_symbols:
             return {}
 
         client = await redis_client_manager.get_client()
+        normalized_symbols: list[str] = []
+        for symbol in requested_symbols:
+            normalized_symbol = _normalize_symbol_key(symbol)
+            if normalized_symbol not in normalized_symbols:
+                normalized_symbols.append(normalized_symbol)
+
         keys = [live_symbol_key(symbol) for symbol in normalized_symbols]
         values = await client.mget(keys)
-        payloads: dict[str, dict[str, Any]] = {}
+        normalized_payloads: dict[str, dict[str, Any]] = {}
         for symbol, value in zip(normalized_symbols, values, strict=False):
             if not value:
                 continue
-            payloads[symbol] = json.loads(value)
+            normalized_payloads[symbol] = json.loads(value)
+        payloads: dict[str, dict[str, Any]] = {}
+        for symbol in requested_symbols:
+            payload = normalized_payloads.get(_normalize_symbol_key(symbol))
+            if payload:
+                payloads[symbol] = payload
         return payloads
 
     @staticmethod
@@ -355,3 +369,7 @@ class RedisLiveAppStatusStore:
 
 def _to_epoch_score(interval_ts: str) -> float:
     return datetime.fromisoformat(interval_ts).timestamp()
+
+
+def _normalize_symbol_key(symbol: str) -> str:
+    return str(symbol).strip().upper()
