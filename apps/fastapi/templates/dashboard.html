@@ -468,8 +468,8 @@
     let hasRendered = false;
     let ws = null;
     let reconnectAttempts = 0;
-    const strikeToRowMap = {};
-    const lastLiveByStrike = {};
+    const optionSymbolToRowMeta = {};
+    const lastLiveByOptionSymbol = {};
     let lastLiveUnderlying = null;
     let lastLiveUpdateAt = null;
     let liveStaleAfterSeconds = null;
@@ -502,6 +502,19 @@
     function fmt2Signed(v) {
       if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
       return Number(v).toFixed(2);
+    }
+
+    function normalizeSymbolKey(value) {
+      return String(value || "").trim().toUpperCase();
+    }
+
+    function normalizeStrikeKey(value) {
+      if (value === null || value === undefined || value === "") return "";
+      const asNumber = Number(value);
+      if (Number.isFinite(asNumber)) {
+        return String(asNumber);
+      }
+      return String(value).trim();
     }
 
     function pcrNumber(v) {
@@ -769,28 +782,28 @@
         updateLiveSpotCards(data);
         return;
       }
-      if (!data.strike_price || !data.option_type) return;
-      const strikeKey = String(data.strike_price);
-      const row = strikeToRowMap[strikeKey];
-      if (!row) return;
+      const optionSymbol = normalizeSymbolKey(data.symbol);
+      const rowMeta = optionSymbolToRowMeta[optionSymbol];
+      if (!rowMeta) return;
       lastLiveUpdateAt = Date.now();
       liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
       setLiveStatus("ok");
 
-      const side = data.option_type === "CE" ? "call" : "put";
-      const strikeState = lastLiveByStrike[strikeKey] || {};
+      const side = rowMeta.side;
+      const liveState = lastLiveByOptionSymbol[optionSymbol] || {};
+      const row = rowMeta.row;
       const ltpCell = row.querySelector(`.${side}-ltp`);
       const avgCell = row.querySelector(`.${side}-avg`);
 
       if (ltpCell && data.ltp !== undefined && data.ltp !== null) {
         ltpCell.textContent = fmt2(data.ltp);
-        strikeState[`${side}_ltp`] = fmt2(data.ltp);
+        liveState.ltp = fmt2(data.ltp);
       }
       if (avgCell && data.avg_price !== undefined && data.avg_price !== null) {
         avgCell.textContent = fmt2(data.avg_price);
-        strikeState[`${side}_avg`] = fmt2(data.avg_price);
+        liveState.avg = fmt2(data.avg_price);
       }
-      lastLiveByStrike[strikeKey] = strikeState;
+      lastLiveByOptionSymbol[optionSymbol] = liveState;
     }
 
     function showLoadingState() {
@@ -976,35 +989,48 @@
 
       const tbody = document.querySelector("#gridTable tbody");
       tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
-        const strikeKey = rowEl.dataset.strike;
-        if (!strikeKey) return;
-        const state = lastLiveByStrike[strikeKey] || {};
+        const callSymbol = normalizeSymbolKey(rowEl.dataset.callSymbol);
+        const putSymbol = normalizeSymbolKey(rowEl.dataset.putSymbol);
         const callLtp = rowEl.querySelector(".call-ltp")?.textContent;
         const callAvg = rowEl.querySelector(".call-avg")?.textContent;
         const putLtp = rowEl.querySelector(".put-ltp")?.textContent;
         const putAvg = rowEl.querySelector(".put-avg")?.textContent;
-        if (callLtp && callLtp !== "-") state.call_ltp = callLtp;
-        if (callAvg && callAvg !== "-") state.call_avg = callAvg;
-        if (putLtp && putLtp !== "-") state.put_ltp = putLtp;
-        if (putAvg && putAvg !== "-") state.put_avg = putAvg;
-        lastLiveByStrike[strikeKey] = state;
+        if (callSymbol) {
+          const state = lastLiveByOptionSymbol[callSymbol] || {};
+          if (callLtp && callLtp !== "-") state.ltp = callLtp;
+          if (callAvg && callAvg !== "-") state.avg = callAvg;
+          lastLiveByOptionSymbol[callSymbol] = state;
+        }
+        if (putSymbol) {
+          const state = lastLiveByOptionSymbol[putSymbol] || {};
+          if (putLtp && putLtp !== "-") state.ltp = putLtp;
+          if (putAvg && putAvg !== "-") state.avg = putAvg;
+          lastLiveByOptionSymbol[putSymbol] = state;
+        }
       });
-      Object.keys(strikeToRowMap).forEach((key) => delete strikeToRowMap[key]);
+      Object.keys(optionSymbolToRowMeta).forEach((key) => delete optionSymbolToRowMeta[key]);
       tbody.innerHTML = strikes.map((row) => {
         const callCoi = row.call_oi_change ?? 0;
         const putCoi = row.put_oi_change ?? 0;
         const callOi = row.call_oi ?? 0;
         const putOi = row.put_oi ?? 0;
-        const strikeKey = String(parseInt(row.strike_price, 10));
-        const preservedLive = lastLiveByStrike[strikeKey] || {};
-        const callLiveLtp = preservedLive.call_ltp || "-";
+        const strikeKey = normalizeStrikeKey(row.strike_price);
+        const callSymbol = normalizeSymbolKey(row.call_trading_symbol);
+        const putSymbol = normalizeSymbolKey(row.put_trading_symbol);
+        const preservedCallLive = lastLiveByOptionSymbol[callSymbol] || {};
+        const preservedPutLive = lastLiveByOptionSymbol[putSymbol] || {};
+        const callLiveLtp = row.call_live_ltp !== null && row.call_live_ltp !== undefined
+          ? fmt2(row.call_live_ltp)
+          : (preservedCallLive.ltp || "-");
         const callLiveAvg = row.call_live_avg_price !== null && row.call_live_avg_price !== undefined
           ? fmt2(row.call_live_avg_price)
-          : (preservedLive.call_avg || "-");
-        const putLiveLtp = preservedLive.put_ltp || "-";
+          : (preservedCallLive.avg || "-");
+        const putLiveLtp = row.put_live_ltp !== null && row.put_live_ltp !== undefined
+          ? fmt2(row.put_live_ltp)
+          : (preservedPutLive.ltp || "-");
         const putLiveAvg = row.put_live_avg_price !== null && row.put_live_avg_price !== undefined
           ? fmt2(row.put_live_avg_price)
-          : (preservedLive.put_avg || "-");
+          : (preservedPutLive.avg || "-");
 
         const totalCoi = Number(callCoi) + Number(putCoi);
         const callRatio = safeDivPct(callCoi, totalCoi);
@@ -1016,7 +1042,12 @@
         const isAtm = atmStrike !== null && Number(row.strike_price) === Number(atmStrike);
 
         return `
-          <tr class="${isAtm ? 'atm-row' : ''}" data-strike="${strikeKey}">
+          <tr
+            class="${isAtm ? 'atm-row' : ''}"
+            data-strike="${escHtml(strikeKey)}"
+            data-call-symbol="${escHtml(callSymbol)}"
+            data-put-symbol="${escHtml(putSymbol)}"
+          >
             <td class="call-col ${signedClass(callRatio)}">${fmt2(callRatio)}%</td>
             <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}%</td>
             <td class="call-col ${signedClass(callOi)}">${fmt(callOi)}</td>
@@ -1037,7 +1068,14 @@
       }).join("");
 
       tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
-        strikeToRowMap[rowEl.dataset.strike] = rowEl;
+        const callSymbol = normalizeSymbolKey(rowEl.dataset.callSymbol);
+        const putSymbol = normalizeSymbolKey(rowEl.dataset.putSymbol);
+        if (callSymbol) {
+          optionSymbolToRowMeta[callSymbol] = { row: rowEl, side: "call" };
+        }
+        if (putSymbol) {
+          optionSymbolToRowMeta[putSymbol] = { row: rowEl, side: "put" };
+        }
       });
 
       const callOiSum = latest ? latest.call_oi_sum : null;
