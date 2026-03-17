@@ -41,7 +41,9 @@ There are three runnable apps involved in the runtime.
    - connects to FYERS websocket for `SymbolUpdate` ticks,
    - writes live symbol updates to Redis,
    - finalizes and cleans up Redis runtime data,
-   - writes heartbeat and runtime status to Redis.
+   - writes heartbeat and runtime status to Redis,
+   - keeps streaming work restricted to market hours,
+   - keeps housekeeping active after close for finalization and cleanup.
 
 ## Ownership Boundaries
 
@@ -126,7 +128,7 @@ Live market ingestion is owned by `apps/live_market_data`.
 Flow:
 
 1. Load active instruments from `data/instruments.json`.
-2. For each active instrument, call FYERS option-chain REST.
+2. Only while the market is open, for each active instrument call FYERS option-chain REST.
 3. Parse the option-chain response to determine the active option trading symbols for the nearest expiry.
 4. Connect to FYERS websocket with those trading symbols.
 5. Also subscribe to the instrument underlying symbol itself.
@@ -134,12 +136,14 @@ Flow:
 7. Write live option-symbol payloads to Redis.
 8. Write live underlying spot payloads to Redis.
 9. Publish updates on Redis channels for browser websocket consumers.
+10. At market close, disconnect the websocket and stop live subscription refresh work.
 
 Important detail:
 
 - `apps/live_market_data` does use FYERS option-chain REST, but only to derive websocket subscription symbols.
 - It does not own the dashboard snapshot timeline.
 - The live-data app computes underlying `change_from_prev_close` and `change_pct_from_prev_close` using the Redis previous-day final spot snapshot as the base.
+- The live-data app checks market state continuously and resumes streaming automatically on the next market open.
 
 ### 3. Dashboard Flow
 
@@ -233,6 +237,29 @@ Behavior:
 
 This avoids crashing the live-data app on server startup before login is completed.
 
+## Market-Hours Runtime Rules
+
+The market-hours rule is now explicit and enforced.
+
+Scheduler:
+
+- scheduler tick may still fire on its interval,
+- but it skips all FYERS option-chain REST capture outside market hours,
+- so no snapshot capture happens after market close or before market open.
+
+Live market data:
+
+- streaming startup is skipped when the market is closed,
+- streaming loop checks market state every few seconds,
+- when the market closes, the FYERS websocket is disconnected,
+- live subscription refresh and option-chain symbol discovery stop outside market hours,
+- when the market opens again, streaming resumes automatically.
+
+Housekeeping:
+
+- housekeeping remains active after market close,
+- this is required for exact-close-preferred previous-day finalization and old trade-date cleanup.
+
 ## Instrument Catalog
 
 Runtime instrument resolution for Redis and live-data flows uses:
@@ -287,6 +314,13 @@ Browser websocket relay:
 - Redis Pub/Sub messages are streamed directly to the browser websocket,
 - relay no longer uses a 1-second polling loop,
 - each forwarded payload includes `relay_forwarded_at` for latency inspection.
+
+Live-data degradation behavior:
+
+- repeated FYERS websocket disconnect/error logs are throttled,
+- repeated Redis live-write failures are throttled,
+- Redis live writes use backoff during outages,
+- on Redis recovery, the live-data app resumes normal writes and logs recovery once.
 
 FYERS auth:
 
@@ -421,6 +455,12 @@ If live market data app is not started:
 - browser live spot/change cards will not update,
 - previous-day finalization and cleanup will not run.
 
+If market is currently closed:
+
+- scheduler process may still be running but will skip capture work,
+- live market data process may still be running but will keep websocket streaming paused,
+- housekeeping can still finalize previous-day state and cleanup Redis runtime data.
+
 ## Recommended Startup Sequence
 
 1. Start Redis.
@@ -468,6 +508,9 @@ After startup, verify:
    - dashboard KPI cards should move on websocket updates even between snapshot intervals
 9. Option live cells do not flash blank on refresh:
    - `LTP` and `VWAP` should retain the last websocket-rendered values until the next tick arrives
+10. After market close:
+   - scheduler logs should show market-closed skips instead of capture
+   - live market data logs should show websocket pause/disconnect and no active streaming work
 
 ## Latency Verification
 
@@ -499,6 +542,7 @@ Interpretation:
 - `apps/fastapi` owns serving APIs, dashboard, login, and browser websocket access.
 - Dashboard snapshot reads are now Redis-only.
 - Live spot/change/change% and option LTP/VWAP are websocket-driven from Redis live data.
+- Scheduler capture and live websocket streaming are both restricted to market hours.
 - Previous-day close reference in Redis prefers exact close time, else latest snapshot of that day.
 - Scheduler and dashboard snapshot runtime are now Redis-native.
 - Browser-facing auth now uses signed session cookies instead of browser basic auth.

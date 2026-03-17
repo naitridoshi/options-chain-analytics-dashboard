@@ -77,6 +77,23 @@
     .status.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
     .status.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
 
+    .welcome {
+      display: none;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #245d43;
+      background: linear-gradient(180deg, #0d261d 0%, #0c2119 100%);
+      color: #9bf4c6;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .welcome.active {
+      display: block;
+    }
+
     .row {
       display: flex;
       flex-wrap: wrap;
@@ -103,6 +120,13 @@
       background: #13213b;
       border-color: #27406a;
       color: #cfe1ff;
+    }
+
+    .btn.disabled,
+    .btn[aria-disabled="true"] {
+      pointer-events: none;
+      opacity: 0.55;
+      filter: saturate(0.6);
     }
 
     .hint {
@@ -169,6 +193,7 @@
     <div class="subtitle">Run this once every morning so snapshots and scheduler can access market data for today.</div>
 
     <div id="tokenStatus" class="status warn">Checking token status...</div>
+    <div id="welcomeBanner" class="welcome">Welcome __AUTH_DISPLAY_NAME__!</div>
 
     <form method="post" action="/login">
       <div class="form-grid">
@@ -187,8 +212,8 @@
     </form>
 
     <div class="row">
-      <a class="btn" href="/api/v1/fyers/login">Login with FYERS</a>
-      <a class="btn secondary" href="/dashboard">Open Dashboard</a>
+      <a id="fyersLoginBtn" class="btn" href="/api/v1/fyers/login" aria-disabled="true">Login with FYERS</a>
+      <a id="dashboardBtn" class="btn secondary" href="/dashboard" aria-disabled="true">Open Dashboard</a>
     </div>
 
     <div class="hint">
@@ -198,9 +223,40 @@
   </div>
 
   <script>
+    const isAuthenticated = "__IS_AUTHENTICATED__" === "true";
+
+    function syncAuthenticatedState() {
+      const welcomeEl = document.getElementById("welcomeBanner");
+      const fyersBtn = document.getElementById("fyersLoginBtn");
+      const dashboardBtn = document.getElementById("dashboardBtn");
+
+      if (isAuthenticated) {
+        welcomeEl.classList.add("active");
+        fyersBtn.classList.remove("disabled");
+        dashboardBtn.classList.remove("disabled");
+        fyersBtn.setAttribute("aria-disabled", "false");
+        dashboardBtn.setAttribute("aria-disabled", "false");
+        return;
+      }
+
+      welcomeEl.classList.remove("active");
+      fyersBtn.classList.add("disabled");
+      dashboardBtn.classList.add("disabled");
+      fyersBtn.setAttribute("aria-disabled", "true");
+      dashboardBtn.setAttribute("aria-disabled", "true");
+    }
+
     function applyCallbackErrorState() {
       const statusEl = document.getElementById("tokenStatus");
-      const error = new URLSearchParams(window.location.search).get("error");
+      const params = new URLSearchParams(window.location.search);
+      const error = params.get("error");
+      const loginState = params.get("login");
+
+      if (loginState === "success" && isAuthenticated) {
+        statusEl.className = "status ok";
+        statusEl.textContent = "Signed in. Continue with FYERS login or open the dashboard.";
+        return true;
+      }
 
       if (!error) {
         return false;
@@ -285,6 +341,7 @@
       }
     }
 
+    syncAuthenticatedState();
     refreshStatus();
     setInterval(refreshStatus, 30000);
   </script>

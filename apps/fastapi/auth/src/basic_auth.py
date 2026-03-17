@@ -1,6 +1,10 @@
 from fastapi import Depends, HTTPException, Request, status
 
-from libs.utils.config.src.auth import AUTH_PASSWORD, AUTH_USERNAME
+from libs.utils.config.src.auth import (
+    AUTH_DISPLAY_NAME,
+    AUTH_PASSWORD,
+    AUTH_USERNAME,
+)
 
 
 def _credentials_valid(username: str, password: str) -> bool:
@@ -10,6 +14,13 @@ def _credentials_valid(username: str, password: str) -> bool:
 def get_current_user(request: Request) -> str | None:
     user = request.session.get("auth_user")
     return user if isinstance(user, str) and user else None
+
+
+def get_current_display_user(request: Request) -> str | None:
+    display_name = request.session.get("auth_display_name")
+    if isinstance(display_name, str) and display_name:
+        return display_name
+    return get_current_user(request)
 
 
 def verify_basic_auth(request: Request) -> str:
@@ -29,6 +40,7 @@ def verify_authenticated_user(user: str = Depends(verify_basic_auth)) -> str:
 def create_authenticated_session(request: Request, username: str) -> None:
     request.session.clear()
     request.session["auth_user"] = username
+    request.session["auth_display_name"] = AUTH_DISPLAY_NAME or username
 
 
 def clear_authenticated_session(request: Request) -> None:
