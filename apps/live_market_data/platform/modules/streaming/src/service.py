@@ -61,6 +61,7 @@ class LiveMarketStreamingService:
         self._ws_client: data_ws.FyersDataSocket | None = None
         self._ws_thread: threading.Thread | None = None
         self._subscription_map: dict[str, SubscribedOption] = {}
+        self._normalized_subscription_map: dict[str, SubscribedOption | None] = {}
         self._underlying_map: dict[str, UnderlyingSubscription] = {}
         self._current_symbols: list[str] = []
         self._is_connected = False
@@ -74,6 +75,7 @@ class LiveMarketStreamingService:
         self._redis_degraded = False
         self._next_symbol_refresh_at = 0.0
         self._market_closed_logged = False
+        self._unmapped_ws_symbols_logged: set[str] = set()
 
     async def start(self) -> None:
         if self._running:
@@ -147,6 +149,7 @@ class LiveMarketStreamingService:
     async def _refresh_subscriptions(self, *, force_restart: bool) -> None:
         instruments = InstrumentCatalogService.get_active_instruments()
         subscription_map: dict[str, SubscribedOption] = {}
+        normalized_subscription_map: dict[str, SubscribedOption | None] = {}
         underlying_map: dict[str, UnderlyingSubscription] = {}
         all_symbols: list[str] = []
 
@@ -187,20 +190,41 @@ class LiveMarketStreamingService:
                 if not trading_symbol or strike_price is None or not option_type:
                     continue
                 strike_key = _normalize_strike_key(strike_price)
-                subscription_map[_normalize_symbol_key(trading_symbol)] = (
-                    SubscribedOption(
-                        instrument_symbol=instrument.symbol,
-                        strike_price=strike_key,
-                        option_type=option_type,
-                        trading_symbol=trading_symbol,
+                if trading_symbol in subscription_map:
+                    logger.error(
+                        "Duplicate websocket subscription symbol collision - "
+                        f"symbol: {trading_symbol} - instrument: {instrument.symbol}"
                     )
+                subscribed_option = SubscribedOption(
+                    instrument_symbol=instrument.symbol,
+                    strike_price=strike_key,
+                    option_type=option_type,
+                    trading_symbol=trading_symbol,
                 )
+                subscription_map[trading_symbol] = subscribed_option
+                normalized_key = _normalize_symbol_key(trading_symbol)
+                existing_normalized = normalized_subscription_map.get(normalized_key)
+                if (
+                    existing_normalized
+                    and existing_normalized.trading_symbol != trading_symbol
+                ):
+                    logger.error(
+                        "Normalized websocket symbol collision detected - "
+                        f"normalized_symbol: {normalized_key} - "
+                        f"existing_symbol: {existing_normalized.trading_symbol} - "
+                        f"incoming_symbol: {trading_symbol}"
+                    )
+                    normalized_subscription_map[normalized_key] = None
+                elif normalized_key not in normalized_subscription_map:
+                    normalized_subscription_map[normalized_key] = subscribed_option
                 all_symbols.append(trading_symbol)
 
         all_symbols = sorted(set(all_symbols))
         symbols_changed = all_symbols != self._current_symbols
         self._subscription_map = subscription_map
+        self._normalized_subscription_map = normalized_subscription_map
         self._underlying_map = underlying_map
+        self._unmapped_ws_symbols_logged.clear()
 
         if not all_symbols:
             logger.warning("No symbols available for live websocket subscription")
@@ -323,8 +347,13 @@ class LiveMarketStreamingService:
             )
             return
 
-        subscribed_option = self._subscription_map.get(normalized_symbol)
+        subscribed_option = self._subscription_map.get(symbol)
         if not subscribed_option:
+            subscribed_option = self._normalized_subscription_map.get(normalized_symbol)
+        if not subscribed_option:
+            if symbol not in self._unmapped_ws_symbols_logged:
+                logger.warning(f"Unmapped websocket symbol: {symbol}")
+                self._unmapped_ws_symbols_logged.add(symbol)
             return
 
         received_at = datetime.now(timezone.utc).isoformat()
