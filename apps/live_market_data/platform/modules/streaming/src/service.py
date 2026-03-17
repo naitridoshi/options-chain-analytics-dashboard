@@ -410,6 +410,7 @@ class LiveMarketStreamingService:
             return []
 
         rows: list[dict] = []
+        seen_symbols: set[str] = set()
         for strike in latest_snapshot.get("strikes", []):
             strike_price = strike.get("strike_price")
             if strike_price is None:
@@ -417,23 +418,41 @@ class LiveMarketStreamingService:
 
             call_symbol = strike.get("call_trading_symbol")
             if call_symbol:
-                rows.append(
-                    {
-                        "trading_symbol": call_symbol,
-                        "strike_price": strike_price,
-                        "option_type": "CE",
-                    }
-                )
+                if call_symbol in seen_symbols:
+                    logger.error(
+                        "Duplicate call trading symbol found in latest snapshot - "
+                        f"instrument_symbol: {instrument_symbol} - "
+                        f"strike_price: {strike_price} - "
+                        f"symbol: {call_symbol}"
+                    )
+                else:
+                    seen_symbols.add(call_symbol)
+                    rows.append(
+                        {
+                            "trading_symbol": call_symbol,
+                            "strike_price": strike_price,
+                            "option_type": "CE",
+                        }
+                    )
 
             put_symbol = strike.get("put_trading_symbol")
             if put_symbol:
-                rows.append(
-                    {
-                        "trading_symbol": put_symbol,
-                        "strike_price": strike_price,
-                        "option_type": "PE",
-                    }
-                )
+                if put_symbol in seen_symbols:
+                    logger.error(
+                        "Duplicate put trading symbol found in latest snapshot - "
+                        f"instrument_symbol: {instrument_symbol} - "
+                        f"strike_price: {strike_price} - "
+                        f"symbol: {put_symbol}"
+                    )
+                else:
+                    seen_symbols.add(put_symbol)
+                    rows.append(
+                        {
+                            "trading_symbol": put_symbol,
+                            "strike_price": strike_price,
+                            "option_type": "PE",
+                        }
+                    )
         return rows
 
     def _schedule_live_write(self, coroutine_factory) -> None:
