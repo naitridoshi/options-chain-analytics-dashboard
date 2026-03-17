@@ -119,10 +119,10 @@ class RedisLiveMarketStore:
         payload: dict[str, Any],
     ) -> None:
         client = await redis_client_manager.get_client()
-        normalized_symbol = _normalize_symbol_key(symbol)
+        exact_symbol = _symbol_storage_key(symbol)
         encoded = json.dumps(payload, separators=(",", ":"))
         await client.set(
-            live_symbol_key(normalized_symbol),
+            live_symbol_key(exact_symbol),
             encoded,
             ex=REDIS_LIVE_DATA_TTL_SECONDS,
         )
@@ -131,7 +131,10 @@ class RedisLiveMarketStore:
     @staticmethod
     async def get_live_symbol(symbol: str) -> dict[str, Any] | None:
         client = await redis_client_manager.get_client()
-        payload = await client.get(live_symbol_key(_normalize_symbol_key(symbol)))
+        exact_symbol = _symbol_storage_key(symbol)
+        payload = await client.get(live_symbol_key(exact_symbol))
+        if not payload:
+            payload = await client.get(live_symbol_key(_normalize_symbol_key(symbol)))
         return json.loads(payload) if payload else None
 
     @staticmethod
@@ -141,22 +144,38 @@ class RedisLiveMarketStore:
             return {}
 
         client = await redis_client_manager.get_client()
-        normalized_symbols: list[str] = []
+        exact_symbols: list[str] = []
         for symbol in requested_symbols:
-            normalized_symbol = _normalize_symbol_key(symbol)
-            if normalized_symbol not in normalized_symbols:
-                normalized_symbols.append(normalized_symbol)
+            exact_symbol = _symbol_storage_key(symbol)
+            if exact_symbol not in exact_symbols:
+                exact_symbols.append(exact_symbol)
 
-        keys = [live_symbol_key(symbol) for symbol in normalized_symbols]
+        keys = [live_symbol_key(symbol) for symbol in exact_symbols]
         values = await client.mget(keys)
-        normalized_payloads: dict[str, dict[str, Any]] = {}
-        for symbol, value in zip(normalized_symbols, values, strict=False):
+        exact_payloads: dict[str, dict[str, Any]] = {}
+        missing_symbols: list[str] = []
+        for symbol, value in zip(exact_symbols, values, strict=False):
             if not value:
+                missing_symbols.append(symbol)
                 continue
-            normalized_payloads[symbol] = json.loads(value)
+            exact_payloads[symbol] = json.loads(value)
+        normalized_payloads: dict[str, dict[str, Any]] = {}
+        if missing_symbols:
+            legacy_keys = [
+                live_symbol_key(_normalize_symbol_key(symbol))
+                for symbol in missing_symbols
+            ]
+            legacy_values = await client.mget(legacy_keys)
+            for symbol, value in zip(missing_symbols, legacy_values, strict=False):
+                if not value:
+                    continue
+                normalized_payloads[symbol] = json.loads(value)
         payloads: dict[str, dict[str, Any]] = {}
         for symbol in requested_symbols:
-            payload = normalized_payloads.get(_normalize_symbol_key(symbol))
+            exact_symbol = _symbol_storage_key(symbol)
+            payload = exact_payloads.get(exact_symbol) or normalized_payloads.get(
+                exact_symbol
+            )
             if payload:
                 payloads[symbol] = payload
         return payloads
@@ -447,3 +466,7 @@ def _to_epoch_score(interval_ts: str) -> float:
 
 def _normalize_symbol_key(symbol: str) -> str:
     return str(symbol).strip().upper()
+
+
+def _symbol_storage_key(symbol: str) -> str:
+    return str(symbol).strip()

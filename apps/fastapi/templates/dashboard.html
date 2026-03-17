@@ -693,8 +693,9 @@
       return Number(v).toFixed(2);
     }
 
-    function normalizeSymbolKey(value) {
-      return String(value || "").trim().toUpperCase();
+    function optionSymbolKey(value) {
+      if (value === null || value === undefined) return "";
+      return String(value).trim();
     }
 
     function normalizeStrikeKey(value) {
@@ -1042,7 +1043,7 @@
         updateLiveSpotCards(data);
         return;
       }
-      const optionSymbol = normalizeSymbolKey(data.symbol);
+      const optionSymbol = optionSymbolKey(data.symbol);
       lastLiveUpdateAt = Date.now();
       liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
       setLiveStatus("ok");
@@ -1265,8 +1266,8 @@
 
       const tbody = document.querySelector("#gridTable tbody");
       tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
-        const callSymbol = normalizeSymbolKey(rowEl.dataset.callSymbol);
-        const putSymbol = normalizeSymbolKey(rowEl.dataset.putSymbol);
+        const callSymbol = optionSymbolKey(rowEl.dataset.callSymbol);
+        const putSymbol = optionSymbolKey(rowEl.dataset.putSymbol);
         const callLtp = rowEl.querySelector(".call-ltp")?.textContent;
         const callAvg = rowEl.querySelector(".call-avg")?.textContent;
         const putLtp = rowEl.querySelector(".put-ltp")?.textContent;
@@ -1291,8 +1292,8 @@
         const callOi = row.call_oi ?? 0;
         const putOi = row.put_oi ?? 0;
         const strikeKey = normalizeStrikeKey(row.strike_price);
-        const callSymbol = normalizeSymbolKey(row.call_trading_symbol);
-        const putSymbol = normalizeSymbolKey(row.put_trading_symbol);
+        const callSymbol = optionSymbolKey(row.call_trading_symbol);
+        const putSymbol = optionSymbolKey(row.put_trading_symbol);
         const preservedCallLive = lastLiveByOptionSymbol[callSymbol] || {};
         const preservedPutLive = lastLiveByOptionSymbol[putSymbol] || {};
         const callLiveLtp = row.call_live_ltp !== null && row.call_live_ltp !== undefined
@@ -1344,8 +1345,8 @@
       }).join("");
 
       tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
-        const callSymbol = normalizeSymbolKey(rowEl.dataset.callSymbol);
-        const putSymbol = normalizeSymbolKey(rowEl.dataset.putSymbol);
+        const callSymbol = optionSymbolKey(rowEl.dataset.callSymbol);
+        const putSymbol = optionSymbolKey(rowEl.dataset.putSymbol);
         if (callSymbol) {
           optionSymbolToRowMeta[callSymbol] = { row: rowEl, side: "call" };
         }
