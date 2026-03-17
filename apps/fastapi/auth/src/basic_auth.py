@@ -1,49 +1,51 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import Depends, HTTPException, Request, status
 
-from libs.utils.config.src.auth import AUTH_PASSWORD, AUTH_USERNAME
+from libs.utils.config.src.auth import (
+    AUTH_DISPLAY_NAME,
+    AUTH_PASSWORD,
+    AUTH_USERNAME,
+)
 
-security = HTTPBasic()
+
+def _credentials_valid(username: str, password: str) -> bool:
+    return username == AUTH_USERNAME and password == AUTH_PASSWORD
 
 
-def verify_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -> bool:
-    """
-    Verify basic authentication credentials against environment variables.
+def get_current_user(request: Request) -> str | None:
+    user = request.session.get("auth_user")
+    return user if isinstance(user, str) and user else None
 
-    Args:
-        credentials: HTTPBasicCredentials from the request
 
-    Returns:
-        bool: True if credentials are valid
+def get_current_display_user(request: Request) -> str | None:
+    display_name = request.session.get("auth_display_name")
+    if isinstance(display_name, str) and display_name:
+        return display_name
+    return get_current_user(request)
 
-    Raises:
-        HTTPException: If credentials are invalid
-    """
-    is_username_correct = credentials.username == AUTH_USERNAME
-    is_password_correct = credentials.password == AUTH_PASSWORD
 
-    if not (is_username_correct and is_password_correct):
+def verify_basic_auth(request: Request) -> str:
+    user = get_current_user(request)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
+            detail="Authentication required",
         )
+    return user
 
-    return True
+
+def verify_authenticated_user(user: str = Depends(verify_basic_auth)) -> str:
+    return user
 
 
-def get_current_user(credentials: HTTPBasicCredentials = Depends(security)) -> str:
-    """
-    Get the current authenticated user.
+def create_authenticated_session(request: Request, username: str) -> None:
+    request.session.clear()
+    request.session["auth_user"] = username
+    request.session["auth_display_name"] = AUTH_DISPLAY_NAME or username
 
-    Args:
-        credentials: HTTPBasicCredentials from the request
 
-    Returns:
-        str: The authenticated username
+def clear_authenticated_session(request: Request) -> None:
+    request.session.clear()
 
-    Raises:
-        HTTPException: If credentials are invalid
-    """
-    verify_basic_auth(credentials)
-    return credentials.username
+
+def authenticate_credentials(username: str, password: str) -> bool:
+    return _credentials_valid(username, password)

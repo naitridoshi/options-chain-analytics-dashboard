@@ -95,6 +95,17 @@
     }
     .fyers-badge.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
     .fyers-badge.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
+    .live-badge {
+      font-size: 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .live-badge.ok { background: #0f2e22; border-color: #1b6e4a; color: #7af0b7; }
+    .live-badge.warn { background: #3a1f1f; border-color: #7d3535; color: #ffc4c4; }
+    .live-badge.pending { background: #2a2f1f; border-color: #4a5080; color: #a8b8ff; }
 
     .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
@@ -383,11 +394,15 @@
           <div class="symbol-meta">
             <span id="symbolBadge">NIFTY</span>
             <span id="fyersStatusBadge" class="fyers-badge warn">FYERS: CHECKING</span>
+            <span id="liveStatusBadge" class="live-badge pending">LIVE: CONNECTING</span>
           </div>
           <span class="pill">LATEST SNAPSHOT</span>
         </div>
         <div class="actions">
           <a class="link-btn" href="/login">FYERS Login</a>
+          <form method="post" action="/logout" style="margin:0;">
+            <button type="submit">Sign Out</button>
+          </form>
         </div>
       </div>
 
@@ -451,6 +466,22 @@
     let timerId = null;
     let refreshMs = 5 * 60 * 1000;
     let hasRendered = false;
+    let ws = null;
+    let reconnectAttempts = 0;
+    const LIVE_OPTION_FLUSH_MS = 1000;
+    const optionSymbolToRowMeta = {};
+    const lastLiveByOptionSymbol = {};
+    const pendingLiveByOptionSymbol = {};
+    let lastLiveUnderlying = null;
+    let lastLiveUpdateAt = null;
+    let liveStaleAfterSeconds = null;
+    let websocketTicket = null;
+    let latestPrevCloseSpot = null;
+
+    function scheduleReload(delayMs = refreshMs) {
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(load, delayMs);
+    }
 
     function fmt(v) {
       if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
@@ -475,6 +506,19 @@
       return Number(v).toFixed(2);
     }
 
+    function normalizeSymbolKey(value) {
+      return String(value || "").trim().toUpperCase();
+    }
+
+    function normalizeStrikeKey(value) {
+      if (value === null || value === undefined || value === "") return "";
+      const asNumber = Number(value);
+      if (Number.isFinite(asNumber)) {
+        return String(asNumber);
+      }
+      return String(value).trim();
+    }
+
     function pcrNumber(v) {
       if (v === null || v === undefined || v === "INF" || v === "-INF") return null;
       const n = Number(v);
@@ -486,6 +530,37 @@
         <div class="title">${title}</div>
         <div class="value">${value}</div>
       </div>`;
+    }
+
+    function updateLiveSpotCards(payload) {
+      if (!payload) return;
+      lastLiveUnderlying = {
+        spot_price: payload.spot_price ?? lastLiveUnderlying?.spot_price ?? null,
+        prev_close_spot: payload.prev_close_spot ?? lastLiveUnderlying?.prev_close_spot ?? null,
+        change_from_prev_close: payload.change_from_prev_close ?? lastLiveUnderlying?.change_from_prev_close ?? null,
+        change_pct_from_prev_close: payload.change_pct_from_prev_close ?? lastLiveUnderlying?.change_pct_from_prev_close ?? null,
+      };
+      if (payload.prev_close_spot !== undefined && payload.prev_close_spot !== null) {
+        latestPrevCloseSpot = Number(payload.prev_close_spot);
+      }
+
+      const spotValueEl = document.getElementById("liveSpotValue");
+      const changeValueEl = document.getElementById("liveChangeValue");
+      const changePctValueEl = document.getElementById("liveChangePctValue");
+      if (!spotValueEl || !changeValueEl || !changePctValueEl) return;
+
+      const spotPrice = lastLiveUnderlying?.spot_price;
+      const changeFromPrevClose = lastLiveUnderlying?.change_from_prev_close;
+      const changePctFromPrevClose = lastLiveUnderlying?.change_pct_from_prev_close;
+
+      spotValueEl.textContent = fmt2(spotPrice);
+      spotValueEl.className = `val ${kpiToneClass(spotPrice)}`;
+      changeValueEl.textContent = fmt2(changeFromPrevClose);
+      changeValueEl.className = `val ${kpiToneClass(changeFromPrevClose)}`;
+      changePctValueEl.textContent = changePctFromPrevClose === null || changePctFromPrevClose === undefined
+        ? "-"
+        : `${fmt2(changePctFromPrevClose)}%`;
+      changePctValueEl.className = `val ${kpiToneClass(changePctFromPrevClose)}`;
     }
 
     function kpiToneClass(raw) {
@@ -523,11 +598,79 @@
       });
     }
 
+    async function readJsonResponse(response) {
+      const contentType = (response.headers.get("content-type") || "").toLowerCase();
+      const rawText = await response.text();
+
+      if (!rawText.trim()) {
+        return {
+          ok: false,
+          status: response.status,
+          error: "empty_body",
+          body: null,
+        };
+      }
+
+      if (!contentType.includes("application/json")) {
+        return {
+          ok: false,
+          status: response.status,
+          error: "non_json",
+          body: null,
+        };
+      }
+
+      try {
+        return {
+          ok: true,
+          status: response.status,
+          error: null,
+          body: JSON.parse(rawText),
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          status: response.status,
+          error: "invalid_json",
+          body: null,
+        };
+      }
+    }
+
+    function getApiErrorMessage(result, fallbackMessage) {
+      if (result.status === 401) {
+        return "Authentication required. Reload the page and sign in again.";
+      }
+
+      if (result.error === "empty_body") {
+        return "API returned an empty response. Retrying automatically.";
+      }
+
+      if (result.error === "non_json") {
+        return "API returned a non-JSON response. Reload the page and try again.";
+      }
+
+      if (result.error === "invalid_json") {
+        return "API returned malformed JSON. Retrying automatically.";
+      }
+
+      return fallbackMessage;
+    }
+
     async function refreshFyersStatus() {
       const statusEl = document.getElementById("fyersStatusBadge");
       try {
         const statusRes = await fetch("/api/v1/fyers/status", { credentials: "include" });
-        const statusBody = await statusRes.json();
+        const statusPayload = await readJsonResponse(statusRes);
+        if (!statusPayload.ok) {
+          statusEl.className = "fyers-badge warn";
+          statusEl.textContent = statusPayload.status === 401
+            ? "FYERS: AUTH REQUIRED"
+            : "FYERS: STATUS ERROR";
+          return;
+        }
+
+        const statusBody = statusPayload.body || {};
         const token = statusBody.data || {};
         if (statusRes.ok && token.has_token) {
           statusEl.className = "fyers-badge ok";
@@ -547,6 +690,138 @@
       el.style.display = "block";
       el.className = "status warn";
       el.textContent = message;
+    }
+
+    function setLiveStatus(state) {
+      const badge = document.getElementById("liveStatusBadge");
+      if (!badge) return;
+      if (state === "ok") {
+        badge.className = "live-badge ok";
+        badge.textContent = "LIVE: CONNECTED";
+        return;
+      }
+      if (state === "warn") {
+        badge.className = "live-badge warn";
+        badge.textContent = "LIVE: DISCONNECTED";
+        return;
+      }
+      badge.className = "live-badge pending";
+      badge.textContent = "LIVE: CONNECTING";
+    }
+
+    function refreshLiveStatusHeartbeat() {
+      if (!lastLiveUpdateAt || !liveStaleAfterSeconds) return;
+      const elapsedSeconds = (Date.now() - lastLiveUpdateAt) / 1000;
+      if (elapsedSeconds > liveStaleAfterSeconds) {
+        setLiveStatus("warn");
+      }
+    }
+
+    async function ensureWebSocketTicket(symbol) {
+      if (websocketTicket) return websocketTicket;
+      const response = await fetch(`/api/v1/market-data/ws-ticket?symbol=${encodeURIComponent(symbol)}`, {
+        method: "POST",
+        credentials: "include"
+      });
+      const body = await response.json();
+      websocketTicket = body?.data?.ticket || null;
+      return websocketTicket;
+    }
+
+    async function connectWebSocket(symbol) {
+      if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+        return;
+      }
+      const ticket = await ensureWebSocketTicket(symbol);
+      if (!ticket) {
+        setLiveStatus("warn");
+        return;
+      }
+      setLiveStatus("pending");
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      ws = new WebSocket(`${protocol}://${window.location.host}/ws/market-data?symbol=${encodeURIComponent(symbol)}&ticket=${encodeURIComponent(ticket)}`);
+
+      ws.onopen = () => {
+        reconnectAttempts = 0;
+        setLiveStatus("ok");
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          applyLiveUpdate(JSON.parse(event.data));
+        } catch (error) {
+          console.error("Failed to parse live market update", error);
+        }
+      };
+
+      ws.onclose = () => {
+        websocketTicket = null;
+        setLiveStatus("warn");
+        scheduleReconnect(symbol);
+      };
+
+      ws.onerror = () => {
+        websocketTicket = null;
+        setLiveStatus("warn");
+      };
+    }
+
+    function scheduleReconnect(symbol) {
+      if (reconnectAttempts >= 10) return;
+      reconnectAttempts += 1;
+      const delay = Math.min(1000 * (2 ** reconnectAttempts), 30000);
+      setTimeout(() => {
+        connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
+      }, delay);
+    }
+
+    function applyLiveUpdate(data) {
+      if (!data) return;
+      if (data.message_type === "underlying_spot_update") {
+        lastLiveUpdateAt = Date.now();
+        liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
+        setLiveStatus("ok");
+        updateLiveSpotCards(data);
+        return;
+      }
+      const optionSymbol = normalizeSymbolKey(data.symbol);
+      lastLiveUpdateAt = Date.now();
+      liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
+      setLiveStatus("ok");
+
+      const pendingState = pendingLiveByOptionSymbol[optionSymbol] || {};
+      if (data.ltp !== undefined && data.ltp !== null) {
+        pendingState.ltp = fmt2(data.ltp);
+      }
+      if (data.avg_price !== undefined && data.avg_price !== null) {
+        pendingState.avg = fmt2(data.avg_price);
+      }
+      pendingLiveByOptionSymbol[optionSymbol] = pendingState;
+    }
+
+    function flushPendingOptionUpdates() {
+      Object.entries(pendingLiveByOptionSymbol).forEach(([optionSymbol, pendingState]) => {
+        const rowMeta = optionSymbolToRowMeta[optionSymbol];
+        if (!rowMeta) return;
+
+        const side = rowMeta.side;
+        const row = rowMeta.row;
+        const liveState = lastLiveByOptionSymbol[optionSymbol] || {};
+        const ltpCell = row.querySelector(`.${side}-ltp`);
+        const avgCell = row.querySelector(`.${side}-avg`);
+
+        if (ltpCell && pendingState.ltp !== undefined) {
+          ltpCell.textContent = pendingState.ltp;
+          liveState.ltp = pendingState.ltp;
+        }
+        if (avgCell && pendingState.avg !== undefined) {
+          avgCell.textContent = pendingState.avg;
+          liveState.avg = pendingState.avg;
+        }
+
+        lastLiveByOptionSymbol[optionSymbol] = liveState;
+        delete pendingLiveByOptionSymbol[optionSymbol];
+      });
     }
 
     function showLoadingState() {
@@ -578,23 +853,47 @@
       refreshFyersStatus().catch(() => {});
 
       let res;
-      let body;
+      let payload;
       try {
         res = await fetch(`/api/v1/dashboard/data?symbol=${encodeURIComponent(symbol)}&timeline_limit=1`, { credentials: "include" });
-        body = await res.json();
+        payload = await readJsonResponse(res);
       } catch (e) {
-        showDataStatus("Dashboard data request failed. Check API logs.");
+        showDataStatus("Dashboard data request failed. Retrying automatically.");
+        scheduleReload(10000);
         return;
       }
 
+      if (!payload.ok) {
+        showDataStatus(getApiErrorMessage(payload, `Dashboard API failed with HTTP ${res.status}`));
+        if (payload.status !== 401) {
+          scheduleReload(10000);
+        }
+        return;
+      }
+
+      const body = payload.body || {};
       if (!res.ok || !body.success) {
-        showDataStatus(`Dashboard API failed with HTTP ${res.status}`);
+        showDataStatus(body.message || `Dashboard API failed with HTTP ${res.status}`);
+        if (res.status !== 401) {
+          scheduleReload(10000);
+        }
         return;
       }
       document.getElementById("dataStatus").style.display = "none";
 
       const data = body.data || {};
       const latest = data.latest;
+      lastLiveUnderlying = {
+        spot_price: latest && latest.spot_price !== undefined ? latest.spot_price : lastLiveUnderlying?.spot_price ?? null,
+        prev_close_spot: latest && latest.prev_close_spot !== undefined ? latest.prev_close_spot : lastLiveUnderlying?.prev_close_spot ?? null,
+        change_from_prev_close: latest && latest.change_from_prev_close !== undefined ? latest.change_from_prev_close : lastLiveUnderlying?.change_from_prev_close ?? null,
+        change_pct_from_prev_close: latest && latest.change_pct_from_prev_close !== undefined ? latest.change_pct_from_prev_close : lastLiveUnderlying?.change_pct_from_prev_close ?? null,
+      };
+      latestPrevCloseSpot = latest && latest.prev_close_spot !== undefined && latest.prev_close_spot !== null
+        ? Number(latest.prev_close_spot)
+        : (lastLiveUnderlying?.prev_close_spot !== null && lastLiveUnderlying?.prev_close_spot !== undefined
+          ? Number(lastLiveUnderlying.prev_close_spot)
+          : null);
       const strikes = data.strikes || [];
       refreshMs = (data.refresh_seconds || 300) * 1000;
       const refreshLabel = refreshMs >= 60000
@@ -610,21 +909,26 @@
 
       const leftKpis = [
         {
+          key: "spot",
           label: "SPOT",
-          val: latest ? fmt2(latest.spot_price) : "-",
-          raw: latest ? latest.spot_price : null,
+          val: fmt2(lastLiveUnderlying?.spot_price),
+          raw: lastLiveUnderlying?.spot_price ?? null,
         },
         {
+          key: "change",
           label: "CHANGE",
-          val: latest ? fmt2(latest.change_from_prev_close) : "-",
+          val: fmt2(lastLiveUnderlying?.change_from_prev_close),
           tip: prevCloseSource,
-          raw: latest ? latest.change_from_prev_close : null,
+          raw: lastLiveUnderlying?.change_from_prev_close ?? null,
         },
         {
+          key: "change_pct",
           label: "CHANGE %",
-          val: latest ? `${fmt2(latest.change_pct_from_prev_close)}%` : "-",
+          val: lastLiveUnderlying?.change_pct_from_prev_close === null || lastLiveUnderlying?.change_pct_from_prev_close === undefined
+            ? "-"
+            : `${fmt2(lastLiveUnderlying.change_pct_from_prev_close)}%`,
           tip: prevCloseSource,
-          raw: latest ? latest.change_pct_from_prev_close : null,
+          raw: lastLiveUnderlying?.change_pct_from_prev_close ?? null,
         },
       ];
       const rightKpis = [
@@ -670,7 +974,15 @@
           const labelHtml = item.tip
             ? `<div class="label with-tip">${item.label}<span class="label-tip" tabindex="0">i<span class="label-tip-pop">${escHtml(item.tip)}</span></span></div>`
             : `<div class="label">${item.label}</div>`;
-          return `<div class="kpi">${labelHtml}<div class="val ${kpiToneClass(item.raw)}">${item.val}</div></div>`;
+          const valueId = item.key === "spot"
+            ? "liveSpotValue"
+            : item.key === "change"
+              ? "liveChangeValue"
+              : item.key === "change_pct"
+                ? "liveChangePctValue"
+                : "";
+          const idAttribute = valueId ? ` id="${valueId}"` : "";
+          return `<div class="kpi">${labelHtml}<div${idAttribute} class="val ${kpiToneClass(item.raw)}">${item.val}</div></div>`;
       };
 
       document.getElementById("kpis").innerHTML = `
@@ -694,11 +1006,49 @@
       }
 
       const tbody = document.querySelector("#gridTable tbody");
+      tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
+        const callSymbol = normalizeSymbolKey(rowEl.dataset.callSymbol);
+        const putSymbol = normalizeSymbolKey(rowEl.dataset.putSymbol);
+        const callLtp = rowEl.querySelector(".call-ltp")?.textContent;
+        const callAvg = rowEl.querySelector(".call-avg")?.textContent;
+        const putLtp = rowEl.querySelector(".put-ltp")?.textContent;
+        const putAvg = rowEl.querySelector(".put-avg")?.textContent;
+        if (callSymbol) {
+          const state = lastLiveByOptionSymbol[callSymbol] || {};
+          if (callLtp && callLtp !== "-") state.ltp = callLtp;
+          if (callAvg && callAvg !== "-") state.avg = callAvg;
+          lastLiveByOptionSymbol[callSymbol] = state;
+        }
+        if (putSymbol) {
+          const state = lastLiveByOptionSymbol[putSymbol] || {};
+          if (putLtp && putLtp !== "-") state.ltp = putLtp;
+          if (putAvg && putAvg !== "-") state.avg = putAvg;
+          lastLiveByOptionSymbol[putSymbol] = state;
+        }
+      });
+      Object.keys(optionSymbolToRowMeta).forEach((key) => delete optionSymbolToRowMeta[key]);
       tbody.innerHTML = strikes.map((row) => {
         const callCoi = row.call_oi_change ?? 0;
         const putCoi = row.put_oi_change ?? 0;
         const callOi = row.call_oi ?? 0;
         const putOi = row.put_oi ?? 0;
+        const strikeKey = normalizeStrikeKey(row.strike_price);
+        const callSymbol = normalizeSymbolKey(row.call_trading_symbol);
+        const putSymbol = normalizeSymbolKey(row.put_trading_symbol);
+        const preservedCallLive = lastLiveByOptionSymbol[callSymbol] || {};
+        const preservedPutLive = lastLiveByOptionSymbol[putSymbol] || {};
+        const callLiveLtp = row.call_live_ltp !== null && row.call_live_ltp !== undefined
+          ? fmt2(row.call_live_ltp)
+          : (preservedCallLive.ltp || "-");
+        const callLiveAvg = row.call_live_avg_price !== null && row.call_live_avg_price !== undefined
+          ? fmt2(row.call_live_avg_price)
+          : (preservedCallLive.avg || "-");
+        const putLiveLtp = row.put_live_ltp !== null && row.put_live_ltp !== undefined
+          ? fmt2(row.put_live_ltp)
+          : (preservedPutLive.ltp || "-");
+        const putLiveAvg = row.put_live_avg_price !== null && row.put_live_avg_price !== undefined
+          ? fmt2(row.put_live_avg_price)
+          : (preservedPutLive.avg || "-");
 
         const totalCoi = Number(callCoi) + Number(putCoi);
         const callRatio = safeDivPct(callCoi, totalCoi);
@@ -710,17 +1060,22 @@
         const isAtm = atmStrike !== null && Number(row.strike_price) === Number(atmStrike);
 
         return `
-          <tr class="${isAtm ? 'atm-row' : ''}">
+          <tr
+            class="${isAtm ? 'atm-row' : ''}"
+            data-strike="${escHtml(strikeKey)}"
+            data-call-symbol="${escHtml(callSymbol)}"
+            data-put-symbol="${escHtml(putSymbol)}"
+          >
             <td class="call-col ${signedClass(callRatio)}">${fmt2(callRatio)}%</td>
             <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}%</td>
             <td class="call-col ${signedClass(callOi)}">${fmt(callOi)}</td>
             <td class="call-col ${signedClass(callCoi)}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
-            <td class="call-col">${fmt2(row.call_ltp)}</td>
-            <td class="call-col">-</td>
+            <td class="call-col call-ltp">${callLiveLtp}</td>
+            <td class="call-col call-avg">${callLiveAvg}</td>
             <td class="sp-cell ${isAtm ? 'atm' : ''}">${fmt2(row.strike_price)}</td>
-            <td class="put-col">-</td>
-            <td class="put-col">${fmt2(row.put_ltp)}</td>
+            <td class="put-col put-avg">${putLiveAvg}</td>
+            <td class="put-col put-ltp">${putLiveLtp}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${signedClass(putCoi)}">${fmt(putCoi)}</td>
             <td class="put-col ${signedClass(putOi)}">${fmt(putOi)}</td>
@@ -729,6 +1084,18 @@
           </tr>
         `;
       }).join("");
+
+      tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
+        const callSymbol = normalizeSymbolKey(rowEl.dataset.callSymbol);
+        const putSymbol = normalizeSymbolKey(rowEl.dataset.putSymbol);
+        if (callSymbol) {
+          optionSymbolToRowMeta[callSymbol] = { row: rowEl, side: "call" };
+        }
+        if (putSymbol) {
+          optionSymbolToRowMeta[putSymbol] = { row: rowEl, side: "put" };
+        }
+      });
+      flushPendingOptionUpdates();
 
       const callOiSum = latest ? latest.call_oi_sum : null;
       const putOiSum = latest ? latest.put_oi_sum : null;
@@ -742,10 +1109,15 @@
       document.getElementById("footOiPcr").textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
       document.getElementById("footCoiPcr").textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
 
+      connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
+      refreshLiveStatusHeartbeat();
+
       if (timerId) clearTimeout(timerId);
       timerId = setTimeout(load, refreshMs);
     }
 
+    setInterval(refreshLiveStatusHeartbeat, 5000);
+    setInterval(flushPendingOptionUpdates, LIVE_OPTION_FLUSH_MS);
     load();
   </script>
 </body>

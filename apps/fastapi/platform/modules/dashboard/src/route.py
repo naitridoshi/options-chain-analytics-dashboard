@@ -1,7 +1,14 @@
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import HTMLResponse, JSONResponse
+from html import escape
 
-from apps.fastapi.auth.src.basic_auth import verify_basic_auth
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.responses import RedirectResponse
+
+from apps.fastapi.auth.src.basic_auth import (
+    get_current_display_user,
+    get_current_user,
+    verify_basic_auth,
+)
 from apps.fastapi.platform.modules.dashboard.src.service import (
     OptionChainDashboardService,
 )
@@ -13,11 +20,19 @@ from libs.utils.common.constants.src.templates import (
 dashboard_route = APIRouter(tags=["Dashboard"])
 
 
+def _render_login_template(current_user: str | None) -> str:
+    display_name = escape(current_user or "")
+    is_authenticated = "true" if current_user else "false"
+    return LOGIN_TEMPLATE_HTML.replace("__AUTH_DISPLAY_NAME__", display_name).replace(
+        "__IS_AUTHENTICATED__", is_authenticated
+    )
+
+
 @dashboard_route.get("/api/v1/dashboard/data")
 async def dashboard_data(
     symbol: str | None = Query(default=None),
     timeline_limit: int = Query(default=100, ge=1, le=1000),
-    _: bool = Depends(verify_basic_auth),
+    _: str = Depends(verify_basic_auth),
 ):
     data = await OptionChainDashboardService.get_dashboard_data(
         symbol=symbol,
@@ -27,10 +42,13 @@ async def dashboard_data(
 
 
 @dashboard_route.get("/login", response_class=HTMLResponse)
-async def fyers_login_page(_: bool = Depends(verify_basic_auth)):
-    return HTMLResponse(LOGIN_TEMPLATE_HTML)
+async def fyers_login_page(request: Request):
+    current_user = get_current_display_user(request)
+    return HTMLResponse(_render_login_template(current_user))
 
 
 @dashboard_route.get("/dashboard", response_class=HTMLResponse)
-async def dashboard_page(_: bool = Depends(verify_basic_auth)):
+async def dashboard_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
     return HTMLResponse(DASHBOARD_TEMPLATE_HTML)

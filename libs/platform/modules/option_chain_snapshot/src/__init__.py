@@ -77,8 +77,17 @@ def _to_date(value: Any) -> date | None:
     return None
 
 
+def _get_chain_rows(data: dict) -> list[dict] | None:
+    chain = data.get("optionsChain") or data.get("options_chain") or data.get("chain")
+    return chain if isinstance(chain, list) else None
+
+
 def parse_spot_price(payload: dict) -> Decimal:
     data = payload.get("d") or payload.get("data") or payload
+
+    # ------------------------------------------------------------------
+    # 1️⃣ Direct spot fields (some APIs return it directly)
+    # ------------------------------------------------------------------
     spot = (
         data.get("ltp")
         or data.get("spot_price")
@@ -86,32 +95,63 @@ def parse_spot_price(payload: dict) -> Decimal:
         or data.get("underlying_value")
         or data.get("underlyingValue")
     )
-    if spot is None and isinstance(data.get("underlying"), dict):
-        spot = data["underlying"].get("ltp") or data["underlying"].get("last_price")
-    if spot is None:
-        chain = (
-            data.get("optionsChain") or data.get("options_chain") or data.get("chain")
-        )
-        if isinstance(chain, list):
-            for item in chain:
-                if not isinstance(item, dict):
-                    continue
-                if (item.get("option_type") or "") == "" and _to_decimal(
-                    item.get("strike_price")
-                ) in (None, Decimal("-1")):
-                    spot = item.get("ltp") or item.get("last_price")
-                    if spot is not None:
-                        break
-    if spot is None:
-        raise ValueError(f"Unable to parse spot price from FYERS response: {payload}")
-    return Decimal(str(spot))
+
+    if spot is not None:
+        return Decimal(str(spot))
+
+    # ------------------------------------------------------------------
+    # 2️⃣ Underlying object fallback
+    # ------------------------------------------------------------------
+    underlying = data.get("underlying")
+    if isinstance(underlying, dict):
+        spot = underlying.get("ltp") or underlying.get("last_price")
+        if spot is not None:
+            return Decimal(str(spot))
+
+    # ------------------------------------------------------------------
+    # 3️⃣ FYERS optionchain structure
+    # underlying row = option_type "" and strike_price -1
+    # Usually the first row
+    # ------------------------------------------------------------------
+    chain = _get_chain_rows(data)
+    if chain:
+        # Fast path: check first row
+        first = chain[0]
+        if (
+            isinstance(first, dict)
+            and (first.get("option_type") or "") == ""
+            and first.get("strike_price") == -1
+        ):
+            spot = first.get("ltp") or first.get("last_price")
+            if spot is not None:
+                return Decimal(str(spot))
+
+        # Fallback: scan entire chain
+        for item in chain:
+            if not isinstance(item, dict):
+                continue
+
+            option_type = item.get("option_type") or ""
+            strike_price = item.get("strike_price")
+
+            if option_type == "" and strike_price in (-1, None):
+                spot = item.get("ltp") or item.get("last_price")
+                if spot is not None:
+                    return Decimal(str(spot))
+
+    # ------------------------------------------------------------------
+    # 4️⃣ If nothing found → error
+    # ------------------------------------------------------------------
+    raise ValueError(f"Unable to parse spot price from FYERS response: {payload}")
 
 
 def parse_expiry_candidates(payload: dict) -> list[dict]:
     data = payload.get("d") or payload.get("data") or payload
+
     raw_candidates = (
         data.get("expiryData") or data.get("expiry_data") or data.get("expiry") or []
     )
+
     candidates: list[dict] = []
 
     for item in raw_candidates:
@@ -125,19 +165,25 @@ def parse_expiry_candidates(payload: dict) -> list[dict]:
                 or item.get("expiry_dt_str")
                 or item.get("display")
             )
+
             timestamp = item.get("timestamp") or item.get("expiry_ts")
+
             if timestamp is None:
                 raw_expiry = item.get("expiry")
                 if isinstance(raw_expiry, (int, float)):
                     timestamp = int(raw_expiry)
                 elif isinstance(raw_expiry, str) and raw_expiry.strip().isdigit():
                     timestamp = int(raw_expiry.strip())
+
             if timestamp is not None:
                 timestamp = int(timestamp)
+
             if not expiry_date and timestamp is not None:
                 expiry_date = _to_date(timestamp)
+
             if not expiry_date:
                 continue
+
             candidates.append(
                 {
                     "expiry_date": expiry_date,
@@ -145,8 +191,10 @@ def parse_expiry_candidates(payload: dict) -> list[dict]:
                     "is_weekly": bool(item.get("isWeekly", True)),
                 }
             )
+
         else:
             expiry_date = _to_date(item)
+
             if expiry_date:
                 candidates.append(
                     {
@@ -159,16 +207,20 @@ def parse_expiry_candidates(payload: dict) -> list[dict]:
                 )
 
     unique = {}
+
     for item in sorted(candidates, key=lambda x: x["expiry_date"]):
         unique[item["expiry_date"]] = item
+
     return list(unique.values())
 
 
 def parse_option_rows(payload: dict) -> list[dict]:
     data = payload.get("d") or payload.get("data") or payload
-    chain = data.get("optionsChain") or data.get("options_chain") or data.get("chain")
+    chain = _get_chain_rows(data)
+
     fallback_expiry_date = None
     parsed_candidates = parse_expiry_candidates(payload)
+
     if parsed_candidates:
         fallback_expiry_date = parsed_candidates[0]["expiry_date"]
 
@@ -176,6 +228,7 @@ def parse_option_rows(payload: dict) -> list[dict]:
         return []
 
     rows: list[dict] = []
+
     for item in chain:
         if not isinstance(item, dict):
             continue
@@ -183,6 +236,7 @@ def parse_option_rows(payload: dict) -> list[dict]:
         strike_price = _to_decimal(
             item.get("strike_price") or item.get("strikePrice") or item.get("strike")
         )
+
         expiry_date = _to_date(
             item.get("expiry")
             or item.get("expiry_date")
@@ -191,6 +245,9 @@ def parse_option_rows(payload: dict) -> list[dict]:
             or item.get("expiry_ts")
         )
 
+        # ------------------------------------------------------------------
+        # Handle nested CE/PE structures (other broker formats)
+        # ------------------------------------------------------------------
         for side_name, option_type in (
             ("ce", "CE"),
             ("pe", "PE"),
@@ -198,6 +255,7 @@ def parse_option_rows(payload: dict) -> list[dict]:
             ("PE", "PE"),
         ):
             contract = item.get(side_name)
+
             if not isinstance(contract, dict):
                 continue
 
@@ -206,6 +264,7 @@ def parse_option_rows(payload: dict) -> list[dict]:
                 or contract.get("trading_symbol")
                 or contract.get("tradingSymbol")
             )
+
             if not trading_symbol or strike_price is None:
                 continue
 
@@ -215,8 +274,10 @@ def parse_option_rows(payload: dict) -> list[dict]:
                 or contract.get("expiry_date")
                 or contract.get("expiry_ts")
             )
+
             if row_expiry_date is None:
                 row_expiry_date = fallback_expiry_date
+
             if row_expiry_date is None:
                 continue
 
@@ -277,12 +338,18 @@ def parse_option_rows(payload: dict) -> list[dict]:
                 }
             )
 
+        # ------------------------------------------------------------------
+        # FYERS flat optionchain rows
+        # ------------------------------------------------------------------
         if item.get("option_type") and item.get("symbol") and strike_price is not None:
             row_expiry = expiry_date or _to_date(item.get("expiry_ts"))
+
             if row_expiry is None:
                 row_expiry = fallback_expiry_date
+
             if row_expiry is None:
                 continue
+
             rows.append(
                 {
                     "expiry_date": row_expiry,
@@ -313,6 +380,7 @@ def parse_option_rows(payload: dict) -> list[dict]:
             )
 
     unique_rows = {}
+
     for row in rows:
         key = (
             row["expiry_date"],

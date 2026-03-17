@@ -10,15 +10,13 @@ from libs.platform.modules.option_chain_snapshot.src import (
 )
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src import FyersClientService
+from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
+from libs.utils.common.runtime_store.src import RuntimeSnapshotService
 from libs.utils.config.src.fyers import (
     SNAPSHOT_EXPIRY_COUNT,
     SNAPSHOT_MAX_RETRIES,
     SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
     SNAPSHOT_STRIKE_COUNT,
-)
-from libs.utils.db.postgres.operations.src import (
-    InstrumentOperations,
-    OptionSnapshotOperations,
 )
 
 log = CustomLogger("OptionChainSnapshotService")
@@ -47,7 +45,7 @@ class OptionChainSnapshotService:
         cls._status.last_run_at = datetime.now(timezone.utc).isoformat()
 
         try:
-            instruments = await InstrumentOperations.get_active_instruments()
+            instruments = InstrumentCatalogService.get_active_instruments()
             processed = 0
             total_snapshots = 0
             total_strikes = 0
@@ -149,18 +147,15 @@ class OptionChainSnapshotService:
                 )
                 continue
 
-            snapshot_result = (
-                await OptionSnapshotOperations.create_snapshot_transactional(
-                    instrument_id=instrument.id,
-                    expiry_date=candidate["expiry_date"],
-                    is_weekly=bool(candidate.get("is_weekly", True)),
+            if index == 0:
+                await RuntimeSnapshotService.save_intraday_snapshot(
+                    instrument=instrument,
                     captured_at=captured_at,
                     spot_price=spot_price,
                     strike_rows=expiry_rows,
                 )
-            )
             snapshots_created += 1
-            strikes_inserted += snapshot_result["strikes_inserted"]
+            strikes_inserted += len(expiry_rows)
 
         if snapshots_created == 0:
             raise ValueError(
