@@ -107,6 +107,7 @@ class LiveMarketStreamingService:
         if self._ws_client:
             self._ws_client.keep_running = False
             self._ws_client = None
+        self._ws_thread = None
         self._is_connected = False
         logger.info("Live market streaming service stopped")
 
@@ -246,7 +247,7 @@ class LiveMarketStreamingService:
             log_path=FYERS_LOG_PATH,
             litemode=False,
             write_to_file=False,
-            reconnect=True,
+            reconnect=False,
             on_connect=self._on_connect,
             on_close=self._on_close,
             on_error=self._on_error,
@@ -283,6 +284,7 @@ class LiveMarketStreamingService:
         if self._ws_client:
             self._ws_client.keep_running = False
             self._ws_client = None
+        self._ws_thread = None
         self._is_connected = False
         if clear_symbols:
             self._current_symbols = []
@@ -299,6 +301,7 @@ class LiveMarketStreamingService:
             )
 
     def _on_close(self) -> None:
+        self._pause_socket()
         self._is_connected = False
         _log_throttled(
             level="warning",
@@ -310,6 +313,7 @@ class LiveMarketStreamingService:
         )
 
     def _on_error(self, error: Exception) -> None:
+        self._pause_socket()
         self._is_connected = False
         _log_throttled(
             level="error",
