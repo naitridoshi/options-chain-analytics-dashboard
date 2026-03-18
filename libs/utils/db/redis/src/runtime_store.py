@@ -111,6 +111,9 @@ class RedisTokenStore:
 
 
 class RedisLiveMarketStore:
+    # Track first write per symbol for debug logging (class-level to persist across instances)
+    _first_write_logged: set[str] = set()
+
     @staticmethod
     async def write_live_symbol(
         *,
@@ -120,9 +123,53 @@ class RedisLiveMarketStore:
     ) -> None:
         client = await redis_client_manager.get_client()
         exact_symbol = _symbol_storage_key(symbol)
+        redis_key = live_symbol_key(exact_symbol)
+
+        # VALIDATION: Check symbol integrity to prevent LTP cross-contamination
+        payload_symbol = payload.get("symbol", "")
+        payload_option_type = payload.get("option_type", "")
+
+        # The symbol in payload should match the storage key
+        if payload_symbol and payload_symbol != exact_symbol:
+            logger.warning(
+                f"Symbol mismatch in write_live_symbol - storage_key: {exact_symbol} - "
+                f"payload_symbol: {payload_symbol} - "
+                f"strike: {payload.get('strike_price')} type: {payload_option_type} - "
+                f"This may indicate a mapping error"
+            )
+
+        # Check if option_type matches the symbol (CE should end with CE, PE should end with PE)
+        if payload_option_type and payload_symbol:
+            symbol_upper = payload_symbol.upper()
+            if payload_option_type == "CE" and not symbol_upper.endswith("CE"):
+                logger.error(
+                    f"CRITICAL: Option type mismatch - type: CE but symbol ends with: "
+                    f"{symbol_upper[-2:] if len(symbol_upper) >= 2 else symbol_upper} - "
+                    f"symbol: {payload_symbol} - strike: {payload.get('strike_price')} - "
+                    f"SKIPPING WRITE to prevent LTP cross-contamination"
+                )
+                return
+            if payload_option_type == "PE" and not symbol_upper.endswith("PE"):
+                logger.error(
+                    f"CRITICAL: Option type mismatch - type: PE but symbol ends with: "
+                    f"{symbol_upper[-2:] if len(symbol_upper) >= 2 else symbol_upper} - "
+                    f"symbol: {payload_symbol} - strike: {payload.get('strike_price')} - "
+                    f"SKIPPING WRITE to prevent LTP cross-contamination"
+                )
+                return
+
+        # Log first write per symbol for debugging (avoid log spam)
+        if exact_symbol not in RedisLiveMarketStore._first_write_logged:
+            logger.info(
+                f"Redis write_live_symbol - key: {redis_key} - "
+                f"symbol: {symbol} - strike: {payload.get('strike_price')} - "
+                f"type: {payload.get('option_type')} - ltp: {payload.get('ltp')}"
+            )
+            RedisLiveMarketStore._first_write_logged.add(exact_symbol)
+
         encoded = json.dumps(payload, separators=(",", ":"))
         await client.set(
-            live_symbol_key(exact_symbol),
+            redis_key,
             encoded,
             ex=REDIS_LIVE_DATA_TTL_SECONDS,
         )
@@ -144,6 +191,7 @@ class RedisLiveMarketStore:
             return {}
 
         client = await redis_client_manager.get_client()
+        # Build list of unique symbols to query (preserve original case for storage key)
         exact_symbols: list[str] = []
         for symbol in requested_symbols:
             exact_symbol = _symbol_storage_key(symbol)
@@ -159,6 +207,8 @@ class RedisLiveMarketStore:
                 missing_symbols.append(symbol)
                 continue
             exact_payloads[symbol] = json.loads(value)
+
+        # Fallback: try uppercase normalized keys for missing symbols
         normalized_payloads: dict[str, dict[str, Any]] = {}
         if missing_symbols:
             legacy_keys = [
@@ -170,6 +220,8 @@ class RedisLiveMarketStore:
                 if not value:
                     continue
                 normalized_payloads[symbol] = json.loads(value)
+
+        # Build final result map
         payloads: dict[str, dict[str, Any]] = {}
         for symbol in requested_symbols:
             exact_symbol = _symbol_storage_key(symbol)
@@ -465,8 +517,13 @@ def _to_epoch_score(interval_ts: str) -> float:
 
 
 def _normalize_symbol_key(symbol: str) -> str:
+    """Normalize symbol for lookup - always uppercase."""
     return str(symbol).strip().upper()
 
 
 def _symbol_storage_key(symbol: str) -> str:
+    """
+    Storage key for Redis - preserves original case to avoid data loss,
+    but callers should normalize for lookup.
+    """
     return str(symbol).strip()

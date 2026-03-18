@@ -3,12 +3,17 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
 from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS
 from libs.utils.db.redis.src import (
     RedisLiveMarketStore,
     RedisOptionChainSnapshotStore,
 )
+
+log = CustomLogger("RuntimeDashboardService")
+logger, listener = log.get_logger()
+listener.start()
 
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -99,6 +104,24 @@ class RuntimeDashboardService:
 
         strikes = await cls._merge_live_market_fields(
             latest_snapshot.get("strikes", []),
+        )
+
+        # Log snapshot details for debugging comparison with live subscription
+        strike_prices = sorted(
+            [
+                s.get("strike_price")
+                for s in strikes
+                if s.get("strike_price") is not None
+            ]
+        )
+        snapshot_captured_at = (latest_snapshot.get("latest") or {}).get(
+            "captured_at", "unknown"
+        )
+        logger.info(
+            f"Dashboard data served - instrument: {instrument.symbol} - "
+            f"strikes_count: {len(strikes)} - "
+            f"captured_at: {snapshot_captured_at} - "
+            f"strike_range: [{strike_prices[0] if strike_prices else 'N/A'} - {strike_prices[-1] if strike_prices else 'N/A'}]"
         )
 
         return {

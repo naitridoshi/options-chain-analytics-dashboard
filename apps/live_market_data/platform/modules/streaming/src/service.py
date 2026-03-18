@@ -76,6 +76,11 @@ class LiveMarketStreamingService:
         self._next_symbol_refresh_at = 0.0
         self._market_closed_logged = False
         self._unmapped_ws_symbols_logged: set[str] = set()
+        # Thread-safe lock for subscription map access during refresh
+        self._subscription_lock = threading.RLock()
+        # Debug tracking for symbol lookup issues
+        self._tick_debug_logged_symbols: set[str] = set()
+        self._symbol_lookup_mismatches: set[str] = set()
 
     async def start(self) -> None:
         if self._running:
@@ -150,9 +155,9 @@ class LiveMarketStreamingService:
     async def _refresh_subscriptions(self, *, force_restart: bool) -> None:
         instruments = InstrumentCatalogService.get_active_instruments()
         subscription_map: dict[str, SubscribedOption] = {}
-        normalized_subscription_map: dict[str, SubscribedOption | None] = {}
         underlying_map: dict[str, UnderlyingSubscription] = {}
         all_symbols: list[str] = []
+        collision_symbols: list[str] = []  # Track collisions for logging
 
         for instrument in instruments:
             if not instrument.fyers_symbol:
@@ -191,11 +196,48 @@ class LiveMarketStreamingService:
                 if not trading_symbol or strike_price is None or not option_type:
                     continue
                 strike_key = _normalize_strike_key(strike_price)
+
+                # Check for duplicate exact symbol (critical error)
                 if trading_symbol in subscription_map:
+                    existing = subscription_map[trading_symbol]
                     logger.error(
-                        "Duplicate websocket subscription symbol collision - "
-                        f"symbol: {trading_symbol} - instrument: {instrument.symbol}"
+                        "DUPLICATE SYMBOL: exact trading symbol already exists - "
+                        f"symbol: {trading_symbol} - "
+                        f"existing_strike: {existing.strike_price} existing_type: {existing.option_type} - "
+                        f"new_strike: {strike_key} new_type: {option_type} - "
+                        f"instrument: {instrument.symbol}"
                     )
+                    continue  # Skip duplicate
+
+                # Check for case-insensitive collision (potential bug source)
+                normalized_key = _normalize_symbol_key(trading_symbol)
+                for existing_symbol, existing_opt in list(subscription_map.items()):
+                    if (
+                        _normalize_symbol_key(existing_symbol) == normalized_key
+                        and existing_symbol != trading_symbol
+                    ):
+                        logger.error(
+                            f"CASE COLLISION: two symbols normalize to same key - "
+                            f"symbol1: {existing_symbol} (strike: {existing_opt.strike_price}) - "
+                            f"symbol2: {trading_symbol} (strike: {strike_key}) - "
+                            f"normalized: {normalized_key}"
+                        )
+                        collision_symbols.append(normalized_key)
+
+                # Check for same strike+type with different symbols (should not happen)
+                for existing_symbol, existing_opt in subscription_map.items():
+                    if (
+                        existing_opt.strike_price == strike_key
+                        and existing_opt.option_type == option_type
+                        and existing_symbol != trading_symbol
+                    ):
+                        logger.error(
+                            f"STRIKE COLLISION: same strike+type has different symbols - "
+                            f"strike: {strike_key} type: {option_type} - "
+                            f"symbol1: {existing_symbol} symbol2: {trading_symbol} - "
+                            f"instrument: {instrument.symbol}"
+                        )
+
                 subscribed_option = SubscribedOption(
                     instrument_symbol=instrument.symbol,
                     strike_price=strike_key,
@@ -203,29 +245,57 @@ class LiveMarketStreamingService:
                     trading_symbol=trading_symbol,
                 )
                 subscription_map[trading_symbol] = subscribed_option
-                normalized_key = _normalize_symbol_key(trading_symbol)
-                existing_normalized = normalized_subscription_map.get(normalized_key)
-                if (
-                    existing_normalized
-                    and existing_normalized.trading_symbol != trading_symbol
-                ):
-                    logger.error(
-                        "Normalized websocket symbol collision detected - "
-                        f"normalized_symbol: {normalized_key} - "
-                        f"existing_symbol: {existing_normalized.trading_symbol} - "
-                        f"incoming_symbol: {trading_symbol}"
-                    )
-                    normalized_subscription_map[normalized_key] = None
-                elif normalized_key not in normalized_subscription_map:
-                    normalized_subscription_map[normalized_key] = subscribed_option
                 all_symbols.append(trading_symbol)
 
         all_symbols = sorted(set(all_symbols))
         symbols_changed = all_symbols != self._current_symbols
-        self._subscription_map = subscription_map
-        self._normalized_subscription_map = normalized_subscription_map
-        self._underlying_map = underlying_map
+
+        # Log subscription map integrity for debugging
+        logger.info(
+            f"Subscription refresh - option_symbols: {len(subscription_map)}, "
+            f"underlying_symbols: {len(underlying_map)}, total_subscribe: {len(all_symbols)}"
+        )
+
+        # Log all subscribed strike prices for debugging comparison with frontend
+        subscribed_strikes = sorted(
+            set(opt.strike_price for opt in subscription_map.values())
+        )
+        logger.info(
+            f"Subscription strikes - count: {len(subscribed_strikes)} - "
+            f"strikes: {subscribed_strikes}"
+        )
+
+        # Log any collision symbols found during build
+        if collision_symbols:
+            logger.error(
+                f"CRITICAL: {len(collision_symbols)} symbol collision(s) detected - "
+                f"collisions: {collision_symbols[:5]}{'...' if len(collision_symbols) > 5 else ''} - "
+                "this may cause duplicate LTP issues"
+            )
+
+        # Verify subscription map integrity: check for strike+type collisions
+        strike_type_map: dict[str, list[str]] = {}
+        for sym, opt in subscription_map.items():
+            key = f"{opt.strike_price}|{opt.option_type}"
+            if key not in strike_type_map:
+                strike_type_map[key] = []
+            strike_type_map[key].append(sym)
+
+        for key, symbols_at_key in strike_type_map.items():
+            if len(symbols_at_key) > 1:
+                logger.error(
+                    f"SUBSCRIPTION INTEGRITY ERROR: Multiple symbols map to same strike+type - "
+                    f"strike|type: {key} - symbols: {symbols_at_key} - "
+                    f"This will cause LTP cross-contamination!"
+                )
+
+        # Thread-safe atomic replacement of subscription maps
+        with self._subscription_lock:
+            self._subscription_map = subscription_map
+            self._underlying_map = underlying_map
         self._unmapped_ws_symbols_logged.clear()
+        self._tick_debug_logged_symbols.clear()
+        self._symbol_lookup_mismatches.clear()
 
         if not all_symbols:
             logger.warning("No symbols available for live websocket subscription")
@@ -329,45 +399,90 @@ class LiveMarketStreamingService:
             return
 
         symbol = message.get("symbol")
+        ltp = message.get("ltp")
         if not symbol or not self._loop:
             return
         normalized_symbol = _normalize_symbol_key(symbol)
 
-        underlying_subscription = self._underlying_map.get(normalized_symbol)
-        if underlying_subscription:
-            payload = _build_underlying_payload(
-                instrument_symbol=underlying_subscription.instrument_symbol,
-                symbol=underlying_subscription.symbol,
-                spot_price=message.get("ltp"),
-                prev_close_spot=underlying_subscription.prev_close_spot,
-                stale_after_seconds=LIVE_DATA_SUBSCRIPTION_STALE_AFTER_SECONDS,
-            )
-            self._last_tick_at = payload["last_update"]
-            self._schedule_live_write(
-                lambda: RedisLiveMarketStore.write_live_underlying(
+        # Thread-safe read from subscription maps
+        with self._subscription_lock:
+            underlying_subscription = self._underlying_map.get(normalized_symbol)
+            if underlying_subscription:
+                payload = _build_underlying_payload(
                     instrument_symbol=underlying_subscription.instrument_symbol,
-                    payload=payload,
+                    symbol=underlying_subscription.symbol,
+                    spot_price=ltp,
+                    prev_close_spot=underlying_subscription.prev_close_spot,
+                    stale_after_seconds=LIVE_DATA_SUBSCRIPTION_STALE_AFTER_SECONDS,
                 )
-            )
-            return
+                self._last_tick_at = payload["last_update"]
+                self._schedule_live_write(
+                    lambda p=payload, inst=underlying_subscription.instrument_symbol: (
+                        RedisLiveMarketStore.write_live_underlying(
+                            instrument_symbol=inst,
+                            payload=p,
+                        )
+                    )
+                )
+                return
 
-        subscribed_option = self._subscription_map.get(symbol)
-        if not subscribed_option:
-            subscribed_option = self._normalized_subscription_map.get(normalized_symbol)
+            # Primary lookup: exact symbol match ONLY (no fallback to avoid cross-contamination)
+            subscribed_option = self._subscription_map.get(symbol)
+            lookup_method = "exact"
+
+            # REMOVED: case-insensitive fallback lookup
+            # This was causing cross-contamination when symbols normalized to the same key
+            # If exact match fails, log warning and skip - do NOT use fallback
+
         if not subscribed_option:
             if symbol not in self._unmapped_ws_symbols_logged:
-                logger.warning(f"Unmapped websocket symbol: {symbol}")
+                # Check if there's a similar symbol in the map (for debugging)
+                similar_symbols = [
+                    s
+                    for s in self._subscription_map.keys()
+                    if _normalize_symbol_key(s) == normalized_symbol
+                ]
+                logger.warning(
+                    f"Unmapped websocket symbol (exact match required): {symbol} - "
+                    f"normalized: {normalized_symbol} - "
+                    f"similar_in_map: {similar_symbols[:3] if similar_symbols else 'none'} - "
+                    f"subscription_map_size: {len(self._subscription_map)}"
+                )
                 self._unmapped_ws_symbols_logged.add(symbol)
             return
 
         received_at = datetime.now(timezone.utc).isoformat()
+
+        # CRITICAL: Validate symbol mapping integrity
+        # The WebSocket symbol MUST match the stored trading symbol to prevent LTP cross-contamination
+        if subscribed_option.trading_symbol != symbol:
+            logger.error(
+                f"SYMBOL MAPPING INTEGRITY ERROR - ws_symbol: {symbol} != stored_trading_symbol: {subscribed_option.trading_symbol} - "
+                f"strike: {subscribed_option.strike_price} type: {subscribed_option.option_type} ltp: {ltp} - "
+                f"SKIPPING this tick to prevent LTP cross-contamination"
+            )
+            return
+
+        # Log tick processing for debugging (first few ticks per symbol)
+        tick_debug_key = (
+            f"{symbol}|{subscribed_option.strike_price}|{subscribed_option.option_type}"
+        )
+        if tick_debug_key not in self._tick_debug_logged_symbols:
+            logger.info(
+                f"TICK PROCESSED - ws_symbol: {symbol} -> "
+                f"trading_symbol: {subscribed_option.trading_symbol} -> "
+                f"strike: {subscribed_option.strike_price} type: {subscribed_option.option_type} -> "
+                f"ltp: {ltp} lookup: {lookup_method}"
+            )
+            self._tick_debug_logged_symbols.add(tick_debug_key)
+
         payload = {
             "message_type": "option_quote_update",
             "instrument_symbol": subscribed_option.instrument_symbol,
-            "symbol": subscribed_option.trading_symbol,
+            "symbol": subscribed_option.trading_symbol,  # Always use stored symbol for Redis key
             "strike_price": subscribed_option.strike_price,
             "option_type": subscribed_option.option_type,
-            "ltp": message.get("ltp"),
+            "ltp": ltp,
             "avg_price": message.get("avg_trade_price") or message.get("avg_price"),
             "source_received_at": received_at,
             "last_update": received_at,
@@ -375,11 +490,16 @@ class LiveMarketStreamingService:
         }
         self._last_tick_at = payload["last_update"]
 
+        # Capture subscribed_option values in lambda to avoid late-binding issues
         self._schedule_live_write(
-            lambda: RedisLiveMarketStore.write_live_symbol(
-                instrument_symbol=subscribed_option.instrument_symbol,
-                symbol=subscribed_option.trading_symbol,
-                payload=payload,
+            lambda p=payload,
+            inst=subscribed_option.instrument_symbol,
+            sym=subscribed_option.trading_symbol: (
+                RedisLiveMarketStore.write_live_symbol(
+                    instrument_symbol=inst,
+                    symbol=sym,
+                    payload=p,
+                )
             )
         )
 
@@ -407,16 +527,51 @@ class LiveMarketStreamingService:
             trade_date=trade_date,
         )
         if not latest_snapshot:
+            logger.info(
+                f"No snapshot found for subscription - instrument: {instrument_symbol} - "
+                f"trade_date: {trade_date} - will use FYERS API fallback"
+            )
             return []
+
+        # Log snapshot details for debugging
+        snapshot_strikes = latest_snapshot.get("strikes", [])
+        snapshot_captured_at = (latest_snapshot.get("latest") or {}).get(
+            "captured_at", "unknown"
+        )
+        strike_prices = sorted(
+            [
+                s.get("strike_price")
+                for s in snapshot_strikes
+                if s.get("strike_price") is not None
+            ]
+        )
+        logger.info(
+            f"Snapshot read for subscription - instrument: {instrument_symbol} - "
+            f"strikes_count: {len(snapshot_strikes)} - "
+            f"captured_at: {snapshot_captured_at} - "
+            f"strike_range: [{strike_prices[0] if strike_prices else 'N/A'} - {strike_prices[-1] if strike_prices else 'N/A'}]"
+        )
 
         rows: list[dict] = []
         seen_symbols: set[str] = set()
-        for strike in latest_snapshot.get("strikes", []):
+        for strike in snapshot_strikes:
             strike_price = strike.get("strike_price")
             if strike_price is None:
                 continue
 
             call_symbol = strike.get("call_trading_symbol")
+            put_symbol = strike.get("put_trading_symbol")
+
+            # CRITICAL: Check if CALL and PUT symbols are identical (data corruption)
+            if call_symbol and put_symbol and call_symbol == put_symbol:
+                logger.error(
+                    f"CRITICAL DATA ERROR: CALL and PUT have same trading symbol at same strike - "
+                    f"instrument: {instrument_symbol} - strike: {strike_price} - "
+                    f"symbol: {call_symbol} - This will cause LTP cross-contamination!"
+                )
+                # Skip this strike entirely to prevent corruption
+                continue
+
             if call_symbol:
                 if call_symbol in seen_symbols:
                     logger.error(
@@ -435,7 +590,6 @@ class LiveMarketStreamingService:
                         }
                     )
 
-            put_symbol = strike.get("put_trading_symbol")
             if put_symbol:
                 if put_symbol in seen_symbols:
                     logger.error(

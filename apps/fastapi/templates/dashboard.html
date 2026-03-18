@@ -153,28 +153,30 @@
 
     .meta { color: var(--muted); font-size: 11px; }
 
-    .breadth-card {
-      margin-top: 10px;
+    /* Market Breadth Section - Redesigned */
+    .breadth-section {
+      margin-top: 12px;
       border: 1px solid #284165;
-      border-radius: 8px;
-      background: #0e1829;
-      padding: 10px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0e1829 0%, #0f1c2e 100%);
+      padding: 14px;
     }
 
-    .breadth-head {
+    .breadth-header {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     .breadth-title {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.4px;
       color: #d8e7ff;
+      margin: 0;
     }
 
     .breadth-meta {
@@ -182,51 +184,208 @@
       color: var(--muted);
     }
 
-    .breadth-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(120px, 1fr));
-      gap: 8px;
+    /* Progress Bar */
+    .breadth-bar-container {
+      margin-bottom: 14px;
     }
 
-    .breadth-item {
+    .breadth-bar {
+      display: flex;
+      height: 24px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #1a2744;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .breadth-bar-segment {
+      transition: width 0.4s ease;
+      min-width: 2px;
+    }
+
+    .breadth-bar-segment.advance {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    }
+
+    .breadth-bar-segment.decline {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .breadth-bar-segment.unchanged {
+      background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+    }
+
+    .breadth-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .label-advance { color: #22c55e; }
+    .label-decline { color: #ef4444; }
+
+    /* Metrics Grid */
+    .breadth-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .metric-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       border: 1px solid #243b5f;
       border-radius: 8px;
-      padding: 8px;
+      padding: 10px;
       background: #101c31;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .breadth-item .label {
-      font-size: 10px;
-      color: var(--muted);
-      text-transform: uppercase;
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .breadth-item .value {
-      margin-top: 4px;
+    .metric-icon {
       font-size: 18px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
       font-weight: 800;
     }
 
-    .breadth-toggle-row {
-      margin-top: 10px;
-      display: flex;
-      justify-content: flex-end;
+    .metric-card.advance .metric-icon {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
     }
 
-    .breadth-toggle {
-      background: #13213b;
+    .metric-card.decline .metric-icon {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .metric-card.unchanged .metric-icon {
+      background: rgba(107, 114, 128, 0.15);
+      color: #6b7280;
+    }
+
+    .metric-card.ratio .metric-icon {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+      font-size: 11px;
+    }
+
+    .metric-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #f0f4ff;
+      line-height: 1.2;
+    }
+
+    .metric-card.advance .metric-value { color: #22c55e; }
+    .metric-card.decline .metric-value { color: #ef4444; }
+
+    .metric-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Sentiment Badge */
+    .breadth-sentiment {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+    }
+
+    .sentiment-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .sentiment-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sentiment-badge.bullish {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .sentiment-badge.bearish {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .sentiment-badge.neutral {
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+      border: 1px solid rgba(107, 114, 128, 0.4);
+    }
+
+    /* Toggle Button */
+    .breadth-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .breadth-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #13213b 0%, #1a2d4d 100%);
       border: 1px solid #27406a;
       color: #d7e7ff;
       border-radius: 8px;
-      height: 32px;
-      padding: 0 12px;
+      height: 36px;
+      padding: 0 16px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      transition: all 0.2s ease;
     }
 
+    .breadth-toggle-btn:hover {
+      background: linear-gradient(135deg, #1a2d4d 0%, #23406a 100%);
+      border-color: #3b5a8a;
+    }
+
+    .breadth-toggle-btn .toggle-icon {
+      font-size: 10px;
+      transition: transform 0.3s ease;
+    }
+
+    .breadth-toggle-btn.open .toggle-icon {
+      transform: rotate(90deg);
+    }
+
+    /* Script List */
     .breadth-list-wrap {
-      margin-top: 10px;
+      margin-top: 14px;
       border: 1px solid #243b5f;
       border-radius: 8px;
       overflow: hidden;
@@ -237,19 +396,63 @@
       display: none;
     }
 
+    .breadth-list-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #111d32;
+      border-bottom: 1px solid #243b5f;
+    }
+
+    .list-count {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .list-filters {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-btn {
+      background: #1a2744;
+      border: 1px solid #2a3f64;
+      color: #8ba3c7;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      background: #233454;
+      color: #d7e7ff;
+    }
+
+    .filter-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
     .breadth-list {
-      max-height: 280px;
+      max-height: 300px;
       overflow: auto;
     }
 
     .breadth-list-head,
     .breadth-list-row {
       display: grid;
-      grid-template-columns: minmax(110px, 0.8fr) minmax(220px, 1.8fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(110px, 0.9fr);
+      grid-template-columns: minmax(100px, 0.8fr) minmax(180px, 1.6fr) minmax(80px, 0.7fr) minmax(80px, 0.7fr) minmax(80px, 0.7fr) minmax(80px, 0.7fr) minmax(90px, 0.8fr);
       gap: 8px;
       align-items: center;
-      padding: 8px 10px;
-      font-size: 12px;
+      padding: 8px 12px;
+      font-size: 11px;
     }
 
     .breadth-list-head {
@@ -258,13 +461,29 @@
       z-index: 1;
       background: #13213b;
       border-bottom: 1px solid #284165;
-      font-weight: 800;
+      font-weight: 700;
       color: #dbe8ff;
     }
+
+    .breadth-list-head div {
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .breadth-list-head div:hover {
+      color: #60a5fa;
+    }
+
+    .breadth-list-body {}
 
     .breadth-list-row {
       border-bottom: 1px solid #172845;
       color: #d7e4fb;
+      transition: background 0.2s ease;
+    }
+
+    .breadth-list-row:hover {
+      background: rgba(37, 99, 235, 0.1);
     }
 
     .breadth-list-row:nth-child(odd) {
@@ -286,9 +505,10 @@
     }
 
     .breadth-list-empty {
-      padding: 12px 10px;
+      padding: 16px 12px;
       color: var(--muted);
       font-size: 12px;
+      text-align: center;
     }
 
     .kpis {
@@ -554,44 +774,93 @@
         <div id="meta" class="meta">Market date: -</div>
       </div>
 
-      <div class="breadth-card">
-        <div class="breadth-head">
-          <div class="breadth-title">Scripts Advance / Decline</div>
-          <div id="breadthMeta" class="breadth-meta">Captured (IST): -</div>
+      <div id="breadthSection" class="breadth-section">
+        <div class="breadth-header">
+          <h3 class="breadth-title">Market Breadth</h3>
+          <span id="breadthMeta" class="breadth-meta">-</span>
         </div>
-        <div class="breadth-grid">
-          <div class="breadth-item">
-            <div class="label">Advance</div>
-            <div id="breadthAdvance" class="value pos">-</div>
+
+        <!-- Visual Progress Bar -->
+        <div class="breadth-bar-container">
+          <div class="breadth-bar">
+            <div id="breadthBarAdvance" class="breadth-bar-segment advance"></div>
+            <div id="breadthBarUnchanged" class="breadth-bar-segment unchanged"></div>
+            <div id="breadthBarDecline" class="breadth-bar-segment decline"></div>
           </div>
-          <div class="breadth-item">
-            <div class="label">Decline</div>
-            <div id="breadthDecline" class="value neg">-</div>
-          </div>
-          <div class="breadth-item">
-            <div class="label">Unchanged</div>
-            <div id="breadthUnchanged" class="value">-</div>
-          </div>
-          <div class="breadth-item">
-            <div class="label">A/D Ratio</div>
-            <div id="breadthRatio" class="value">-</div>
+          <div class="breadth-bar-labels">
+            <span id="breadthAdvancePct" class="label-advance">0%</span>
+            <span id="breadthDeclinePct" class="label-decline">0%</span>
           </div>
         </div>
-        <div class="breadth-toggle-row">
-          <button id="breadthToggleBtn" class="breadth-toggle" type="button">Show Scripts</button>
+
+        <!-- Metrics Grid -->
+        <div class="breadth-metrics">
+          <div class="metric-card advance">
+            <div class="metric-icon">▲</div>
+            <div class="metric-content">
+              <span class="metric-value" id="breadthAdvance">-</span>
+              <span class="metric-label">Advancing</span>
+            </div>
+          </div>
+          <div class="metric-card decline">
+            <div class="metric-icon">▼</div>
+            <div class="metric-content">
+              <span class="metric-value" id="breadthDecline">-</span>
+              <span class="metric-label">Declining</span>
+            </div>
+          </div>
+          <div class="metric-card unchanged">
+            <div class="metric-icon">●</div>
+            <div class="metric-content">
+              <span class="metric-value" id="breadthUnchanged">-</span>
+              <span class="metric-label">Unchanged</span>
+            </div>
+          </div>
+          <div class="metric-card ratio">
+            <div class="metric-icon">A/D</div>
+            <div class="metric-content">
+              <span class="metric-value" id="breadthRatio">-</span>
+              <span class="metric-label">Ratio</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Sentiment Badge -->
+        <div class="breadth-sentiment">
+          <span class="sentiment-label">Market Sentiment:</span>
+          <span id="breadthSentiment" class="sentiment-badge neutral">Neutral</span>
+        </div>
+
+        <!-- Toggle for Details -->
+        <div class="breadth-actions">
+          <button id="breadthToggleBtn" class="breadth-toggle-btn" type="button">
+            <span class="toggle-icon">▶</span>
+            <span class="toggle-text">Show Script Details</span>
+          </button>
+        </div>
+
+        <!-- Expandable Script List -->
         <div id="breadthListWrap" class="breadth-list-wrap" hidden>
+          <div class="breadth-list-header">
+            <span class="list-count" id="breadthListCount">0 scripts</span>
+            <div class="list-filters">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="ADVANCE">Advance</button>
+              <button class="filter-btn" data-filter="DECLINE">Decline</button>
+              <button class="filter-btn" data-filter="UNCHANGED">Unchanged</button>
+            </div>
+          </div>
           <div class="breadth-list">
             <div class="breadth-list-head">
-              <div>Symbol</div>
-              <div>Name</div>
-              <div>LTP</div>
-              <div>Prev Close</div>
-              <div>Change</div>
-              <div>Change %</div>
-              <div>Trend</div>
+              <div data-sort="symbol">Symbol</div>
+              <div data-sort="name">Name</div>
+              <div data-sort="ltp">LTP</div>
+              <div data-sort="previous_close">Prev Close</div>
+              <div data-sort="change">Change</div>
+              <div data-sort="change_pct">Change %</div>
+              <div data-sort="trend">Trend</div>
             </div>
-            <div id="breadthListBody"></div>
+            <div id="breadthListBody" class="breadth-list-body"></div>
           </div>
         </div>
       </div>
@@ -664,6 +933,7 @@
     let latestPrevCloseSpot = null;
     let isBreadthListOpen = false;
     let latestBreadthScripts = [];
+    let currentBreadthFilter = "all";
 
     function scheduleReload(delayMs = refreshMs) {
       if (timerId) clearTimeout(timerId);
@@ -695,7 +965,8 @@
 
     function optionSymbolKey(value) {
       if (value === null || value === undefined) return "";
-      return String(value).trim();
+      // Normalize to uppercase for consistent symbol matching
+      return String(value).trim().toUpperCase();
     }
 
     function normalizeStrikeKey(value) {
@@ -726,7 +997,11 @@
       const buttonEl = document.getElementById("breadthToggleBtn");
       if (!wrapEl || !buttonEl) return;
       wrapEl.hidden = !open;
-      buttonEl.textContent = open ? "Hide Scripts" : "Show Scripts";
+      buttonEl.classList.toggle("open", open);
+      const toggleText = buttonEl.querySelector(".toggle-text");
+      if (toggleText) {
+        toggleText.textContent = open ? "Hide Script Details" : "Show Script Details";
+      }
       if (open) {
         renderBreadthScriptRows(latestBreadthScripts);
       }
@@ -734,13 +1009,26 @@
 
     function renderBreadthScriptRows(scripts) {
       const bodyEl = document.getElementById("breadthListBody");
+      const countEl = document.getElementById("breadthListCount");
       if (!bodyEl) return;
-      if (!Array.isArray(scripts) || scripts.length === 0) {
-        bodyEl.innerHTML = `<div class="breadth-list-empty">No script breadth data available.</div>`;
+
+      // Filter scripts based on current filter
+      let filteredScripts = scripts;
+      if (currentBreadthFilter !== "all") {
+        filteredScripts = scripts.filter(s => (s.trend || "UNCHANGED") === currentBreadthFilter);
+      }
+
+      // Update count
+      if (countEl) {
+        countEl.textContent = `${filteredScripts.length} script${filteredScripts.length !== 1 ? "s" : ""}`;
+      }
+
+      if (!Array.isArray(filteredScripts) || filteredScripts.length === 0) {
+        bodyEl.innerHTML = `<div class="breadth-list-empty">No scripts match the current filter.</div>`;
         return;
       }
 
-      bodyEl.innerHTML = scripts.map((item) => {
+      bodyEl.innerHTML = filteredScripts.map((item) => {
         const trend = item.trend || "UNCHANGED";
         const trendClass = trend === "ADVANCE" ? "pos" : trend === "DECLINE" ? "neg" : "";
         return `
@@ -755,6 +1043,15 @@
           </div>
         `;
       }).join("");
+    }
+
+    function filterBreadthScripts(filter) {
+      currentBreadthFilter = filter;
+      // Update active filter button
+      document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.filter === filter);
+      });
+      renderBreadthScriptRows(latestBreadthScripts);
     }
 
     function updateLiveSpotCards(payload) {
@@ -925,16 +1222,25 @@
         const advance = Number(data.advance_count || 0);
         const decline = Number(data.decline_count || 0);
         const unchanged = Number(data.unchanged_count || 0);
+        const total = advance + decline + unchanged;
         const ratio = decline === 0
           ? (advance === 0 ? "-" : "∞")
           : (advance / decline).toFixed(2);
 
+        // Update metric values
         document.getElementById("breadthAdvance").textContent = fmt(advance);
         document.getElementById("breadthDecline").textContent = fmt(decline);
         document.getElementById("breadthUnchanged").textContent = fmt(unchanged);
         document.getElementById("breadthRatio").textContent = ratio;
         document.getElementById("breadthMeta").textContent =
           `Captured (IST): ${toIST(data.captured_at)}`;
+
+        // Update progress bar
+        updateBreadthBar(advance, decline, unchanged, total);
+
+        // Update sentiment badge
+        updateBreadthSentiment(advance, decline, total);
+
         latestBreadthScripts = Array.isArray(data.scripts) ? data.scripts : [];
         if (isBreadthListOpen) {
           renderBreadthScriptRows(latestBreadthScripts);
@@ -942,6 +1248,50 @@
       } catch (error) {
         // Keep the dashboard usable even if breadth fetch fails.
       }
+    }
+
+    function updateBreadthBar(advance, decline, unchanged, total) {
+      const advanceEl = document.getElementById("breadthBarAdvance");
+      const declineEl = document.getElementById("breadthBarDecline");
+      const unchangedEl = document.getElementById("breadthBarUnchanged");
+      const advancePctEl = document.getElementById("breadthAdvancePct");
+      const declinePctEl = document.getElementById("breadthDeclinePct");
+
+      if (!advanceEl || !declineEl || !unchangedEl || total === 0) return;
+
+      const advancePct = (advance / total) * 100;
+      const declinePct = (decline / total) * 100;
+      const unchangedPct = (unchanged / total) * 100;
+
+      advanceEl.style.width = `${advancePct}%`;
+      unchangedEl.style.width = `${unchangedPct}%`;
+      declineEl.style.width = `${declinePct}%`;
+
+      if (advancePctEl) advancePctEl.textContent = `${advancePct.toFixed(1)}%`;
+      if (declinePctEl) declinePctEl.textContent = `${declinePct.toFixed(1)}%`;
+    }
+
+    function updateBreadthSentiment(advance, decline, total) {
+      const sentimentEl = document.getElementById("breadthSentiment");
+      if (!sentimentEl || total === 0) return;
+
+      const advancePct = (advance / total) * 100;
+      const declinePct = (decline / total) * 100;
+
+      let sentiment, className;
+      if (advancePct > 60) {
+        sentiment = "Bullish";
+        className = "sentiment-badge bullish";
+      } else if (declinePct > 60) {
+        sentiment = "Bearish";
+        className = "sentiment-badge bearish";
+      } else {
+        sentiment = "Neutral";
+        className = "sentiment-badge neutral";
+      }
+
+      sentimentEl.textContent = sentiment;
+      sentimentEl.className = className;
     }
 
     function showDataStatus(message) {
@@ -1034,6 +1384,10 @@
       }, delay);
     }
 
+    // Debug: track first few live updates
+    let liveUpdateDebugCount = 0;
+    const liveUpdateDebugMax = 5;
+
     function applyLiveUpdate(data) {
       if (!data) return;
       if (data.message_type === "underlying_spot_update") {
@@ -1048,6 +1402,19 @@
       liveStaleAfterSeconds = Number(data.stale_after_seconds || 0) || null;
       setLiveStatus("ok");
 
+      // Debug: log first few updates with full details
+      if (liveUpdateDebugCount < liveUpdateDebugMax) {
+        const rowMeta = optionSymbolToRowMeta[optionSymbol];
+        console.log(`[LIVE DEBUG ${liveUpdateDebugCount + 1}] ` +
+          `ws_symbol: ${data.symbol} -> ` +
+          `normalized: ${optionSymbol} -> ` +
+          `strike_price: ${data.strike_price} -> ` +
+          `ltp: ${data.ltp} -> ` +
+          `row_found: ${!!rowMeta} -> ` +
+          `row_strike: ${rowMeta?.row?.dataset?.strike || 'N/A'}`);
+        liveUpdateDebugCount++;
+      }
+
       const pendingState = pendingLiveByOptionSymbol[optionSymbol] || {};
       if (data.ltp !== undefined && data.ltp !== null) {
         pendingState.ltp = fmt2(data.ltp);
@@ -1055,16 +1422,61 @@
       if (data.avg_price !== undefined && data.avg_price !== null) {
         pendingState.avg = fmt2(data.avg_price);
       }
+      // Store strike_price for debugging unmatched symbols
+      if (data.strike_price !== undefined && data.strike_price !== null) {
+        pendingState.strike_price = data.strike_price;
+      }
       pendingLiveByOptionSymbol[optionSymbol] = pendingState;
     }
+
+    // Track unmatched symbols for debugging (avoid console spam)
+    const unmatchedSymbolsLogged = new Set();
+    const strikeMismatchLogged = new Set();
 
     function flushPendingOptionUpdates() {
       Object.entries(pendingLiveByOptionSymbol).forEach(([optionSymbol, pendingState]) => {
         const rowMeta = optionSymbolToRowMeta[optionSymbol];
-        if (!rowMeta) return;
+        if (!rowMeta) {
+          // This is expected during snapshot transitions - old WebSocket data arrives
+          // before new subscription is built. Just discard the orphan update silently.
+          // Only log once per symbol for debugging (not as warning since it's expected)
+          if (!unmatchedSymbolsLogged.has(optionSymbol)) {
+            const wsStrike = pendingState.strike_price || 'unknown';
+            // Log at debug level - this is normal during snapshot transitions
+            console.debug(
+              `[LIVE DATA] Orphan update discarded (snapshot transition): ${optionSymbol} - strike: ${wsStrike}`
+            );
+            unmatchedSymbolsLogged.add(optionSymbol);
+          }
+          // Clean up the orphan pending state
+          delete pendingLiveByOptionSymbol[optionSymbol];
+          return;
+        }
 
         const side = rowMeta.side;
         const row = rowMeta.row;
+        const rowStrike = row.dataset.strike;
+        const wsStrike = pendingState.strike_price;
+
+        // CRITICAL: Validate strike match to prevent LTP cross-contamination
+        if (wsStrike !== undefined && wsStrike !== null) {
+          const normalizedWsStrike = normalizeStrikeKey(wsStrike);
+          const normalizedRowStrike = normalizeStrikeKey(rowStrike);
+          if (normalizedWsStrike !== normalizedRowStrike) {
+            const mismatchKey = `${optionSymbol}|${normalizedWsStrike}|${normalizedRowStrike}`;
+            if (!strikeMismatchLogged.has(mismatchKey)) {
+              console.error(
+                `[LIVE DATA] CRITICAL STRIKE MISMATCH - symbol: ${optionSymbol} - ` +
+                `ws_strike: ${wsStrike} row_strike: ${rowStrike} side: ${side} ltp: ${pendingState.ltp} - ` +
+                `SKIPPING to prevent LTP cross-contamination`
+              );
+              strikeMismatchLogged.add(mismatchKey);
+            }
+            delete pendingLiveByOptionSymbol[optionSymbol];
+            return;
+          }
+        }
+
         const liveState = lastLiveByOptionSymbol[optionSymbol] || {};
         const ltpCell = row.querySelector(`.${side}-ltp`);
         const avgCell = row.querySelector(`.${side}-avg`);
@@ -1345,15 +1757,62 @@
       }).join("");
 
       tbody.querySelectorAll("tr[data-strike]").forEach((rowEl) => {
+        const strike = rowEl.dataset.strike;
         const callSymbol = optionSymbolKey(rowEl.dataset.callSymbol);
         const putSymbol = optionSymbolKey(rowEl.dataset.putSymbol);
+
+        // CRITICAL: Check if CALL and PUT symbols are identical (data corruption)
+        if (callSymbol && putSymbol && callSymbol === putSymbol) {
+          console.error(
+            `[ROW MAP] CRITICAL DATA ERROR at strike ${strike}: CALL and PUT have same symbol: ${callSymbol}. ` +
+            `Skipping this strike to prevent LTP cross-contamination.`
+          );
+          return; // Skip this row entirely
+        }
+
         if (callSymbol) {
-          optionSymbolToRowMeta[callSymbol] = { row: rowEl, side: "call" };
+          // Check for duplicate symbol mapping (bug detection)
+          if (optionSymbolToRowMeta[callSymbol]) {
+            const existingMeta = optionSymbolToRowMeta[callSymbol];
+            const existingStrike = existingMeta.row.dataset.strike;
+            const existingSide = existingMeta.side;
+            console.error(
+              `[ROW MAP] Duplicate call symbol: ${callSymbol} - ` +
+              `existing: strike=${existingStrike} side=${existingSide} - ` +
+              `new: strike=${strike} side=call - ` +
+              `SKIPPING to prevent LTP cross-contamination`
+            );
+          } else {
+            optionSymbolToRowMeta[callSymbol] = { row: rowEl, side: "call" };
+          }
         }
         if (putSymbol) {
-          optionSymbolToRowMeta[putSymbol] = { row: rowEl, side: "put" };
+          // Check for duplicate symbol mapping (bug detection)
+          if (optionSymbolToRowMeta[putSymbol]) {
+            const existingMeta = optionSymbolToRowMeta[putSymbol];
+            const existingStrike = existingMeta.row.dataset.strike;
+            const existingSide = existingMeta.side;
+            console.error(
+              `[ROW MAP] Duplicate put symbol: ${putSymbol} - ` +
+              `existing: strike=${existingStrike} side=${existingSide} - ` +
+              `new: strike=${strike} side=put - ` +
+              `SKIPPING to prevent LTP cross-contamination`
+            );
+          } else {
+            optionSymbolToRowMeta[putSymbol] = { row: rowEl, side: "put" };
+          }
         }
       });
+
+      // Debug: log row map stats after build with strike prices for comparison
+      const rowMapStrikes = new Set();
+      Object.values(optionSymbolToRowMeta).forEach(meta => {
+        rowMapStrikes.add(meta.row.dataset.strike);
+      });
+      const sortedStrikes = Array.from(rowMapStrikes).sort((a, b) => Number(a) - Number(b));
+      console.log(`[ROW MAP] Built map with ${Object.keys(optionSymbolToRowMeta).length} symbols. ` +
+        `Strikes (${sortedStrikes.length}): [${sortedStrikes.join(', ')}]`);
+
       flushPendingOptionUpdates();
 
       const callOiSum = latest ? latest.call_oi_sum : null;
@@ -1383,6 +1842,14 @@
     document.getElementById("breadthToggleBtn")?.addEventListener("click", () => {
       setBreadthListOpen(!isBreadthListOpen);
     });
+
+    // Filter button event listeners for breadth scripts
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        filterBreadthScripts(btn.dataset.filter);
+      });
+    });
+
     setBreadthListOpen(false);
     load();
   </script>
