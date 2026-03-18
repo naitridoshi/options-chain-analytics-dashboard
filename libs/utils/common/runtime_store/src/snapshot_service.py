@@ -116,6 +116,15 @@ class RuntimeSnapshotService:
         interval_summary_values, strike_summary_values = build_summary_payloads(
             strike_rows
         )
+
+        # CRITICAL: Sort strikes by strike_price for correct PCR calculations
+        # PCR functions rely on index positions where:
+        # - Higher index = higher strike (CALL strikes above ATM)
+        # - Lower index = lower strike (PUT strikes below ATM)
+        strike_summary_values = sorted(
+            strike_summary_values, key=lambda x: x["strike_price"]
+        )
+
         latest = {
             "captured_at": captured_at.isoformat(),
             "spot_price": _as_number(spot_price),
