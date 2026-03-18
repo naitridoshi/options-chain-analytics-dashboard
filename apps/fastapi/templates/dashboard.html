@@ -122,8 +122,8 @@
       gap: 8px;
     }
 
-    .actions .link-btn,
-    .actions button {
+    .action-btn,
+    .actions .action-btn {
       background: linear-gradient(135deg, #1a2d4d 0%, #23406a 100%);
       border: 1px solid #3b5a8a;
       color: #d7e7ff;
@@ -138,10 +138,11 @@
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
+      font-family: inherit;
     }
 
-    .actions .link-btn:hover,
-    .actions button:hover {
+    .action-btn:hover,
+    .actions .action-btn:hover {
       background: linear-gradient(135deg, #23406a 0%, #2d4f80 100%);
       border-color: #4b6a9a;
       color: #fff;
@@ -1159,9 +1160,9 @@
           <span class="pill">LATEST SNAPSHOT</span>
         </div>
         <div class="actions">
-          <a class="link-btn" href="/login">FYERS Login</a>
+          <a class="action-btn" href="/login">FYERS Login</a>
           <form method="post" action="/logout" style="margin:0;">
-            <button type="submit">Sign Out</button>
+            <button type="submit" class="action-btn">Sign Out</button>
           </form>
         </div>
       </div>
@@ -2245,6 +2246,7 @@
 
     setInterval(refreshLiveStatusHeartbeat, 5000);
     setInterval(flushPendingOptionUpdates, LIVE_OPTION_FLUSH_MS);
+    setInterval(refreshAdvanceDecline, 15000); // Refresh advance/decline every 15 seconds
     document.getElementById("breadthToggleBtn")?.addEventListener("click", () => {
       setBreadthListOpen(!isBreadthListOpen);
     });
