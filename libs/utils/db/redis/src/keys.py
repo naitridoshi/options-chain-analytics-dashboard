@@ -57,6 +57,22 @@ def previous_day_final_snapshot_key(instrument_symbol: str) -> str:
     return _join("previous-day", "final", instrument_symbol.upper())
 
 
+def script_intraday_snapshot_key(trade_date: str, interval_ts: str) -> str:
+    return _join("scripts", "snapshots", trade_date, interval_ts)
+
+
+def script_intraday_timeline_key(trade_date: str) -> str:
+    return _join("scripts", "timelines", trade_date)
+
+
+def script_intraday_trade_dates_key() -> str:
+    return _join("scripts", "timeline-dates")
+
+
+def script_intraday_latest_snapshot_pointer_key(trade_date: str) -> str:
+    return _join("scripts", "latest", trade_date)
+
+
 def rollover_marker_key(marker_name: str, trade_date: str) -> str:
     return _join("rollover", marker_name, trade_date)
 

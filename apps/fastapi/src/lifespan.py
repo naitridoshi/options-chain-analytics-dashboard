@@ -3,10 +3,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from libs.utils.common.constants.src.custom_logger import Colors
-from libs.utils.common.constants.src.seeder import INSTRUMENTS_FILE_PATH
+from libs.utils.common.constants.src.seeder import (
+    INSTRUMENTS_FILE_PATH,
+)
 from libs.utils.common.custom_logger.src import CustomLogger, color_string
 from libs.utils.common.enums.src.custom_logger import LogType
-from libs.utils.db.postgres.operations.src import InstrumentOperations
+from libs.utils.db.postgres.operations.src import (
+    InstrumentOperations,
+)
 
 log = CustomLogger("FastAPI Lifespan")
 logger, listener = log.get_logger()

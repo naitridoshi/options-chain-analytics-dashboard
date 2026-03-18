@@ -141,26 +141,43 @@ class RuntimeSnapshotService:
             "atm_pcr": _compute_atm_pcr(strike_summary_values, spot_price),
             "strength_pcr": _compute_strength_pcr(strike_summary_values, spot_price),
         }
-        strikes = [
-            {
-                "strike_price": _as_number(item["strike_price"]),
-                "call_trading_symbol": item.get("call_trading_symbol"),
-                "put_trading_symbol": item.get("put_trading_symbol"),
-                "call_oi_change": item["call_oi_change"],
-                "put_oi_change": item["put_oi_change"],
-                "net_oi_change": item["net_oi_change"],
-                "call_oi": item["call_oi"],
-                "put_oi": item["put_oi"],
-                "net_oi": item["net_oi"],
-                "call_volume": item["call_volume"],
-                "put_volume": item["put_volume"],
-                "call_ltp": _as_number(item["call_ltp"]),
-                "call_ltp_change": _as_number(item["call_ltp_change"]),
-                "put_ltp": _as_number(item["put_ltp"]),
-                "put_ltp_change": _as_number(item["put_ltp_change"]),
-            }
-            for item in strike_summary_values
-        ]
+        strikes = []
+        for item in strike_summary_values:
+            strike_price = _as_number(item["strike_price"])
+            call_symbol = item.get("call_trading_symbol")
+            put_symbol = item.get("put_trading_symbol")
+
+            # CRITICAL: Validate that CALL and PUT symbols are different
+            if call_symbol and put_symbol and call_symbol == put_symbol:
+                # This is a critical data error - skip this strike
+                import logging
+
+                logging.getLogger(__name__).error(
+                    f"CRITICAL DATA ERROR in build_runtime_payload: "
+                    f"CALL and PUT have same trading symbol at strike {strike_price}: "
+                    f"symbol={call_symbol}. Skipping this strike to prevent LTP contamination."
+                )
+                continue
+
+            strikes.append(
+                {
+                    "strike_price": strike_price,
+                    "call_trading_symbol": call_symbol,
+                    "put_trading_symbol": put_symbol,
+                    "call_oi_change": item["call_oi_change"],
+                    "put_oi_change": item["put_oi_change"],
+                    "net_oi_change": item["net_oi_change"],
+                    "call_oi": item["call_oi"],
+                    "put_oi": item["put_oi"],
+                    "net_oi": item["net_oi"],
+                    "call_volume": item["call_volume"],
+                    "put_volume": item["put_volume"],
+                    "call_ltp": _as_number(item["call_ltp"]),
+                    "call_ltp_change": _as_number(item["call_ltp_change"]),
+                    "put_ltp": _as_number(item["put_ltp"]),
+                    "put_ltp_change": _as_number(item["put_ltp_change"]),
+                }
+            )
         normalized = normalize_interval_boundary(captured_at)
         market_date = normalized.astimezone(IST).date().isoformat()
 
@@ -231,18 +248,35 @@ def _compute_window_pcr(rows: list[dict], spot_price: Decimal, window: int):
 
 
 def _compute_atm_pcr(rows: list[dict], spot_price: Decimal):
+    """
+    ATM PCR = PUT COI at (ATM + 1 strike BELOW) / CALL COI at (ATM + 1 strike ABOVE)
+    Formula: PUT at strike below ATM divided by CALL at strike above ATM
+    Example: If ATM = 24600, then PUT at 24550 / CALL at 24650
+    """
     atm_index = _closest_atm_index(rows, spot_price)
     if atm_index is None:
         return None
-    call_total = _sum_range(rows, atm_index - 1, atm_index, "call_oi_change")
-    put_total = _sum_range(rows, atm_index, atm_index + 1, "put_oi_change")
+    # CALL: strike ABOVE ATM (higher strike, higher index)
+    call_total = _sum_range(rows, atm_index + 1, atm_index + 1, "call_oi_change")
+    # PUT: strike BELOW ATM (lower strike, lower index)
+    put_total = _sum_range(rows, atm_index - 1, atm_index - 1, "put_oi_change")
     return _pcr(put_total, call_total)
 
 
 def _compute_strength_pcr(rows: list[dict], spot_price: Decimal):
+    """
+    Strength PCR = CALL COI of (ATM + 4 strikes ABOVE) / PUT COI of (ATM + 4 strikes BELOW)
+    Formula: Sum of CALL OI changes from ATM to 4 strikes above,
+             divided by sum of PUT OI changes from ATM to 4 strikes below.
+    Example: If ATM = 24600,
+             CALL: 24600, 24650, 24700, 24750, 24800 (indices N to N+4)
+             PUT: 24600, 24550, 24500, 24450, 24400 (indices N-4 to N)
+    """
     atm_index = _closest_atm_index(rows, spot_price)
     if atm_index is None:
         return None
-    call_total = _sum_range(rows, atm_index - 4, atm_index, "call_oi_change")
-    put_total = _sum_range(rows, atm_index, atm_index + 4, "put_oi_change")
+    # CALL: ATM and 4 strikes ABOVE (higher strikes, higher indices)
+    call_total = _sum_range(rows, atm_index, atm_index + 4, "call_oi_change")
+    # PUT: ATM and 4 strikes BELOW (lower strikes, lower indices)
+    put_total = _sum_range(rows, atm_index - 4, atm_index, "put_oi_change")
     return _pcr(put_total, call_total)

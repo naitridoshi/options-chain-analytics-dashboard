@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from libs.utils.common.custom_logger.src import CustomLogger
+
+log = CustomLogger("RuntimeSummary")
+logger, listener = log.get_logger()
+listener.start()
+
 
 def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
     def safe_int(value) -> int:
@@ -18,6 +24,7 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
 
     strike_agg: dict[Decimal, dict] = {}
     seen_contract_keys: set[tuple[Decimal, str]] = set()
+    seen_trading_symbols: set[str] = set()
     call_oi_change_sum = 0
     put_oi_change_sum = 0
     call_oi_sum = 0
@@ -34,6 +41,17 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
         row_volume = safe_int(row.get("volume"))
         row_ltp = safe_decimal(row.get("ltp"))
         row_ltp_change = safe_decimal(row.get("ltp_change"))
+        trading_symbol = str(row.get("trading_symbol") or "").strip()
+        if trading_symbol:
+            if trading_symbol in seen_trading_symbols:
+                logger.error(
+                    "Duplicate trading symbol detected in runtime summary rows - "
+                    f"symbol: {trading_symbol} - "
+                    f"strike_price: {row.get('strike_price')} - "
+                    f"option_type: {option_type}"
+                )
+                continue
+            seen_trading_symbols.add(trading_symbol)
         strike_price = Decimal(str(row["strike_price"]))
         contract_key = (strike_price, option_type)
         if contract_key in seen_contract_keys:
@@ -63,7 +81,9 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
 
         if option_type == "CE":
             strike_entry["call_option_contract_id"] = row.get("option_contract_id")
-            strike_entry["call_trading_symbol"] = row.get("trading_symbol")
+            strike_entry["call_trading_symbol"] = trading_symbol or row.get(
+                "trading_symbol"
+            )
             strike_entry["call_oi_change"] = row_oi_change
             strike_entry["call_oi"] = row_oi
             strike_entry["call_volume"] = row_volume
@@ -74,7 +94,9 @@ def build_summary_payloads(summary_rows: list[dict]) -> tuple[dict, list[dict]]:
             call_volume_sum += row_volume
         elif option_type == "PE":
             strike_entry["put_option_contract_id"] = row.get("option_contract_id")
-            strike_entry["put_trading_symbol"] = row.get("trading_symbol")
+            strike_entry["put_trading_symbol"] = trading_symbol or row.get(
+                "trading_symbol"
+            )
             strike_entry["put_oi_change"] = row_oi_change
             strike_entry["put_oi"] = row_oi
             strike_entry["put_volume"] = row_volume

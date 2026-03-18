@@ -65,7 +65,8 @@ Required keys:
 - `FYERS_TOTP_KEY`
 - `FYERS_PIN`
 - `FYERS_LOG_PATH`
-- `SNAPSHOT_INTERVAL_SECONDS`
+- `INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS`
+- `SCRIPTS_SNAPSHOT_INTERVAL_SECONDS`
 - `SNAPSHOT_STRIKE_COUNT`
 - `SNAPSHOT_EXPIRY_COUNT`
 - `SNAPSHOT_MAX_RETRIES`
@@ -80,9 +81,11 @@ Required keys:
    - `alembic upgrade head`
 2. Seed instruments:
    - `python scripts/seed_instruments.py`
-3. Start API:
+3. Seed scripts:
+   - `python scripts/seed_scripts.py`
+4. Start API:
    - `python -m apps.fastapi.src`
-4. Start scheduler app:
+5. Start scheduler app:
    - `python -m apps.scheduler.src`
 
 ## Route Surface

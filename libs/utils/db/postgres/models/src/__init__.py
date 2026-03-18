@@ -24,6 +24,10 @@ from libs.utils.db.postgres.models.src.option_chain_strike_summary import (  # n
 from libs.utils.db.postgres.models.src.option_contract import (  # noqa: F401
     OptionContract,
 )
+from libs.utils.db.postgres.models.src.script import Script  # noqa: F401
+from libs.utils.db.postgres.models.src.script_price_snapshot import (  # noqa: F401
+    ScriptPriceSnapshot,
+)
 
 __all__ = [
     "Base",
@@ -35,4 +39,6 @@ __all__ = [
     "OptionChainIntervalSummary",
     "OptionChainStrikeSummary",
     "FyersToken",
+    "Script",
+    "ScriptPriceSnapshot",
 ]
