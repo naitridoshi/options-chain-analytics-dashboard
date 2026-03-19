@@ -12,3 +12,6 @@ LOGIN_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "login.html").read_text(encoding=
 DASHBOARD_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "dashboard.html").read_text(
     encoding="utf-8"
 )
+MARKET_BREADTH_TEMPLATE_HTML = (
+    FASTAPI_TEMPLATES_DIR / "market_breadth.html"
+).read_text(encoding="utf-8")

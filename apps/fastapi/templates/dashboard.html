@@ -233,6 +233,321 @@
       white-space: nowrap;
     }
 
+    /* Spot KPI Row - Reference Image Style */
+    .spot-kpi-row {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #0d1524;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .spot-kpi-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      min-width: 80px;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      border-radius: 6px;
+      border: 1px solid #3b82f6;
+    }
+
+    .spot-kpi-box .label {
+      font-size: 8px;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .spot-kpi-box .val {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .spot-kpi-box .val.pos { color: #86efac; }
+    .spot-kpi-box .val.neg { color: #fca5a5; }
+
+    /* Strategy & Movement Cards Row */
+    .strategy-movement-row {
+      display: flex;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #0b1020;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .strategy-card {
+      flex: 0 0 auto;
+      min-width: 160px;
+      padding: 8px 12px;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .strategy-card .card-title {
+      font-size: 8px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .strategy-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
+    .strategy-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .strategy-item .item-label {
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    .strategy-item .item-value {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .strategy-item .item-value.bullish {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .strategy-item .item-value.bearish {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .strategy-item .item-value.neutral {
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+    }
+
+    .movement-card {
+      flex: 1;
+      padding: 8px 12px;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .movement-card .card-title {
+      font-size: 8px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .movement-ranges {
+      display: flex;
+      gap: 3px;
+    }
+
+    .movement-range-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 4px;
+    }
+
+    .movement-range-item .range-label {
+      font-size: 7px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .movement-range-item .range-value {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Signal Cards Row */
+    .signal-cards-row {
+      display: flex;
+      gap: 0;
+      padding: 0;
+      background: #0b1020;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .signal-card-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      border-right: 1px solid #1e3050;
+      min-width: 80px;
+    }
+
+    .signal-card-box:last-child {
+      border-right: none;
+    }
+
+    .signal-card-box .title {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.9;
+      margin-bottom: 2px;
+    }
+
+    .signal-card-box .value {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+
+    .signal-positive {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      color: #fff;
+    }
+
+    .signal-negative {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      color: #fff;
+    }
+
+    .signal-neutral {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #fff;
+    }
+
+    /* Clickable Advance/Decline Bar Graph */
+    .breadth-bar-graph {
+      padding: 12px 14px;
+      background: #0d1524;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .breadth-bar-graph:hover {
+      background: #101c31;
+    }
+
+    .breadth-bar-graph-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .breadth-bar-graph-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #d8e7ff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .breadth-bar-graph-link {
+      font-size: 10px;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .breadth-bar-graph-link:hover {
+      text-decoration: underline;
+    }
+
+    .breadth-graph-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 24px;
+      height: 100px;
+      padding: 20px 0 8px 0;
+    }
+
+    .breadth-graph-bars {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+      height: 100%;
+    }
+
+    .breadth-graph-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      max-width: 120px;
+      position: relative;
+    }
+
+    .breadth-graph-bar {
+      width: 60px;
+      border-radius: 4px 4px 0 0;
+      transition: height 0.4s ease;
+    }
+
+    .breadth-graph-bar.advance {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    }
+
+    .breadth-graph-bar.decline {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .breadth-graph-bar .bar-value {
+      font-size: 12px;
+      font-weight: 800;
+      color: #fff;
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .breadth-graph-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    .breadth-graph-label.advance { color: #22c55e; }
+    .breadth-graph-label.decline { color: #ef4444; }
+
+    .breadth-graph-yaxis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      padding-right: 24px;
+      min-width: 28px;
+      padding-bottom: 20px;
+    }
+
+    .breadth-graph-yaxis span {
+      font-size: 9px;
+      color: var(--muted);
+      text-align: right;
+    }
+
     /* Compact KPI Strip */
     .kpi-strip {
       display: flex;
@@ -1043,7 +1358,7 @@
       100% { transform: translateX(100%); }
     }
 
-    .board { padding: 4px; }
+    .board { padding: 8px; }
 
     .table-wrap {
       border: 1px solid #274067;
@@ -1056,7 +1371,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 10px;
+      font-size: 12px;
       min-width: 1400px;
     }
 
@@ -1065,13 +1380,13 @@
       top: 0;
       z-index: 2;
       border-bottom: 1px solid #33568b;
-      padding: 4px 3px;
+      padding: 8px 6px;
       font-weight: 700;
       letter-spacing: 0.2px;
       text-align: right;
       white-space: nowrap;
       background: #142340;
-      font-size: 9px;
+      font-size: 11px;
     }
 
     thead th.call { background: #142340; color: var(--text); }
@@ -1080,7 +1395,7 @@
 
     tbody td {
       border-bottom: 1px solid #172845;
-      padding: 2px 3px;
+      padding: 6px 8px;
       text-align: right;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
@@ -1129,10 +1444,10 @@
       z-index: 1;
       background: #101a2e;
       border-top: 1px solid #33568b;
-      padding: 5px 4px;
+      padding: 8px 6px;
       font-weight: 800;
       text-align: right;
-      font-size: 10px;
+      font-size: 12px;
     }
 
     @media (max-width: 1200px) {
@@ -1172,100 +1487,138 @@
         <div id="meta" class="meta">Market date: -</div>
       </div>
 
-      <div id="breadthSection" class="breadth-section">
-        <div class="breadth-header" onclick="toggleBreadthSection()">
-          <h3 class="breadth-title">Market Breadth</h3>
-          <span id="breadthMeta" class="breadth-meta">-</span>
+      <!-- Spot KPI Row -->
+      <div class="spot-kpi-row">
+        <div class="spot-kpi-box">
+          <span class="label">SPOT</span>
+          <span id="liveSpotValue" class="val">-</span>
         </div>
-
-        <div class="breadth-content">
-        <!-- Visual Progress Bar -->
-        <div class="breadth-bar-container">
-          <div class="breadth-bar">
-            <div id="breadthBarAdvance" class="breadth-bar-segment advance"></div>
-            <div id="breadthBarUnchanged" class="breadth-bar-segment unchanged"></div>
-            <div id="breadthBarDecline" class="breadth-bar-segment decline"></div>
-          </div>
-          <div class="breadth-bar-labels">
-            <span id="breadthAdvancePct" class="label-advance">0%</span>
-            <span id="breadthDeclinePct" class="label-decline">0%</span>
-          </div>
+        <div class="spot-kpi-box">
+          <span class="label">CHANGE</span>
+          <span id="liveChangeValue" class="val">-</span>
         </div>
-
-        <!-- Metrics Grid -->
-        <div class="breadth-metrics">
-          <div class="metric-card advance">
-            <div class="metric-icon">▲</div>
-            <div class="metric-content">
-              <span class="metric-value" id="breadthAdvance">-</span>
-              <span class="metric-label">Advancing</span>
-            </div>
-          </div>
-          <div class="metric-card decline">
-            <div class="metric-icon">▼</div>
-            <div class="metric-content">
-              <span class="metric-value" id="breadthDecline">-</span>
-              <span class="metric-label">Declining</span>
-            </div>
-          </div>
-          <div class="metric-card unchanged">
-            <div class="metric-icon">●</div>
-            <div class="metric-content">
-              <span class="metric-value" id="breadthUnchanged">-</span>
-              <span class="metric-label">Unchanged</span>
-            </div>
-          </div>
-          <div class="metric-card ratio">
-            <div class="metric-icon">A/D</div>
-            <div class="metric-content">
-              <span class="metric-value" id="breadthRatio">-</span>
-              <span class="metric-label">Ratio</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sentiment Badge -->
-        <div class="breadth-sentiment">
-          <span class="sentiment-label">Market Sentiment:</span>
-          <span id="breadthSentiment" class="sentiment-badge neutral">Neutral</span>
-        </div>
-
-        <!-- Toggle for Details -->
-        <div class="breadth-actions">
-          <button id="breadthToggleBtn" class="breadth-toggle-btn" type="button">
-            <span class="toggle-icon">▶</span>
-            <span class="toggle-text">Show Script Details</span>
-          </button>
-        </div>
-
-        <!-- Expandable Script List -->
-        <div id="breadthListWrap" class="breadth-list-wrap" hidden>
-          <div class="breadth-list-header">
-            <span class="list-count" id="breadthListCount">0 scripts</span>
-            <div class="list-filters">
-              <button class="filter-btn active" data-filter="all">All</button>
-              <button class="filter-btn" data-filter="ADVANCE">Advance</button>
-              <button class="filter-btn" data-filter="DECLINE">Decline</button>
-              <button class="filter-btn" data-filter="UNCHANGED">Unchanged</button>
-            </div>
-          </div>
-          <div class="breadth-list">
-            <div class="breadth-list-head">
-              <div data-sort="symbol">Symbol</div>
-              <div data-sort="name">Name</div>
-              <div data-sort="ltp">LTP</div>
-              <div data-sort="previous_close">Prev Close</div>
-              <div data-sort="change">Change</div>
-              <div data-sort="change_pct">Change %</div>
-              <div data-sort="trend">Trend</div>
-            </div>
-            <div id="breadthListBody" class="breadth-list-body"></div>
-          </div>
-        </div>
+        <div class="spot-kpi-box">
+          <span class="label">% CHANGE</span>
+          <span id="liveChangePctValue" class="val">-</span>
         </div>
       </div>
 
-      <div class="kpis" id="kpis"></div>
+      <!-- Strategy & Movement Cards Row -->
+      <div class="strategy-movement-row">
+        <div class="strategy-card">
+          <div class="card-title">TRADING STRATEGY</div>
+          <div class="strategy-item">
+            <span class="item-label">Signal</span>
+            <span id="strategySignal" class="item-value bullish">BUY ON DIPS</span>
+          </div>
+          <div class="strategy-item">
+            <span class="item-label">Data Trend</span>
+            <span id="strategyTrend" class="item-value bullish">BULLISH</span>
+          </div>
+        </div>
+        <div class="movement-card">
+          <div class="card-title">TODAY'S MOVEMENT FROM OPEN</div>
+          <div class="movement-ranges" id="todayMovementRanges">
+            <div class="movement-range-item">
+              <span class="range-label">0-25%</span>
+              <span class="range-value">-</span>
+            </div>
+            <div class="movement-range-item">
+              <span class="range-label">25-50%</span>
+              <span class="range-value">-</span>
+            </div>
+            <div class="movement-range-item">
+              <span class="range-label">50-75%</span>
+              <span class="range-value">-</span>
+            </div>
+            <div class="movement-range-item">
+              <span class="range-label">75-100%</span>
+              <span class="range-value">-</span>
+            </div>
+            <div class="movement-range-item">
+              <span class="range-label">>100%</span>
+              <span class="range-value">-</span>
+            </div>
+          </div>
+        </div>
+        <div class="movement-card">
+          <div class="card-title">WEEKLY MOVEMENT FROM PREVIOUS WEEK CLOSE</div>
+          <div class="movement-ranges" id="weeklyMovementRanges">
+            <div class="movement-range-item">
+              <span class="range-label">0-25%</span>
+              <span class="range-value">-</span>
+            </div>
+            <div class="movement-range-item">
+              <span class="range-label">25-50%</span>
+              <span class="range-value">-</span>
+            </div>
+            <div class="movement-range-item">
+              <span class="range-label">50-75%</span>
+              <span class="range-value">-</span>
+            </div>
+            <div class="movement-range-item">
+              <span class="range-label">75-100%</span>
+              <span class="range-value">-</span>
+            </div>
+            <div class="movement-range-item">
+              <span class="range-label">>100%</span>
+              <span class="range-value">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signal Cards Row (COI PCR, ATM PCR, STRENGTH PCR) -->
+      <div class="signal-cards-row" id="signalCardsRow">
+        <div class="signal-card-box signal-positive">
+          <div class="title">COI PCR</div>
+          <div class="value" id="signalCoi">-</div>
+        </div>
+        <div class="signal-card-box signal-neutral">
+          <div class="title">ATM PCR</div>
+          <div class="value" id="signalAtmPcr">-</div>
+        </div>
+        <div class="signal-card-box signal-positive">
+          <div class="title">STRENGTH PCR</div>
+          <div class="value" id="signalStrengthPcr">-</div>
+        </div>
+      </div>
+
+      <!-- Clickable Advance/Decline Bar Graph -->
+      <a href="/market-breadth" style="text-decoration: none; display: block;">
+        <div class="breadth-bar-graph">
+          <div class="breadth-bar-graph-header">
+            <div class="breadth-bar-graph-title">
+              <span>&#9632;</span>
+              Advance / Decline Scripts
+            </div>
+            <span class="breadth-bar-graph-link">View Details &#8594;</span>
+          </div>
+          <div class="breadth-graph-container">
+            <div class="breadth-graph-yaxis">
+              <span>200</span>
+              <span>150</span>
+              <span>100</span>
+              <span>50</span>
+              <span>0</span>
+            </div>
+            <div class="breadth-graph-bars">
+              <div class="breadth-graph-bar-wrap">
+                <div id="breadthGraphBarAdvance" class="breadth-graph-bar advance" style="height: 0px;">
+                  <span class="bar-value" id="breadthGraphAdvanceValue">0</span>
+                </div>
+                <span class="breadth-graph-label advance">ADVANCE</span>
+              </div>
+              <div class="breadth-graph-bar-wrap">
+                <div id="breadthGraphBarDecline" class="breadth-graph-bar decline" style="height: 0px;">
+                  <span class="bar-value" id="breadthGraphDeclineValue">0</span>
+                </div>
+                <span class="breadth-graph-label decline">DECLINE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
     </div>
 
     <div class="card board">
@@ -1331,9 +1684,6 @@
     let liveStaleAfterSeconds = null;
     let websocketTicket = null;
     let latestPrevCloseSpot = null;
-    let isBreadthListOpen = false;
-    let latestBreadthScripts = [];
-    let currentBreadthFilter = "all";
 
     function scheduleReload(delayMs = refreshMs) {
       if (timerId) clearTimeout(timerId);
@@ -1391,74 +1741,59 @@
       </div>`;
     }
 
-    function toggleBreadthSection() {
-      const section = document.getElementById("breadthSection");
-      if (section) {
-        section.classList.toggle("open");
+    function updateSignalCards(latest, coiPcr, atmPcr, strengthPcr) {
+      // Update COI signal card
+      const coiEl = document.getElementById("signalCoi");
+      const coiBoxEl = coiEl?.closest(".signal-card-box");
+      if (coiEl && latest) {
+        coiEl.textContent = fmtPcr(latest.coi_pcr_window);
+        if (coiBoxEl) {
+          coiBoxEl.className = "signal-card-box " + getSignalClass(coiPcr);
+        }
+      }
+
+      // Update ATM PCR signal card
+      const atmPcrEl = document.getElementById("signalAtmPcr");
+      const atmPcrBoxEl = atmPcrEl?.closest(".signal-card-box");
+      if (atmPcrEl && latest) {
+        atmPcrEl.textContent = fmtPcr(latest.atm_pcr);
+        if (atmPcrBoxEl) {
+          atmPcrBoxEl.className = "signal-card-box " + getSignalClass(atmPcr);
+        }
+      }
+
+      // Update Strength PCR signal card
+      const strengthPcrEl = document.getElementById("signalStrengthPcr");
+      const strengthPcrBoxEl = strengthPcrEl?.closest(".signal-card-box");
+      if (strengthPcrEl && latest) {
+        strengthPcrEl.textContent = fmtPcr(latest.strength_pcr);
+        if (strengthPcrBoxEl) {
+          strengthPcrBoxEl.className = "signal-card-box " + getSignalClass(strengthPcr);
+        }
       }
     }
 
-    function setBreadthListOpen(open) {
-      isBreadthListOpen = open;
-      const wrapEl = document.getElementById("breadthListWrap");
-      const buttonEl = document.getElementById("breadthToggleBtn");
-      if (!wrapEl || !buttonEl) return;
-      wrapEl.hidden = !open;
-      buttonEl.classList.toggle("open", open);
-      const toggleText = buttonEl.querySelector(".toggle-text");
-      if (toggleText) {
-        toggleText.textContent = open ? "Hide Script Details" : "Show Script Details";
-      }
-      if (open) {
-        renderBreadthScriptRows(latestBreadthScripts);
-      }
+    function getSignalClass(pcrValue) {
+      if (pcrValue === null || pcrValue === undefined) return "signal-neutral";
+      if (pcrValue > 1.25) return "signal-positive";
+      if (pcrValue < 0.75) return "signal-negative";
+      return "signal-neutral";
     }
 
-    function renderBreadthScriptRows(scripts) {
-      const bodyEl = document.getElementById("breadthListBody");
-      const countEl = document.getElementById("breadthListCount");
-      if (!bodyEl) return;
-
-      // Filter scripts based on current filter
-      let filteredScripts = scripts;
-      if (currentBreadthFilter !== "all") {
-        filteredScripts = scripts.filter(s => (s.trend || "UNCHANGED") === currentBreadthFilter);
+    function updateStrategyCards(tradingStrategy, dataTrend) {
+      // Update strategy signal
+      const signalEl = document.getElementById("strategySignal");
+      if (signalEl) {
+        signalEl.textContent = tradingStrategy.value;
+        signalEl.className = "item-value " + (tradingStrategy.tone === "positive" ? "bullish" : tradingStrategy.tone === "negative" ? "bearish" : "neutral");
       }
 
-      // Update count
-      if (countEl) {
-        countEl.textContent = `${filteredScripts.length} script${filteredScripts.length !== 1 ? "s" : ""}`;
+      // Update data trend
+      const trendEl = document.getElementById("strategyTrend");
+      if (trendEl) {
+        trendEl.textContent = dataTrend.value;
+        trendEl.className = "item-value " + (dataTrend.tone === "positive" ? "bullish" : dataTrend.tone === "negative" ? "bearish" : "neutral");
       }
-
-      if (!Array.isArray(filteredScripts) || filteredScripts.length === 0) {
-        bodyEl.innerHTML = `<div class="breadth-list-empty">No scripts match the current filter.</div>`;
-        return;
-      }
-
-      bodyEl.innerHTML = filteredScripts.map((item) => {
-        const trend = item.trend || "UNCHANGED";
-        const trendClass = trend === "ADVANCE" ? "pos" : trend === "DECLINE" ? "neg" : "";
-        return `
-          <div class="breadth-list-row">
-            <div>${escHtml(item.symbol || "-")}</div>
-            <div class="breadth-script-name" title="${escHtml(item.name || item.symbol || "-")}">${escHtml(item.name || item.symbol || "-")}</div>
-            <div>${fmt2(item.ltp)}</div>
-            <div>${fmt2(item.previous_close)}</div>
-            <div class="${signedClass(item.change)}">${fmt2Signed(item.change)}</div>
-            <div class="${signedClass(item.change_pct)}">${item.change_pct === null || item.change_pct === undefined ? "-" : `${fmt2(item.change_pct)}%`}</div>
-            <div class="${trendClass}">${escHtml(trend)}</div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function filterBreadthScripts(filter) {
-      currentBreadthFilter = filter;
-      // Update active filter button
-      document.querySelectorAll(".filter-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.filter === filter);
-      });
-      renderBreadthScriptRows(latestBreadthScripts);
     }
 
     function updateLiveSpotCards(payload) {
@@ -1628,77 +1963,33 @@
         const data = payload.data || {};
         const advance = Number(data.advance_count || 0);
         const decline = Number(data.decline_count || 0);
-        const unchanged = Number(data.unchanged_count || 0);
-        const total = advance + decline + unchanged;
-        const ratio = decline === 0
-          ? (advance === 0 ? "-" : "∞")
-          : (advance / decline).toFixed(2);
 
-        // Update metric values
-        document.getElementById("breadthAdvance").textContent = fmt(advance);
-        document.getElementById("breadthDecline").textContent = fmt(decline);
-        document.getElementById("breadthUnchanged").textContent = fmt(unchanged);
-        document.getElementById("breadthRatio").textContent = ratio;
-        document.getElementById("breadthMeta").textContent =
-          `Captured (IST): ${toIST(data.captured_at)}`;
-
-        // Update progress bar
-        updateBreadthBar(advance, decline, unchanged, total);
-
-        // Update sentiment badge
-        updateBreadthSentiment(advance, decline, total);
-
-        latestBreadthScripts = Array.isArray(data.scripts) ? data.scripts : [];
-        if (isBreadthListOpen) {
-          renderBreadthScriptRows(latestBreadthScripts);
-        }
+        // Update the bar graph
+        updateBreadthBarGraph(advance, decline);
       } catch (error) {
         // Keep the dashboard usable even if breadth fetch fails.
       }
     }
 
-    function updateBreadthBar(advance, decline, unchanged, total) {
-      const advanceEl = document.getElementById("breadthBarAdvance");
-      const declineEl = document.getElementById("breadthBarDecline");
-      const unchangedEl = document.getElementById("breadthBarUnchanged");
-      const advancePctEl = document.getElementById("breadthAdvancePct");
-      const declinePctEl = document.getElementById("breadthDeclinePct");
+    function updateBreadthBarGraph(advance, decline) {
+      const advanceBarEl = document.getElementById("breadthGraphBarAdvance");
+      const declineBarEl = document.getElementById("breadthGraphBarDecline");
+      const advanceValueEl = document.getElementById("breadthGraphAdvanceValue");
+      const declineValueEl = document.getElementById("breadthGraphDeclineValue");
 
-      if (!advanceEl || !declineEl || !unchangedEl || total === 0) return;
+      if (!advanceBarEl || !declineBarEl) return;
 
-      const advancePct = (advance / total) * 100;
-      const declinePct = (decline / total) * 100;
-      const unchangedPct = (unchanged / total) * 100;
+      const maxVal = Math.max(advance, decline, 200);
+      const maxHeight = 100; // Max bar height in pixels
 
-      advanceEl.style.width = `${advancePct}%`;
-      unchangedEl.style.width = `${unchangedPct}%`;
-      declineEl.style.width = `${declinePct}%`;
+      const advanceHeight = (advance / maxVal) * maxHeight;
+      const declineHeight = (decline / maxVal) * maxHeight;
 
-      if (advancePctEl) advancePctEl.textContent = `${advancePct.toFixed(1)}%`;
-      if (declinePctEl) declinePctEl.textContent = `${declinePct.toFixed(1)}%`;
-    }
+      advanceBarEl.style.height = `${advanceHeight}px`;
+      declineBarEl.style.height = `${declineHeight}px`;
 
-    function updateBreadthSentiment(advance, decline, total) {
-      const sentimentEl = document.getElementById("breadthSentiment");
-      if (!sentimentEl || total === 0) return;
-
-      const advancePct = (advance / total) * 100;
-      const declinePct = (decline / total) * 100;
-
-      let sentiment, className;
-      if (advancePct > 60) {
-        sentiment = "Bullish";
-        className = "sentiment-badge bullish";
-      } else if (declinePct > 60) {
-        sentiment = "Bearish";
-        className = "sentiment-badge bearish";
-      } else {
-        sentiment = "Neutral";
-        className = "sentiment-badge neutral";
-      }
-
-      sentimentEl.textContent = sentiment;
-      sentimentEl.className = className;
+      if (advanceValueEl) advanceValueEl.textContent = advance;
+      if (declineValueEl) declineValueEl.textContent = decline;
     }
 
     function showDataStatus(message) {
@@ -1903,16 +2194,6 @@
     }
 
     function showLoadingState() {
-      const kpiCardSkeleton = `<div class="kpi"><div class="label skeleton"></div><div class="val skeleton"></div></div>`;
-      document.getElementById("kpis").innerHTML = `
-        <div class="kpi-stack">${kpiCardSkeleton}${kpiCardSkeleton}${kpiCardSkeleton}</div>
-        <div class="signal-col">
-          <div class="signal-card"><div class="title skeleton" style="width:80px;height:8px;"></div><div class="value skeleton" style="width:100px;height:16px;"></div></div>
-          <div class="signal-card"><div class="title skeleton" style="width:70px;height:8px;"></div><div class="value skeleton" style="width:90px;height:16px;"></div></div>
-        </div>
-        <div class="kpi-stack">${kpiCardSkeleton}${kpiCardSkeleton}${kpiCardSkeleton}</div>
-      `;
-
       document.querySelector("#gridTable tbody").innerHTML =
         `<tr><td colspan="15" style="padding:14px 8px;">
           <div class="table-skeleton skeleton"></div>
@@ -1985,48 +2266,6 @@
         ? `Prev close used: ${toIST(latest.prev_close_captured_at)} IST (${latest.prev_close_selection === "exact_close_time" ? "exact market close" : "latest prev market-day snapshot"})`
         : "Previous market-day close snapshot not available";
 
-      const leftKpis = [
-        {
-          key: "spot",
-          label: "SPOT",
-          val: fmt2(lastLiveUnderlying?.spot_price),
-          raw: lastLiveUnderlying?.spot_price ?? null,
-        },
-        {
-          key: "change",
-          label: "CHANGE",
-          val: fmt2(lastLiveUnderlying?.change_from_prev_close),
-          tip: prevCloseSource,
-          raw: lastLiveUnderlying?.change_from_prev_close ?? null,
-        },
-        {
-          key: "change_pct",
-          label: "CHANGE %",
-          val: lastLiveUnderlying?.change_pct_from_prev_close === null || lastLiveUnderlying?.change_pct_from_prev_close === undefined
-            ? "-"
-            : `${fmt2(lastLiveUnderlying.change_pct_from_prev_close)}%`,
-          tip: prevCloseSource,
-          raw: lastLiveUnderlying?.change_pct_from_prev_close ?? null,
-        },
-      ];
-      const rightKpis = [
-        {
-          label: "COI PCR",
-          val: latest ? fmtPcr(latest.coi_pcr_window) : "-",
-          raw: latest ? pcrNumber(latest.coi_pcr_window) : null,
-        },
-        {
-          label: "ATM PCR",
-          val: latest ? fmtPcr(latest.atm_pcr) : "-",
-          raw: latest ? pcrNumber(latest.atm_pcr) : null,
-        },
-        {
-          label: "STRENGTH PCR",
-          val: latest ? fmtPcr(latest.strength_pcr) : "-",
-          raw: latest ? pcrNumber(latest.strength_pcr) : null,
-        },
-      ];
-
       const coiPcr = latest ? pcrNumber(latest.coi_pcr_window) : null;
       const atmPcr = latest ? pcrNumber(latest.atm_pcr) : null;
       const strengthPcr = latest ? pcrNumber(latest.strength_pcr) : null;
@@ -2048,29 +2287,28 @@
         else if (negativeTrend) dataTrend = { value: "NEGATIVE", tone: "negative" };
       }
 
-      const renderKpiCard = (item) => {
-          const labelHtml = item.tip
-            ? `<div class="label with-tip">${item.label}<span class="label-tip" tabindex="0">i<span class="label-tip-pop">${escHtml(item.tip)}</span></span></div>`
-            : `<div class="label">${item.label}</div>`;
-          const valueId = item.key === "spot"
-            ? "liveSpotValue"
-            : item.key === "change"
-              ? "liveChangeValue"
-              : item.key === "change_pct"
-                ? "liveChangePctValue"
-                : "";
-          const idAttribute = valueId ? ` id="${valueId}"` : "";
-          return `<div class="kpi">${labelHtml}<div${idAttribute} class="val ${kpiToneClass(item.raw)}">${item.val}</div></div>`;
-      };
+      // Update the signal cards in the header
+      updateSignalCards(latest, coiPcr, atmPcr, strengthPcr);
 
-      document.getElementById("kpis").innerHTML = `
-        <div class="kpi-stack">${leftKpis.map(renderKpiCard).join("")}</div>
-        <div class="signal-col">
-          ${renderSignalCard("TRADING STRATEGY", tradingStrategy.value, tradingStrategy.tone)}
-          ${renderSignalCard("DATA TREND", dataTrend.value, dataTrend.tone)}
-        </div>
-        <div class="kpi-stack">${rightKpis.map(renderKpiCard).join("")}</div>
-      `;
+      // Update strategy cards
+      updateStrategyCards(tradingStrategy, dataTrend);
+
+      // Update spot KPI values
+      const spotEl = document.getElementById("liveSpotValue");
+      const changeEl = document.getElementById("liveChangeValue");
+      const changePctEl = document.getElementById("liveChangePctValue");
+      if (spotEl) spotEl.textContent = fmt2(lastLiveUnderlying?.spot_price);
+      if (changeEl) {
+        changeEl.textContent = fmt2(lastLiveUnderlying?.change_from_prev_close);
+        changeEl.className = `val ${kpiToneClass(lastLiveUnderlying?.change_from_prev_close)}`;
+      }
+      if (changePctEl) {
+        changePctEl.textContent = lastLiveUnderlying?.change_pct_from_prev_close === null || lastLiveUnderlying?.change_pct_from_prev_close === undefined
+          ? "-"
+          : `${fmt2(lastLiveUnderlying.change_pct_from_prev_close)}%`;
+        changePctEl.className = `val ${kpiToneClass(lastLiveUnderlying?.change_pct_from_prev_close)}`;
+      }
+
       hasRendered = true;
 
       const spot = latest ? Number(latest.spot_price) : null;
@@ -2247,18 +2485,7 @@
     setInterval(refreshLiveStatusHeartbeat, 5000);
     setInterval(flushPendingOptionUpdates, LIVE_OPTION_FLUSH_MS);
     setInterval(refreshAdvanceDecline, 15000); // Refresh advance/decline every 15 seconds
-    document.getElementById("breadthToggleBtn")?.addEventListener("click", () => {
-      setBreadthListOpen(!isBreadthListOpen);
-    });
 
-    // Filter button event listeners for breadth scripts
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        filterBreadthScripts(btn.dataset.filter);
-      });
-    });
-
-    setBreadthListOpen(false);
     load();
   </script>
 </body>

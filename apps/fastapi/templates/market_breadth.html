@@ -1,0 +1,924 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Market Breadth - Options Chain Analytics</title>
+  <style>
+    :root {
+      --bg: #0a0f18;
+      --panel: #10192b;
+      --panel-2: #0d1524;
+      --line: #223352;
+      --text: #e6eefc;
+      --muted: #8fa3c7;
+      --accent: #27c4ff;
+      --good: #1ecf7a;
+      --bad: #ff5f6d;
+      --warn: #ffcc66;
+      --gold: #f2c14e;
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      min-height: 100%;
+      background:
+        radial-gradient(1300px 420px at 50% -8%, #1a2d4f 0%, transparent 65%),
+        linear-gradient(180deg, #090e17 0%, #0a0f18 50%, #08111f 100%);
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
+      background: transparent;
+    }
+
+    .page { max-width: 1400px; margin: 8px auto; padding: 0 8px; }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: linear-gradient(180deg, #142240 0%, #101a2e 100%);
+      border-bottom: 1px solid var(--line);
+      border-radius: 6px 6px 0 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+
+    .header-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #7af0b7;
+    }
+
+    .back-btn {
+      background: linear-gradient(135deg, #1a2d4d 0%, #23406a 100%);
+      border: 1px solid #3b5a8a;
+      color: #d7e7ff;
+      border-radius: 4px;
+      height: 32px;
+      padding: 0 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: linear-gradient(135deg, #23406a 0%, #2d4f80 100%);
+      border-color: #4b6a9a;
+      color: #fff;
+    }
+
+    /* Content */
+    .content {
+      padding: 16px;
+    }
+
+    /* Metrics Summary */
+    .metrics-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #243b5f;
+      border-radius: 6px;
+      padding: 12px 14px;
+      background: #101c31;
+      transition: border-color 0.2s ease;
+    }
+
+    .metric-card:hover {
+      border-color: #3b5a8a;
+    }
+
+    .metric-icon {
+      font-size: 18px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .metric-card.advance .metric-icon {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+
+    .metric-card.decline .metric-icon {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .metric-card.unchanged .metric-icon {
+      background: rgba(107, 114, 128, 0.15);
+      color: #6b7280;
+    }
+
+    .metric-card.ratio .metric-icon {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+      font-size: 12px;
+    }
+
+    .metric-content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #f0f4ff;
+      line-height: 1.2;
+    }
+
+    .metric-card.advance .metric-value { color: #22c55e; }
+    .metric-card.decline .metric-value { color: #ef4444; }
+
+    .metric-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Progress Bar */
+    .breadth-bar-section {
+      margin-bottom: 16px;
+    }
+
+    .breadth-bar-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .breadth-bar {
+      display: flex;
+      height: 24px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #1a2744;
+    }
+
+    .breadth-bar-segment {
+      transition: width 0.4s ease;
+      min-width: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .breadth-bar-segment.advance {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    }
+
+    .breadth-bar-segment.decline {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .breadth-bar-segment.unchanged {
+      background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+    }
+
+    .breadth-bar-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .legend-advance { color: #22c55e; }
+    .legend-decline { color: #ef4444; }
+    .legend-unchanged { color: #6b7280; }
+
+    /* Sentiment */
+    .sentiment-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+    }
+
+    .sentiment-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .sentiment-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .sentiment-badge.bullish {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .sentiment-badge.bearish {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .sentiment-badge.neutral {
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+      border: 1px solid rgba(107, 114, 128, 0.4);
+    }
+
+    .captured-time {
+      margin-left: auto;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Actions Bar */
+    .actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0d1524;
+      border: 1px solid #243b5f;
+      border-radius: 6px;
+      padding: 6px 12px;
+      flex: 1;
+      max-width: 300px;
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+      width: 100%;
+    }
+
+    .search-box input::placeholder {
+      color: var(--muted);
+    }
+
+    .search-icon {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-btn {
+      background: #1a2744;
+      border: 1px solid #2a3f64;
+      color: #8ba3c7;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      background: #233454;
+      color: #d7e7ff;
+    }
+
+    .filter-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    .export-btn {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      border: 1px solid #22c55e;
+      color: #fff;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .export-btn:hover {
+      background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    }
+
+    /* Script List */
+    .script-list-wrap {
+      border: 1px solid #243b5f;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0d1729;
+    }
+
+    .script-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #111d32;
+      border-bottom: 1px solid #243b5f;
+    }
+
+    .list-count {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .script-list {
+      max-height: 500px;
+      overflow: auto;
+    }
+
+    .script-list-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .script-list-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #13213b;
+      border-bottom: 1px solid #284165;
+      padding: 10px 12px;
+      font-weight: 700;
+      color: #dbe8ff;
+      text-align: left;
+      cursor: pointer;
+      transition: color 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .script-list-table thead th:hover {
+      color: #60a5fa;
+    }
+
+    .script-list-table tbody tr {
+      border-bottom: 1px solid #172845;
+      transition: background 0.2s ease;
+    }
+
+    .script-list-table tbody tr:hover {
+      background: rgba(37, 99, 235, 0.1);
+    }
+
+    .script-list-table tbody tr:nth-child(odd) {
+      background: #0c1526;
+    }
+
+    .script-list-table tbody tr:nth-child(even) {
+      background: #0e192c;
+    }
+
+    .script-list-table tbody td {
+      padding: 10px 12px;
+      color: #d7e4fb;
+    }
+
+    .script-name {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pos { color: var(--good); font-weight: 700; }
+    .neg { color: var(--bad); font-weight: 700; }
+
+    .trend-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+
+    .trend-badge.advance {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+
+    .trend-badge.decline {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .trend-badge.unchanged {
+      background: rgba(107, 114, 128, 0.15);
+      color: #9ca3af;
+    }
+
+    .empty-state {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #243b5f;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .metrics-summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .metrics-summary {
+        grid-template-columns: 1fr;
+      }
+      .actions-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-box {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <a href="/dashboard" class="back-btn">
+            <span>&#8592;</span>
+            <span>Back to Dashboard</span>
+          </a>
+          <h1 class="page-title">Market Breadth</h1>
+          <span class="header-badge">LIVE</span>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Metrics Summary -->
+        <div class="metrics-summary">
+          <div class="metric-card advance">
+            <div class="metric-icon">&#9650;</div>
+            <div class="metric-content">
+              <span class="metric-value" id="breadthAdvance">-</span>
+              <span class="metric-label">Advancing</span>
+            </div>
+          </div>
+          <div class="metric-card decline">
+            <div class="metric-icon">&#9660;</div>
+            <div class="metric-content">
+              <span class="metric-value" id="breadthDecline">-</span>
+              <span class="metric-label">Declining</span>
+            </div>
+          </div>
+          <div class="metric-card unchanged">
+            <div class="metric-icon">&#9679;</div>
+            <div class="metric-content">
+              <span class="metric-value" id="breadthUnchanged">-</span>
+              <span class="metric-label">Unchanged</span>
+            </div>
+          </div>
+          <div class="metric-card ratio">
+            <div class="metric-icon">A/D</div>
+            <div class="metric-content">
+              <span class="metric-value" id="breadthRatio">-</span>
+              <span class="metric-label">Ratio</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="breadth-bar-section">
+          <div class="breadth-bar-label">Market Distribution</div>
+          <div class="breadth-bar">
+            <div id="breadthBarAdvance" class="breadth-bar-segment advance" style="width: 0%"></div>
+            <div id="breadthBarUnchanged" class="breadth-bar-segment unchanged" style="width: 0%"></div>
+            <div id="breadthBarDecline" class="breadth-bar-segment decline" style="width: 0%"></div>
+          </div>
+          <div class="breadth-bar-legend">
+            <span class="legend-advance" id="breadthAdvancePct">0%</span>
+            <span class="legend-unchanged" id="breadthUnchangedPct">0%</span>
+            <span class="legend-decline" id="breadthDeclinePct">0%</span>
+          </div>
+        </div>
+
+        <!-- Sentiment -->
+        <div class="sentiment-section">
+          <span class="sentiment-label">Market Sentiment:</span>
+          <span id="breadthSentiment" class="sentiment-badge neutral">Neutral</span>
+          <span id="capturedTime" class="captured-time">-</span>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="actions-bar">
+          <div class="search-box">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="searchInput" placeholder="Search by symbol or name..." />
+          </div>
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="ADVANCE">Advance</button>
+            <button class="filter-btn" data-filter="DECLINE">Decline</button>
+            <button class="filter-btn" data-filter="UNCHANGED">Unchanged</button>
+          </div>
+          <button id="exportBtn" class="export-btn">
+            <span>&#8615;</span>
+            <span>Export CSV</span>
+          </button>
+        </div>
+
+        <!-- Script List -->
+        <div class="script-list-wrap">
+          <div class="script-list-header">
+            <span class="list-count" id="listCount">0 scripts</span>
+          </div>
+          <div class="script-list">
+            <table class="script-list-table">
+              <thead>
+                <tr>
+                  <th data-sort="symbol">Symbol</th>
+                  <th data-sort="name">Name</th>
+                  <th data-sort="ltp">LTP</th>
+                  <th data-sort="previous_close">Prev Close</th>
+                  <th data-sort="change">Change</th>
+                  <th data-sort="change_pct">Change %</th>
+                  <th data-sort="trend">Trend</th>
+                </tr>
+              </thead>
+              <tbody id="scriptListBody">
+                <tr>
+                  <td colspan="7">
+                    <div class="loading">
+                      <div class="spinner"></div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allScripts = [];
+    let currentFilter = "all";
+    let currentSearch = "";
+    let currentSort = { field: "symbol", dir: "asc" };
+
+    function fmt(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+      return Number(v).toLocaleString();
+    }
+
+    function fmt2(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+      return Number(v).toFixed(2);
+    }
+
+    function escHtml(v) {
+      return String(v)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function toIST(iso) {
+      if (!iso) return "-";
+      const d = new Date(iso);
+      return d.toLocaleTimeString("en-IN", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Asia/Kolkata"
+      });
+    }
+
+    function updateMetrics(data) {
+      const advance = Number(data.advance_count || 0);
+      const decline = Number(data.decline_count || 0);
+      const unchanged = Number(data.unchanged_count || 0);
+      const total = advance + decline + unchanged;
+      const ratio = decline === 0
+        ? (advance === 0 ? "-" : "∞")
+        : (advance / decline).toFixed(2);
+
+      document.getElementById("breadthAdvance").textContent = fmt(advance);
+      document.getElementById("breadthDecline").textContent = fmt(decline);
+      document.getElementById("breadthUnchanged").textContent = fmt(unchanged);
+      document.getElementById("breadthRatio").textContent = ratio;
+
+      // Update progress bar
+      if (total > 0) {
+        const advancePct = (advance / total) * 100;
+        const declinePct = (decline / total) * 100;
+        const unchangedPct = (unchanged / total) * 100;
+
+        document.getElementById("breadthBarAdvance").style.width = `${advancePct}%`;
+        document.getElementById("breadthBarUnchanged").style.width = `${unchangedPct}%`;
+        document.getElementById("breadthBarDecline").style.width = `${declinePct}%`;
+
+        document.getElementById("breadthAdvancePct").textContent = `${advancePct.toFixed(1)}%`;
+        document.getElementById("breadthUnchangedPct").textContent = `${unchangedPct.toFixed(1)}%`;
+        document.getElementById("breadthDeclinePct").textContent = `${declinePct.toFixed(1)}%`;
+      }
+
+      // Update sentiment
+      const sentimentEl = document.getElementById("breadthSentiment");
+      const advancePct = total > 0 ? (advance / total) * 100 : 0;
+      const declinePct = total > 0 ? (decline / total) * 100 : 0;
+
+      if (advancePct > 60) {
+        sentimentEl.textContent = "Bullish";
+        sentimentEl.className = "sentiment-badge bullish";
+      } else if (declinePct > 60) {
+        sentimentEl.textContent = "Bearish";
+        sentimentEl.className = "sentiment-badge bearish";
+      } else {
+        sentimentEl.textContent = "Neutral";
+        sentimentEl.className = "sentiment-badge neutral";
+      }
+
+      document.getElementById("capturedTime").textContent = `Captured: ${toIST(data.captured_at)}`;
+    }
+
+    function renderScriptList(scripts) {
+      const tbody = document.getElementById("scriptListBody");
+      const countEl = document.getElementById("listCount");
+
+      // Filter
+      let filtered = scripts;
+      if (currentFilter !== "all") {
+        filtered = filtered.filter(s => (s.trend || "UNCHANGED") === currentFilter);
+      }
+
+      // Search
+      if (currentSearch) {
+        const search = currentSearch.toLowerCase();
+        filtered = filtered.filter(s =>
+          (s.symbol || "").toLowerCase().includes(search) ||
+          (s.name || "").toLowerCase().includes(search)
+        );
+      }
+
+      // Sort
+      filtered.sort((a, b) => {
+        let aVal = a[currentSort.field];
+        let bVal = b[currentSort.field];
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          return currentSort.dir === "asc" ? aVal - bVal : bVal - aVal;
+        }
+        aVal = String(aVal || "");
+        bVal = String(bVal || "");
+        return currentSort.dir === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      });
+
+      countEl.textContent = `${filtered.length} script${filtered.length !== 1 ? "s" : ""}`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <div class="empty-state-icon">&#128269;</div>
+                <div class="empty-state-text">No scripts match your search criteria</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => {
+        const trend = item.trend || "UNCHANGED";
+        const trendClass = trend.toLowerCase();
+        const changeClass = Number(item.change) > 0 ? "pos" : Number(item.change) < 0 ? "neg" : "";
+        const changePctClass = Number(item.change_pct) > 0 ? "pos" : Number(item.change_pct) < 0 ? "neg" : "";
+
+        return `
+          <tr>
+            <td>${escHtml(item.symbol || "-")}</td>
+            <td class="script-name" title="${escHtml(item.name || item.symbol || "-")}">${escHtml(item.name || item.symbol || "-")}</td>
+            <td>${fmt2(item.ltp)}</td>
+            <td>${fmt2(item.previous_close)}</td>
+            <td class="${changeClass}">${fmt2(item.change)}</td>
+            <td class="${changePctClass}">${item.change_pct === null || item.change_pct === undefined ? "-" : `${fmt2(item.change_pct)}%`}</td>
+            <td><span class="trend-badge ${trendClass}">${escHtml(trend)}</span></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function exportToCSV() {
+      let filtered = allScripts;
+      if (currentFilter !== "all") {
+        filtered = filtered.filter(s => (s.trend || "UNCHANGED") === currentFilter);
+      }
+      if (currentSearch) {
+        const search = currentSearch.toLowerCase();
+        filtered = filtered.filter(s =>
+          (s.symbol || "").toLowerCase().includes(search) ||
+          (s.name || "").toLowerCase().includes(search)
+        );
+      }
+
+      const headers = ["Symbol", "Name", "LTP", "Previous Close", "Change", "Change %", "Trend"];
+      const rows = filtered.map(s => [
+        s.symbol || "",
+        s.name || "",
+        s.ltp || "",
+        s.previous_close || "",
+        s.change || "",
+        s.change_pct || "",
+        s.trend || "UNCHANGED"
+      ]);
+
+      const csvContent = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `market_breadth_${new Date().toISOString().split("T")[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function loadData() {
+      try {
+        const response = await fetch("/api/v1/script-snapshot/advance-decline", {
+          credentials: "include"
+        });
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const data = result.data;
+          updateMetrics(data);
+          allScripts = Array.isArray(data.scripts) ? data.scripts : [];
+          renderScriptList(allScripts);
+        }
+      } catch (error) {
+        console.error("Failed to load market breadth data:", error);
+        document.getElementById("scriptListBody").innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <div class="empty-state-icon">&#9888;</div>
+                <div class="empty-state-text">Failed to load data. Please try again.</div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Event listeners
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      currentSearch = e.target.value;
+      renderScriptList(allScripts);
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        renderScriptList(allScripts);
+      });
+    });
+
+    document.querySelectorAll(".script-list-table th[data-sort]").forEach(th => {
+      th.addEventListener("click", () => {
+        const field = th.dataset.sort;
+        if (currentSort.field === field) {
+          currentSort.dir = currentSort.dir === "asc" ? "desc" : "asc";
+        } else {
+          currentSort.field = field;
+          currentSort.dir = "asc";
+        }
+        renderScriptList(allScripts);
+      });
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", exportToCSV);
+
+    // Initial load
+    loadData();
+
+    // Auto refresh every 30 seconds
+    setInterval(loadData, 30000);
+  </script>
+</body>
+</html>

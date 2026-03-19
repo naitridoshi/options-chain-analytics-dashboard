@@ -33,8 +33,8 @@ start_time = get_current_utc_timestamp()
 
 
 @core_route.get("/")
-def redirect_to_health():
-    return RedirectResponse(url="/health")
+def redirect_to_login():
+    return RedirectResponse(url="/login")
 
 
 @core_route.get("/health")
