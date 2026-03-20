@@ -402,7 +402,7 @@
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
       gap: 4px;
@@ -450,50 +450,113 @@
       visibility: visible;
     }
 
-    .movement-ranges {
-      display: flex;
-      gap: 3px;
+    /* Movement Table Styles */
+    .movement-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
     }
 
-    .movement-range-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 3px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 4px;
-      transition: background 0.2s ease;
-    }
-
-    .movement-range-item.highlighted-positive {
-      background: rgba(34, 197, 94, 0.3);
-      border: 1px solid rgba(34, 197, 94, 0.5);
-    }
-
-    .movement-range-item.highlighted-negative {
-      background: rgba(239, 68, 68, 0.3);
-      border: 1px solid rgba(239, 68, 68, 0.5);
-    }
-
-    .movement-range-item .range-label {
-      font-size: 10px;
+    .movement-table thead th {
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 4px 6px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid var(--line);
       color: var(--muted);
-      margin-bottom: 2px;
     }
 
-    .movement-range-item .range-value {
-      font-size: 10px;
+    .movement-table thead th.range-header {
+      text-align: left;
+      width: 80px;
+    }
+
+    .movement-table tbody td {
+      padding: 5px 6px;
+      text-align: center;
+      border-bottom: 1px solid rgba(42, 63, 100, 0.3);
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .movement-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .movement-table .range-cell {
+      text-align: left;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .movement-table .today-cell,
+    .movement-table .weekly-cell {
       font-weight: 700;
       color: var(--text);
     }
 
-    .movement-range-item.highlighted-positive .range-value {
+    /* Highlighted row styles */
+    .movement-table tbody tr.highlighted-today .today-cell {
+      background: rgba(34, 197, 94, 0.25);
       color: #22c55e;
+      border-radius: 3px;
     }
 
-    .movement-range-item.highlighted-negative .range-value {
+    .movement-table tbody tr.highlighted-today.negative .today-cell {
+      background: rgba(239, 68, 68, 0.25);
       color: #ef4444;
+    }
+
+    .movement-table tbody tr.highlighted-weekly .weekly-cell {
+      background: rgba(34, 197, 94, 0.25);
+      color: #22c55e;
+      border-radius: 3px;
+    }
+
+    .movement-table tbody tr.highlighted-weekly.negative .weekly-cell {
+      background: rgba(239, 68, 68, 0.25);
+      color: #ef4444;
+    }
+
+    /* Info icon in table headers */
+    .info-icon-small {
+      font-size: 8px;
+      color: #aecdff;
+      cursor: help;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 2px;
+      font-weight: 700;
+    }
+
+    .info-icon-small .tooltip {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 4px);
+      transform: translateX(-50%);
+      background: #0f1b30;
+      border: 1px solid #2a3f64;
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 7px;
+      font-weight: 400;
+      color: #d6e3ff;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, visibility 0.15s ease;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .info-icon-small:hover .tooltip,
+    .info-icon-small:focus .tooltip {
+      opacity: 1;
+      visibility: visible;
     }
 
     /* Signal Cards Row */
@@ -1649,65 +1712,60 @@
         </div>
         <div class="movement-card">
           <div class="card-title">
-            TODAY'S MOVEMENT FROM OPEN
+            MOVEMENT PROBABILITY RANGES
             <span class="info-icon" tabindex="0">
               i
-              <span class="tooltip" id="todayMovementTooltip">Reference snapshot: --</span>
+              <span class="tooltip">Cumulative probability of movement staying within each threshold</span>
             </span>
           </div>
-          <div class="movement-ranges" id="todayMovementRanges">
-            <div class="movement-range-item" data-range="0-25">
-              <span class="range-label">0-25%</span>
-              <span class="range-value">-</span>
-            </div>
-            <div class="movement-range-item" data-range="25-50">
-              <span class="range-label">25-50%</span>
-              <span class="range-value">-</span>
-            </div>
-            <div class="movement-range-item" data-range="50-75">
-              <span class="range-label">50-75%</span>
-              <span class="range-value">-</span>
-            </div>
-            <div class="movement-range-item" data-range="75-100">
-              <span class="range-label">75-100%</span>
-              <span class="range-value">-</span>
-            </div>
-            <div class="movement-range-item" data-range="100+">
-              <span class="range-label">&gt;100%</span>
-              <span class="range-value">-</span>
-            </div>
-          </div>
-        </div>
-        <div class="movement-card">
-          <div class="card-title">
-            WEEKLY MOVEMENT FROM PREVIOUS WEEK CLOSE
-            <span class="info-icon" tabindex="0">
-              i
-              <span class="tooltip" id="weeklyMovementTooltip">Reference snapshot: --</span>
-            </span>
-          </div>
-          <div class="movement-ranges" id="weeklyMovementRanges">
-            <div class="movement-range-item" data-range="0-25">
-              <span class="range-label">0-25%</span>
-              <span class="range-value">-</span>
-            </div>
-            <div class="movement-range-item" data-range="25-50">
-              <span class="range-label">25-50%</span>
-              <span class="range-value">-</span>
-            </div>
-            <div class="movement-range-item" data-range="50-75">
-              <span class="range-label">50-75%</span>
-              <span class="range-value">-</span>
-            </div>
-            <div class="movement-range-item" data-range="75-100">
-              <span class="range-label">75-100%</span>
-              <span class="range-value">-</span>
-            </div>
-            <div class="movement-range-item" data-range="100+">
-              <span class="range-label">&gt;100%</span>
-              <span class="range-value">-</span>
-            </div>
-          </div>
+          <table class="movement-table" id="movementTable">
+            <thead>
+              <tr>
+                <th class="range-header">Range</th>
+                <th class="today-header">
+                  Today's Movement from Open
+                  <span class="info-icon-small" tabindex="0">
+                    i
+                    <span class="tooltip" id="todayMovementTooltip">Reference snapshot: --</span>
+                  </span>
+                </th>
+                <th class="weekly-header">
+                  Weekly Movement from Prev Week Close
+                  <span class="info-icon-small" tabindex="0">
+                    i
+                    <span class="tooltip" id="weeklyMovementTooltip">Reference snapshot: --</span>
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="movementTableBody">
+              <tr data-threshold="0.50">
+                <td class="range-cell">within 0.50%</td>
+                <td class="today-cell">54.10%</td>
+                <td class="weekly-cell">32.82%</td>
+              </tr>
+              <tr data-threshold="1.00">
+                <td class="range-cell">within 1.00%</td>
+                <td class="today-cell">82.90%</td>
+                <td class="weekly-cell">62.85%</td>
+              </tr>
+              <tr data-threshold="1.50">
+                <td class="range-cell">within 1.50%</td>
+                <td class="today-cell">93.90%</td>
+                <td class="weekly-cell">77.85%</td>
+              </tr>
+              <tr data-threshold="2.00">
+                <td class="range-cell">within 2.00%</td>
+                <td class="today-cell">98.10%</td>
+                <td class="weekly-cell">91.60%</td>
+              </tr>
+              <tr data-threshold="3.00">
+                <td class="range-cell">within 3.00%</td>
+                <td class="today-cell">-</td>
+                <td class="weekly-cell">98.73%</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -1982,9 +2040,18 @@
     function updateMovementDisplays(movements) {
       if (!movements) return;
 
+      const tableBody = document.getElementById("movementTableBody");
+      if (!tableBody) return;
+
+      // Clear all highlights first
+      const rows = tableBody.querySelectorAll("tr");
+      rows.forEach(row => {
+        row.classList.remove("highlighted-today", "highlighted-weekly", "negative");
+      });
+
       // Update today's movement from open
-      if (movements.today_from_open) {
-        updateMovementCard("todayMovementRanges", movements.today_from_open);
+      if (movements.today_from_open && movements.today_from_open.movement_pct !== null) {
+        highlightMovementRow("today", movements.today_from_open.movement_pct);
         const todayTooltip = document.getElementById("todayMovementTooltip");
         if (todayTooltip && movements.today_from_open.captured_at_open) {
           todayTooltip.textContent = "Reference snapshot: " + formatTooltipTimestamp(movements.today_from_open.captured_at_open);
@@ -1992,8 +2059,8 @@
       }
 
       // Update weekly movement from close
-      if (movements.weekly_from_close) {
-        updateMovementCard("weeklyMovementRanges", movements.weekly_from_close);
+      if (movements.weekly_from_close && movements.weekly_from_close.movement_pct !== null) {
+        highlightMovementRow("weekly", movements.weekly_from_close.movement_pct);
         const weeklyTooltip = document.getElementById("weeklyMovementTooltip");
         if (weeklyTooltip && movements.weekly_from_close.captured_at_close) {
           weeklyTooltip.textContent = "Reference snapshot: " + formatTooltipTimestamp(movements.weekly_from_close.captured_at_close);
@@ -2001,44 +2068,44 @@
       }
     }
 
-    function updateMovementCard(containerId, movementData) {
-      const container = document.getElementById(containerId);
-      if (!container || !movementData || movementData.movement_pct === null) return;
+    function highlightMovementRow(type, movementPct) {
+      const tableBody = document.getElementById("movementTableBody");
+      if (!tableBody || movementPct === null) return;
 
-      const movementPct = Math.abs(movementData.movement_pct);
-      const isPositive = movementData.movement_pct >= 0;
-      const items = container.querySelectorAll(".movement-range-item");
+      const absMovement = Math.abs(movementPct);
+      const isNegative = movementPct < 0;
+      const rows = tableBody.querySelectorAll("tr");
 
-      // Clear all highlights
-      items.forEach(item => {
-        item.classList.remove("highlighted-positive", "highlighted-negative");
-        const valueEl = item.querySelector(".range-value");
-        if (valueEl) valueEl.textContent = "-";
-      });
-
-      // Determine which bucket to highlight
-      let targetBucket = null;
-      if (movementPct >= 0 && movementPct < 25) {
-        targetBucket = "0-25";
-      } else if (movementPct >= 25 && movementPct < 50) {
-        targetBucket = "25-50";
-      } else if (movementPct >= 50 && movementPct < 75) {
-        targetBucket = "50-75";
-      } else if (movementPct >= 75 && movementPct < 100) {
-        targetBucket = "75-100";
-      } else if (movementPct >= 100) {
-        targetBucket = "100+";
+      // Determine which threshold row to highlight
+      let targetThreshold = null;
+      if (absMovement <= 0.50) {
+        targetThreshold = "0.50";
+      } else if (absMovement <= 1.00) {
+        targetThreshold = "1.00";
+      } else if (absMovement <= 1.50) {
+        targetThreshold = "1.50";
+      } else if (absMovement <= 2.00) {
+        targetThreshold = "2.00";
+      } else if (absMovement <= 3.00) {
+        targetThreshold = "3.00";
+      } else {
+        targetThreshold = "3.00"; // For movements > 3%, highlight the 3.00 row
       }
 
-      // Highlight the target bucket
-      items.forEach(item => {
-        const range = item.dataset.range;
-        if (range === targetBucket) {
-          item.classList.add(isPositive ? "highlighted-positive" : "highlighted-negative");
-          const valueEl = item.querySelector(".range-value");
-          if (valueEl) {
-            const sign = isPositive ? "+" : "";
-            valueEl.textContent = sign + fmt2(movementData.movement_pct) + "%";
+      // Find and highlight the target row
+      rows.forEach(row => {
+        const threshold = row.dataset.threshold;
+        if (threshold === targetThreshold) {
+          const cellClass = type === "today" ? "today-cell" : "weekly-cell";
+          const cell = row.querySelector("." + cellClass);
+          if (cell) {
+            row.classList.add(type === "today" ? "highlighted-today" : "highlighted-weekly");
+            if (isNegative) {
+              row.classList.add("negative");
+            }
+            // Update the cell value with actual movement
+            const sign = isNegative ? "" : "+";
+            cell.textContent = sign + fmt2(movementPct) + "%";
           }
         }
       });
