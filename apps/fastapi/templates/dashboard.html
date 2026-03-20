@@ -398,7 +398,7 @@
     }
 
     .movement-card .card-title {
-      font-size: 8px;
+      font-size: 10px;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -409,7 +409,7 @@
     }
 
     .movement-card .card-title .info-icon {
-      font-size: 9px;
+      font-size: 10px;
       color: #aecdff;
       cursor: help;
       position: relative;
@@ -433,7 +433,7 @@
       border: 1px solid #2a3f64;
       border-radius: 4px;
       padding: 4px 8px;
-      font-size: 8px;
+      font-size: 10px;
       font-weight: 400;
       color: #d6e3ff;
       white-space: nowrap;
@@ -454,11 +454,11 @@
     .movement-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 9px;
+      font-size: 10px;
     }
 
     .movement-table thead th {
-      font-size: 8px;
+      font-size: 9px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.3px;
@@ -2092,20 +2092,13 @@
         targetThreshold = "3.00"; // For movements > 3%, highlight the 3.00 row
       }
 
-      // Find and highlight the target row
+      // Find and highlight the target row (without changing the static probability value)
       rows.forEach(row => {
         const threshold = row.dataset.threshold;
         if (threshold === targetThreshold) {
-          const cellClass = type === "today" ? "today-cell" : "weekly-cell";
-          const cell = row.querySelector("." + cellClass);
-          if (cell) {
-            row.classList.add(type === "today" ? "highlighted-today" : "highlighted-weekly");
-            if (isNegative) {
-              row.classList.add("negative");
-            }
-            // Update the cell value with actual movement
-            const sign = isNegative ? "" : "+";
-            cell.textContent = sign + fmt2(movementPct) + "%";
+          row.classList.add(type === "today" ? "highlighted-today" : "highlighted-weekly");
+          if (isNegative) {
+            row.classList.add("negative");
           }
         }
       });
