@@ -537,8 +537,9 @@ class LiveMarketStreamingService:
 
     async def _get_market_open_data(self, instrument_symbol: str) -> dict:
         """
-        Get the market open spot price (first snapshot between 9:00-9:15 AM).
+        Get the snapshot closest to 9:15 AM within the 9:00-9:15 window.
         Returns dict with spot_price and captured_at.
+        Fallback to first snapshot of the day if none found in window.
         """
         from datetime import time as time_type
 
@@ -558,7 +559,10 @@ class LiveMarketStreamingService:
 
         market_open_time = time_type(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE)
         market_open_end_time = time_type(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE + 15)
+        target_time = time_type(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE + 15)  # 9:15 AM
 
+        # Collect all snapshots within the 9:00-9:15 window
+        candidates = []
         for snapshot in reversed(timeline):  # Timeline is in reverse order
             latest = snapshot.get("latest") or snapshot
             captured_at_str = latest.get("captured_at")
@@ -570,12 +574,37 @@ class LiveMarketStreamingService:
                 captured_time = captured_at.astimezone(IST).time()
 
                 if market_open_time <= captured_time <= market_open_end_time:
-                    return {
-                        "spot_price": latest.get("spot_price"),
-                        "captured_at": captured_at_str,
-                    }
+                    # Calculate time difference from 9:15 AM in seconds
+                    captured_seconds = (
+                        captured_time.hour * 3600
+                        + captured_time.minute * 60
+                        + captured_time.second
+                    )
+                    target_seconds = (
+                        target_time.hour * 3600
+                        + target_time.minute * 60
+                        + target_time.second
+                    )
+                    diff_seconds = abs(captured_seconds - target_seconds)
+
+                    candidates.append(
+                        {
+                            "spot_price": latest.get("spot_price"),
+                            "captured_at": captured_at_str,
+                            "diff_seconds": diff_seconds,
+                        }
+                    )
             except (ValueError, TypeError):
                 continue
+
+        # If we have candidates, return the one closest to 9:15 AM
+        if candidates:
+            candidates.sort(key=lambda x: x["diff_seconds"])
+            best = candidates[0]
+            return {
+                "spot_price": best["spot_price"],
+                "captured_at": best["captured_at"],
+            }
 
         # Fallback: return earliest snapshot
         if timeline:

@@ -280,8 +280,9 @@ class RuntimeDashboardService:
         trade_date: str,
     ) -> dict | None:
         """
-        Get the first snapshot captured between market open time and 15 mins after.
+        Get the snapshot closest to 9:15 AM within the 9:00-9:15 window.
         This is used as the reference for 'Today's Movement from Open'.
+        Fallback to first snapshot of the day if none found in window.
         """
         timeline = await RedisOptionChainSnapshotStore.get_timeline(
             instrument_symbol=instrument_symbol,
@@ -293,7 +294,10 @@ class RuntimeDashboardService:
 
         market_open_time = time(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE)
         market_open_end_time = time(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE + 15)
+        target_time = time(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE + 15)  # 9:15 AM
 
+        # Collect all snapshots within the 9:00-9:15 window
+        candidates = []
         for snapshot in reversed(
             timeline
         ):  # Timeline is in reverse order (latest first)
@@ -308,12 +312,37 @@ class RuntimeDashboardService:
 
                 # Check if captured between market open and 15 mins after
                 if market_open_time <= captured_time <= market_open_end_time:
-                    return {
-                        "spot_price": latest.get("spot_price"),
-                        "captured_at": captured_at_str,
-                    }
+                    # Calculate time difference from 9:15 AM in seconds
+                    captured_seconds = (
+                        captured_time.hour * 3600
+                        + captured_time.minute * 60
+                        + captured_time.second
+                    )
+                    target_seconds = (
+                        target_time.hour * 3600
+                        + target_time.minute * 60
+                        + target_time.second
+                    )
+                    diff_seconds = abs(captured_seconds - target_seconds)
+
+                    candidates.append(
+                        {
+                            "spot_price": latest.get("spot_price"),
+                            "captured_at": captured_at_str,
+                            "diff_seconds": diff_seconds,
+                        }
+                    )
             except (ValueError, TypeError):
                 continue
+
+        # If we have candidates, return the one closest to 9:15 AM
+        if candidates:
+            candidates.sort(key=lambda x: x["diff_seconds"])
+            best = candidates[0]
+            return {
+                "spot_price": best["spot_price"],
+                "captured_at": best["captured_at"],
+            }
 
         # Fallback: return the earliest snapshot of the day
         if timeline:

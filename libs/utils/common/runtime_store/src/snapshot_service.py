@@ -11,11 +11,16 @@ from libs.platform.modules.option_chain_snapshot.src import (
 from libs.platform.modules.option_chain_snapshot.src.runtime_summary import (
     build_summary_payloads,
 )
+from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
 from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS
 from libs.utils.db.redis.src import RedisOptionChainSnapshotStore
 
 IST = ZoneInfo("Asia/Kolkata")
+
+log = CustomLogger("RuntimeSnapshotPayload")
+logger, listener = log.get_logger()
+listener.start()
 
 
 @dataclass
@@ -150,6 +155,14 @@ class RuntimeSnapshotService:
             "atm_pcr": _compute_atm_pcr(strike_summary_values, spot_price),
             "strength_pcr": _compute_strength_pcr(strike_summary_values, spot_price),
         }
+
+        logger.info(
+            f"PCR Values Calculated - spot_price: {spot_price} - "
+            f"COI_PCR_Window: {latest['coi_pcr_window']} - "
+            f"ATM_PCR: {latest['atm_pcr']} - "
+            f"Strength_PCR: {latest['strength_pcr']} - "
+            f"strikes_count: {len(strike_summary_values)}"
+        )
         strikes = []
         for item in strike_summary_values:
             strike_price = _as_number(item["strike_price"])
@@ -247,13 +260,27 @@ def _compute_window_pcr(rows: list[dict], spot_price: Decimal, window: int):
     atm_index = _closest_atm_index(rows, spot_price)
     if atm_index is None:
         return None
+
+    atm_strike = rows[atm_index]["strike_price"]
     call_total = _sum_range(
         rows, atm_index - window, atm_index + window, "call_oi_change"
     )
     put_total = _sum_range(
         rows, atm_index - window, atm_index + window, "put_oi_change"
     )
-    return _pcr(put_total, call_total)
+
+    pcr_value = _pcr(put_total, call_total)
+
+    # Debug logging for COI PCR Window calculation
+    logger.debug(
+        f"COI PCR Window Calculation - spot_price: {spot_price} - "
+        f"atm_index: {atm_index} - atm_strike: {atm_strike} - "
+        f"window: {window} (strikes {atm_index - window} to {atm_index + window}) - "
+        f"call_total: {call_total} - put_total: {put_total} - "
+        f"COI_PCR: {pcr_value}"
+    )
+
+    return pcr_value
 
 
 def _compute_atm_pcr(rows: list[dict], spot_price: Decimal):
@@ -265,11 +292,31 @@ def _compute_atm_pcr(rows: list[dict], spot_price: Decimal):
     atm_index = _closest_atm_index(rows, spot_price)
     if atm_index is None:
         return None
+
+    # Log ATM strike for debugging
+    atm_strike = rows[atm_index]["strike_price"]
+    call_strike = (
+        rows[atm_index + 1]["strike_price"] if atm_index + 1 < len(rows) else None
+    )
+    put_strike = rows[atm_index - 1]["strike_price"] if atm_index - 1 >= 0 else None
+
     # CALL: strike ABOVE ATM (higher strike, higher index)
     call_total = _sum_range(rows, atm_index + 1, atm_index + 1, "call_oi_change")
     # PUT: strike BELOW ATM (lower strike, lower index)
     put_total = _sum_range(rows, atm_index - 1, atm_index - 1, "put_oi_change")
-    return _pcr(put_total, call_total)
+
+    pcr_value = _pcr(put_total, call_total)
+
+    # Debug logging for ATM PCR calculation
+    logger.debug(
+        f"ATM PCR Calculation - spot_price: {spot_price} - "
+        f"atm_index: {atm_index} - atm_strike: {atm_strike} - "
+        f"call_strike: {call_strike} (COI: {call_total}) - "
+        f"put_strike: {put_strike} (COI: {put_total}) - "
+        f"ATM_PCR: {pcr_value}"
+    )
+
+    return pcr_value
 
 
 def _compute_strength_pcr(rows: list[dict], spot_price: Decimal):
@@ -284,8 +331,23 @@ def _compute_strength_pcr(rows: list[dict], spot_price: Decimal):
     atm_index = _closest_atm_index(rows, spot_price)
     if atm_index is None:
         return None
+
+    atm_strike = rows[atm_index]["strike_price"]
     # CALL: ATM and 4 strikes ABOVE (higher strikes, higher indices)
     call_total = _sum_range(rows, atm_index, atm_index + 4, "call_oi_change")
     # PUT: ATM and 4 strikes BELOW (lower strikes, lower indices)
     put_total = _sum_range(rows, atm_index - 4, atm_index, "put_oi_change")
-    return _pcr(put_total, call_total)
+
+    pcr_value = _pcr(put_total, call_total)
+
+    # Debug logging for Strength PCR calculation
+    logger.debug(
+        f"Strength PCR Calculation - spot_price: {spot_price} - "
+        f"atm_index: {atm_index} - atm_strike: {atm_strike} - "
+        f"call_range: [{atm_index} to {atm_index + 4}] - "
+        f"put_range: [{atm_index - 4} to {atm_index}] - "
+        f"call_total: {call_total} - put_total: {put_total} - "
+        f"Strength_PCR: {pcr_value}"
+    )
+
+    return pcr_value
