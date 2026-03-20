@@ -285,9 +285,12 @@ def _compute_window_pcr(rows: list[dict], spot_price: Decimal, window: int):
 
 def _compute_atm_pcr(rows: list[dict], spot_price: Decimal):
     """
-    ATM PCR = PUT COI at (ATM + 1 strike BELOW) / CALL COI at (ATM + 1 strike ABOVE)
-    Formula: PUT at strike below ATM divided by CALL at strike above ATM
-    Example: If ATM = 24600, then PUT at 24550 / CALL at 24650
+    ATM PCR = (PUT COI at ATM + PUT COI at 1 strike BELOW) / (CALL COI at ATM + CALL COI at 1 strike ABOVE)
+    Formula: Sum of PUT OI changes at ATM and 1 strike below,
+             divided by sum of CALL OI changes at ATM and 1 strike above.
+    Example: If ATM = 23200,
+             PUT: 23200 + 23150 (indices N-1 to N)
+             CALL: 23200 + 23250 (indices N to N+1)
     """
     atm_index = _closest_atm_index(rows, spot_price)
     if atm_index is None:
@@ -295,15 +298,17 @@ def _compute_atm_pcr(rows: list[dict], spot_price: Decimal):
 
     # Log ATM strike for debugging
     atm_strike = rows[atm_index]["strike_price"]
-    call_strike = (
+    call_strike_above = (
         rows[atm_index + 1]["strike_price"] if atm_index + 1 < len(rows) else None
     )
-    put_strike = rows[atm_index - 1]["strike_price"] if atm_index - 1 >= 0 else None
+    put_strike_below = (
+        rows[atm_index - 1]["strike_price"] if atm_index - 1 >= 0 else None
+    )
 
-    # CALL: strike ABOVE ATM (higher strike, higher index)
-    call_total = _sum_range(rows, atm_index + 1, atm_index + 1, "call_oi_change")
-    # PUT: strike BELOW ATM (lower strike, lower index)
-    put_total = _sum_range(rows, atm_index - 1, atm_index - 1, "put_oi_change")
+    # CALL: ATM strike + 1 strike ABOVE (indices N to N+1)
+    call_total = _sum_range(rows, atm_index, atm_index + 1, "call_oi_change")
+    # PUT: ATM strike + 1 strike BELOW (indices N-1 to N)
+    put_total = _sum_range(rows, atm_index - 1, atm_index, "put_oi_change")
 
     pcr_value = _pcr(put_total, call_total)
 
@@ -311,8 +316,8 @@ def _compute_atm_pcr(rows: list[dict], spot_price: Decimal):
     logger.debug(
         f"ATM PCR Calculation - spot_price: {spot_price} - "
         f"atm_index: {atm_index} - atm_strike: {atm_strike} - "
-        f"call_strike: {call_strike} (COI: {call_total}) - "
-        f"put_strike: {put_strike} (COI: {put_total}) - "
+        f"call_strikes: [{atm_strike}, {call_strike_above}] (COI: {call_total}) - "
+        f"put_strikes: [{put_strike_below}, {atm_strike}] (COI: {put_total}) - "
         f"ATM_PCR: {pcr_value}"
     )
 
