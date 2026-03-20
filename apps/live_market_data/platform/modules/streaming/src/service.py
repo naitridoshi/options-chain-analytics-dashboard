@@ -28,6 +28,7 @@ from libs.utils.config.src.fyers import (
 from libs.utils.db.redis.src import (
     RedisLiveMarketStore,
     RedisOptionChainSnapshotStore,
+    RedisWeeklyCloseStore,
 )
 
 log = CustomLogger("LiveMarketStreamingService")
@@ -49,6 +50,11 @@ class UnderlyingSubscription:
     instrument_symbol: str
     symbol: str
     prev_close_spot: float | None
+    market_open_spot: float | None = None
+    market_open_captured_at: str | None = None
+    weekly_close_spot: float | None = None
+    weekly_close_expiry_date: str | None = None
+    weekly_close_captured_at: str | None = None
 
 
 class LiveMarketStreamingService:
@@ -163,11 +169,18 @@ class LiveMarketStreamingService:
             if not instrument.fyers_symbol:
                 continue
             prev_close_spot = await self._get_previous_close_spot(instrument.symbol)
+            market_open_data = await self._get_market_open_data(instrument.symbol)
+            weekly_close_data = await self._get_weekly_close_data(instrument.symbol)
             underlying_map[_normalize_symbol_key(instrument.fyers_symbol)] = (
                 UnderlyingSubscription(
                     instrument_symbol=instrument.symbol,
                     symbol=instrument.fyers_symbol,
                     prev_close_spot=prev_close_spot,
+                    market_open_spot=market_open_data.get("spot_price"),
+                    market_open_captured_at=market_open_data.get("captured_at"),
+                    weekly_close_spot=weekly_close_data.get("close_spot"),
+                    weekly_close_expiry_date=weekly_close_data.get("expiry_date"),
+                    weekly_close_captured_at=weekly_close_data.get("captured_at"),
                 )
             )
             all_symbols.append(instrument.fyers_symbol)
@@ -413,6 +426,11 @@ class LiveMarketStreamingService:
                     symbol=underlying_subscription.symbol,
                     spot_price=ltp,
                     prev_close_spot=underlying_subscription.prev_close_spot,
+                    market_open_spot=underlying_subscription.market_open_spot,
+                    market_open_captured_at=underlying_subscription.market_open_captured_at,
+                    weekly_close_spot=underlying_subscription.weekly_close_spot,
+                    weekly_close_expiry_date=underlying_subscription.weekly_close_expiry_date,
+                    weekly_close_captured_at=underlying_subscription.weekly_close_captured_at,
                     stale_after_seconds=LIVE_DATA_SUBSCRIPTION_STALE_AFTER_SECONDS,
                 )
                 self._last_tick_at = payload["last_update"]
@@ -516,6 +534,73 @@ class LiveMarketStreamingService:
         if spot_price is None:
             return None
         return float(spot_price)
+
+    async def _get_market_open_data(self, instrument_symbol: str) -> dict:
+        """
+        Get the market open spot price (first snapshot between 9:00-9:15 AM).
+        Returns dict with spot_price and captured_at.
+        """
+        from datetime import time as time_type
+
+        from libs.utils.config.src.fyers import (
+            MARKET_OPEN_HOUR,
+            MARKET_OPEN_MINUTE,
+        )
+
+        trade_date = datetime.now(IST).date().isoformat()
+        timeline = await RedisOptionChainSnapshotStore.get_timeline(
+            instrument_symbol=instrument_symbol,
+            trade_date=trade_date,
+            limit=100,
+        )
+        if not timeline:
+            return {}
+
+        market_open_time = time_type(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE)
+        market_open_end_time = time_type(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE + 15)
+
+        for snapshot in reversed(timeline):  # Timeline is in reverse order
+            latest = snapshot.get("latest") or snapshot
+            captured_at_str = latest.get("captured_at")
+            if not captured_at_str:
+                continue
+
+            try:
+                captured_at = datetime.fromisoformat(captured_at_str)
+                captured_time = captured_at.astimezone(IST).time()
+
+                if market_open_time <= captured_time <= market_open_end_time:
+                    return {
+                        "spot_price": latest.get("spot_price"),
+                        "captured_at": captured_at_str,
+                    }
+            except (ValueError, TypeError):
+                continue
+
+        # Fallback: return earliest snapshot
+        if timeline:
+            earliest = timeline[-1]
+            latest = earliest.get("latest") or earliest
+            return {
+                "spot_price": latest.get("spot_price"),
+                "captured_at": latest.get("captured_at"),
+            }
+
+        return {}
+
+    async def _get_weekly_close_data(self, instrument_symbol: str) -> dict:
+        """
+        Get the previous weekly expiry close spot price from Redis.
+        Returns dict with close_spot, expiry_date, and captured_at.
+        """
+        weekly_close = await RedisWeeklyCloseStore.get_weekly_close(instrument_symbol)
+        if not weekly_close:
+            return {}
+        return {
+            "close_spot": weekly_close.get("close_spot"),
+            "expiry_date": weekly_close.get("expiry_date"),
+            "captured_at": weekly_close.get("captured_at"),
+        }
 
     async def _get_snapshot_subscription_rows(
         self,
@@ -702,6 +787,11 @@ def _build_underlying_payload(
     symbol: str,
     spot_price,
     prev_close_spot: float | None,
+    market_open_spot: float | None = None,
+    market_open_captured_at: str | None = None,
+    weekly_close_spot: float | None = None,
+    weekly_close_expiry_date: str | None = None,
+    weekly_close_captured_at: str | None = None,
     stale_after_seconds: int,
 ) -> dict:
     normalized_spot_price = _as_float(spot_price)
@@ -715,6 +805,28 @@ def _build_underlying_payload(
                 change_from_prev_close / prev_close_spot
             ) * 100
 
+    # Calculate today's movement from open
+    today_from_open_pct = None
+    if (
+        normalized_spot_price is not None
+        and market_open_spot is not None
+        and market_open_spot != 0
+    ):
+        today_from_open_pct = (
+            (normalized_spot_price - market_open_spot) / market_open_spot
+        ) * 100
+
+    # Calculate weekly movement from previous close
+    weekly_from_close_pct = None
+    if (
+        normalized_spot_price is not None
+        and weekly_close_spot is not None
+        and weekly_close_spot != 0
+    ):
+        weekly_from_close_pct = (
+            (normalized_spot_price - weekly_close_spot) / weekly_close_spot
+        ) * 100
+
     return {
         "message_type": "underlying_spot_update",
         "instrument_symbol": instrument_symbol,
@@ -726,6 +838,28 @@ def _build_underlying_payload(
         "source_received_at": received_at,
         "last_update": received_at,
         "stale_after_seconds": stale_after_seconds,
+        # Movement data
+        "movements": {
+            "today_from_open": {
+                "open_spot": market_open_spot,
+                "movement_pct": round(today_from_open_pct, 2)
+                if today_from_open_pct is not None
+                else None,
+                "captured_at_open": market_open_captured_at,
+            }
+            if market_open_spot is not None
+            else None,
+            "weekly_from_close": {
+                "prev_week_close": weekly_close_spot,
+                "movement_pct": round(weekly_from_close_pct, 2)
+                if weekly_from_close_pct is not None
+                else None,
+                "expiry_date": weekly_close_expiry_date,
+                "captured_at_close": weekly_close_captured_at,
+            }
+            if weekly_close_spot is not None
+            else None,
+        },
     }
 
 

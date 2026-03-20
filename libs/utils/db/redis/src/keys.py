@@ -83,3 +83,8 @@ def websocket_ticket_key(ticket_id: str) -> str:
 
 def live_app_status_key() -> str:
     return _join("live-app", "status")
+
+
+def weekly_expiry_close_key(instrument_symbol: str) -> str:
+    """Redis key for storing previous weekly expiry close spot price."""
+    return _join("weekly-close", instrument_symbol.upper())
