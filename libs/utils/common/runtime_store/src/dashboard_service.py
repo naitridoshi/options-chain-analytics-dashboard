@@ -1,14 +1,21 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
-from libs.utils.config.src.fyers import SNAPSHOT_INTERVAL_SECONDS
+from libs.utils.config.src.fyers import (
+    MARKET_CLOSE_HOUR,
+    MARKET_CLOSE_MINUTE,
+    MARKET_OPEN_HOUR,
+    MARKET_OPEN_MINUTE,
+    SNAPSHOT_INTERVAL_SECONDS,
+)
 from libs.utils.db.redis.src import (
     RedisLiveMarketStore,
     RedisOptionChainSnapshotStore,
+    RedisWeeklyCloseStore,
 )
 
 log = CustomLogger("RuntimeDashboardService")
@@ -106,6 +113,26 @@ class RuntimeDashboardService:
             latest_snapshot.get("strikes", []),
         )
 
+        # Get current spot for movement calculations
+        current_spot = latest_payload.get("spot_price")
+        if current_spot is not None:
+            current_spot = float(current_spot)
+
+        # Capture weekly close if it's Tuesday after market close
+        if current_spot is not None:
+            await cls._capture_weekly_close_if_needed(
+                instrument_symbol=instrument.symbol,
+                trade_date=trade_date,
+                current_spot=current_spot,
+            )
+
+        # Calculate movements
+        movements = await cls._calculate_movements(
+            instrument_symbol=instrument.symbol,
+            trade_date=trade_date,
+            current_spot=current_spot,
+        )
+
         # Log snapshot details for debugging comparison with live subscription
         strike_prices = sorted(
             [
@@ -134,6 +161,7 @@ class RuntimeDashboardService:
             "timeline": [item.get("latest", item) for item in timeline_snapshots],
             "latest": latest_payload,
             "strikes": strikes,
+            "movements": movements,
             "source": "redis",
         }
 
@@ -244,3 +272,187 @@ class RuntimeDashboardService:
             row["put_live_avg_price"] = put_live.get("avg_price") if put_live else None
             merged_rows.append(row)
         return merged_rows
+
+    @classmethod
+    async def _get_market_open_snapshot(
+        cls,
+        instrument_symbol: str,
+        trade_date: str,
+    ) -> dict | None:
+        """
+        Get the first snapshot captured between market open time and 15 mins after.
+        This is used as the reference for 'Today's Movement from Open'.
+        """
+        timeline = await RedisOptionChainSnapshotStore.get_timeline(
+            instrument_symbol=instrument_symbol,
+            trade_date=trade_date,
+            limit=100,  # Get enough snapshots to find the open
+        )
+        if not timeline:
+            return None
+
+        market_open_time = time(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE)
+        market_open_end_time = time(MARKET_OPEN_HOUR, MARKET_OPEN_MINUTE + 15)
+
+        for snapshot in reversed(
+            timeline
+        ):  # Timeline is in reverse order (latest first)
+            latest = snapshot.get("latest") or snapshot
+            captured_at_str = latest.get("captured_at")
+            if not captured_at_str:
+                continue
+
+            try:
+                captured_at = datetime.fromisoformat(captured_at_str)
+                captured_time = captured_at.astimezone(IST).time()
+
+                # Check if captured between market open and 15 mins after
+                if market_open_time <= captured_time <= market_open_end_time:
+                    return {
+                        "spot_price": latest.get("spot_price"),
+                        "captured_at": captured_at_str,
+                    }
+            except (ValueError, TypeError):
+                continue
+
+        # Fallback: return the earliest snapshot of the day
+        if timeline:
+            earliest = timeline[-1]  # Last item is the earliest
+            latest = earliest.get("latest") or earliest
+            return {
+                "spot_price": latest.get("spot_price"),
+                "captured_at": latest.get("captured_at"),
+            }
+
+        return None
+
+    @classmethod
+    async def _capture_weekly_close_if_needed(
+        cls,
+        instrument_symbol: str,
+        trade_date: str,
+        current_spot: float,
+    ) -> None:
+        """
+        On Tuesdays near market close, capture the weekly expiry close spot price.
+        This is stored for calculating 'Weekly Movement from Previous Week Close'.
+        """
+        try:
+            trade_date_obj = datetime.strptime(trade_date, "%Y-%m-%d").date()
+        except ValueError:
+            return
+
+        # Check if today is Tuesday (weekday 1)
+        if trade_date_obj.weekday() != 1:
+            return
+
+        now = datetime.now(IST)
+        current_time = now.time()
+        market_close_time = time(MARKET_CLOSE_HOUR, MARKET_CLOSE_MINUTE)
+
+        # Only capture after market close time
+        if current_time < market_close_time:
+            return
+
+        # Check if we already have a weekly close for this week
+        existing = await RedisWeeklyCloseStore.get_weekly_close(instrument_symbol)
+        if existing:
+            try:
+                existing_date = datetime.strptime(
+                    existing.get("expiry_date", ""), "%Y-%m-%d"
+                ).date()
+                if existing_date >= trade_date_obj:
+                    return  # Already captured this week or later
+            except (ValueError, TypeError):
+                pass
+
+        # Get the last snapshot at or after market close
+        timeline = await RedisOptionChainSnapshotStore.get_timeline(
+            instrument_symbol=instrument_symbol,
+            trade_date=trade_date,
+            limit=50,
+        )
+
+        close_snapshot = None
+        for snapshot in timeline:
+            latest = snapshot.get("latest") or snapshot
+            captured_at_str = latest.get("captured_at")
+            if not captured_at_str:
+                continue
+
+            try:
+                captured_at = datetime.fromisoformat(captured_at_str)
+                captured_time = captured_at.astimezone(IST).time()
+
+                # Get snapshot at market close or the last one of the day
+                if captured_time >= market_close_time:
+                    close_snapshot = latest
+                    break
+            except (ValueError, TypeError):
+                continue
+
+        # Fallback to the latest snapshot if no close-time snapshot found
+        if not close_snapshot and timeline:
+            close_snapshot = timeline[0].get("latest") or timeline[0]
+
+        if close_snapshot:
+            await RedisWeeklyCloseStore.save_weekly_close(
+                instrument_symbol=instrument_symbol,
+                expiry_date=trade_date,
+                close_spot=float(close_snapshot.get("spot_price", current_spot)),
+                captured_at=close_snapshot.get("captured_at", now.isoformat()),
+            )
+            logger.info(
+                f"Weekly close captured - instrument: {instrument_symbol} - "
+                f"expiry_date: {trade_date} - close_spot: {close_snapshot.get('spot_price')}"
+            )
+
+    @classmethod
+    async def _calculate_movements(
+        cls,
+        instrument_symbol: str,
+        trade_date: str,
+        current_spot: float | None,
+    ) -> dict:
+        """
+        Calculate today's movement from open and weekly movement from previous close.
+        Returns a dict with movement data for the dashboard.
+        """
+        movements = {
+            "today_from_open": None,
+            "weekly_from_close": None,
+        }
+
+        if current_spot is None:
+            return movements
+
+        # Calculate today's movement from open
+        open_snapshot = await cls._get_market_open_snapshot(
+            instrument_symbol, trade_date
+        )
+        if open_snapshot and open_snapshot.get("spot_price") is not None:
+            open_spot = float(open_snapshot["spot_price"])
+            if open_spot != 0:
+                movement_pct = ((current_spot - open_spot) / open_spot) * 100
+                movements["today_from_open"] = {
+                    "open_spot": open_spot,
+                    "current_spot": current_spot,
+                    "movement_pct": round(movement_pct, 2),
+                    "captured_at_open": open_snapshot.get("captured_at"),
+                }
+
+        # Calculate weekly movement from previous week close
+        weekly_close = await RedisWeeklyCloseStore.get_weekly_close(instrument_symbol)
+        if weekly_close and weekly_close.get("close_spot") is not None:
+            prev_close = float(weekly_close["close_spot"])
+            if prev_close != 0:
+                movement_pct = ((current_spot - prev_close) / prev_close) * 100
+                movements["weekly_from_close"] = {
+                    "prev_week_close": prev_close,
+                    "current_spot": current_spot,
+                    "movement_pct": round(movement_pct, 2),
+                    "expiry_date": weekly_close.get("expiry_date"),
+                    "captured_at_close": weekly_close.get("captured_at"),
+                }
+
+        return movements

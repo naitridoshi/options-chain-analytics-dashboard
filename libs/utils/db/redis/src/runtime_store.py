@@ -14,6 +14,7 @@ from libs.utils.config.src.redis import (
     REDIS_PREVIOUS_DAY_SNAPSHOT_TTL_SECONDS,
     REDIS_TOKEN_TTL_SECONDS,
     REDIS_WEBSOCKET_TICKET_TTL_SECONDS,
+    REDIS_WEEKLY_CLOSE_TTL_SECONDS,
 )
 from libs.utils.db.redis.src.client import redis_client_manager
 from libs.utils.db.redis.src.keys import (
@@ -33,6 +34,7 @@ from libs.utils.db.redis.src.keys import (
     script_intraday_timeline_key,
     script_intraday_trade_dates_key,
     websocket_ticket_key,
+    weekly_expiry_close_key,
 )
 
 log = CustomLogger("RedisRuntimeStore")
@@ -509,6 +511,39 @@ class RedisLiveAppStatusStore:
     async def get_status() -> dict[str, Any] | None:
         client = await redis_client_manager.get_client()
         payload = await client.get(live_app_status_key())
+        return json.loads(payload) if payload else None
+
+
+class RedisWeeklyCloseStore:
+    """Store for weekly expiry close spot prices used in movement calculations."""
+
+    @staticmethod
+    async def save_weekly_close(
+        *,
+        instrument_symbol: str,
+        expiry_date: str,
+        close_spot: float,
+        captured_at: str,
+    ) -> None:
+        """Save weekly expiry close spot price to Redis."""
+        client = await redis_client_manager.get_client()
+        payload = {
+            "expiry_date": expiry_date,
+            "close_spot": close_spot,
+            "captured_at": captured_at,
+            "day_of_week": "Tuesday",
+        }
+        await client.set(
+            weekly_expiry_close_key(instrument_symbol),
+            json.dumps(payload, separators=(",", ":")),
+            ex=REDIS_WEEKLY_CLOSE_TTL_SECONDS,
+        )
+
+    @staticmethod
+    async def get_weekly_close(instrument_symbol: str) -> dict[str, Any] | None:
+        """Get weekly expiry close spot price from Redis."""
+        client = await redis_client_manager.get_client()
+        payload = await client.get(weekly_expiry_close_key(instrument_symbol))
         return json.loads(payload) if payload else None
 
 
