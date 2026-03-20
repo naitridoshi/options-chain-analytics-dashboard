@@ -433,6 +433,20 @@ def _compute_custom_pcrs(
     strike_rows: list[OptionChainStrikeSummary],
     spot_price: Decimal | None,
 ) -> dict:
+    """
+    Compute custom PCR metrics based on spot price and strike positions.
+
+    PCR Formulas (consistent with snapshot_service.py):
+    - COI PCR Window: Sum of PUT OI changes in 6-strike window / Sum of CALL OI changes in 6-strike window
+    - ATM PCR: PUT COI at (ATM + 1 strike BELOW) / CALL COI at (ATM + 1 strike ABOVE)
+      Example: If ATM = 24600, then PUT at 24550 / CALL at 24650
+    - Strength PCR: PUT COI of (ATM + 4 strikes BELOW) / CALL COI of (ATM + 4 strikes ABOVE)
+      Example: If ATM = 24600,
+        CALL: 24600, 24650, 24700, 24750, 24800 (indices N to N+4)
+        PUT: 24600, 24550, 24500, 24450, 24400 (indices N-4 to N)
+
+    Note: Strikes must be sorted by strike_price ascending (lower strikes = lower indices).
+    """
     if not strike_rows or spot_price is None:
         return {
             "coi_pcr_window": None,
@@ -445,17 +459,21 @@ def _compute_custom_pcrs(
         key=lambda idx: abs(float(strike_rows[idx].strike_price) - float(spot_price)),
     )
     return {
+        # COI PCR Window: 6 strikes on each side of ATM
         "coi_pcr_window": _pcr(
             _sum_range(strike_rows, atm_index - 6, atm_index + 6, "put_oi_change"),
             _sum_range(strike_rows, atm_index - 6, atm_index + 6, "call_oi_change"),
         ),
+        # ATM PCR: CALL at strike ABOVE ATM, PUT at strike BELOW ATM
+        # Higher index = higher strike (sorted ascending)
         "atm_pcr": _pcr(
-            _sum_range(strike_rows, atm_index, atm_index + 1, "put_oi_change"),
-            _sum_range(strike_rows, atm_index - 1, atm_index, "call_oi_change"),
+            _sum_range(strike_rows, atm_index - 1, atm_index - 1, "put_oi_change"),
+            _sum_range(strike_rows, atm_index + 1, atm_index + 1, "call_oi_change"),
         ),
+        # Strength PCR: CALL at ATM and 4 strikes ABOVE, PUT at ATM and 4 strikes BELOW
         "strength_pcr": _pcr(
-            _sum_range(strike_rows, atm_index, atm_index + 4, "put_oi_change"),
-            _sum_range(strike_rows, atm_index - 4, atm_index, "call_oi_change"),
+            _sum_range(strike_rows, atm_index - 4, atm_index, "put_oi_change"),
+            _sum_range(strike_rows, atm_index, atm_index + 4, "call_oi_change"),
         ),
     }
 
