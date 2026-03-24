@@ -4,6 +4,10 @@ from libs.utils.db.redis.src.client import (
 )
 from libs.utils.db.redis.src.keys import (
     fyers_token_key,
+    index_intraday_latest_snapshot_pointer_key,
+    index_intraday_snapshot_key,
+    index_intraday_timeline_key,
+    index_intraday_trade_dates_key,
     intraday_latest_snapshot_pointer_key,
     intraday_snapshot_key,
     intraday_timeline_key,
@@ -26,6 +30,7 @@ from libs.utils.db.redis.src.lock import (
     RedisLockManager,
 )
 from libs.utils.db.redis.src.runtime_store import (
+    RedisIndexSnapshotStore,
     RedisLiveAppStatusStore,
     RedisLiveMarketStore,
     RedisOptionChainSnapshotStore,
@@ -47,6 +52,7 @@ __all__ = [
     "RedisLiveAppStatusStore",
     "RedisOptionChainSnapshotStore",
     "RedisScriptSnapshotStore",
+    "RedisIndexSnapshotStore",
     "RedisRolloverStore",
     "RuntimeFyersToken",
     "RedisWebSocketTicketStore",
@@ -66,6 +72,10 @@ __all__ = [
     "script_intraday_snapshot_key",
     "script_intraday_timeline_key",
     "script_intraday_trade_dates_key",
+    "index_intraday_latest_snapshot_pointer_key",
+    "index_intraday_snapshot_key",
+    "index_intraday_timeline_key",
+    "index_intraday_trade_dates_key",
     "websocket_ticket_key",
     "weekly_expiry_close_key",
 ]

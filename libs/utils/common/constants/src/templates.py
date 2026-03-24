@@ -15,3 +15,6 @@ DASHBOARD_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "dashboard.html").read_text(
 MARKET_BREADTH_TEMPLATE_HTML = (
     FASTAPI_TEMPLATES_DIR / "market_breadth.html"
 ).read_text(encoding="utf-8")
+HEATMAP_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "heatmap.html").read_text(
+    encoding="utf-8"
+)

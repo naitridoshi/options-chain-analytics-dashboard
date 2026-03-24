@@ -1,0 +1,629 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Market Heatmap - Options Chain Analytics</title>
+  <style>
+    :root {
+      --bg: #0a0f18;
+      --panel: #10192b;
+      --panel-2: #0d1524;
+      --line: #223352;
+      --text: #e6eefc;
+      --muted: #8fa3c7;
+      --accent: #27c4ff;
+      --good: #1ecf7a;
+      --bad: #ff5f6d;
+      --warn: #ffcc66;
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      min-height: 100%;
+      background:
+        radial-gradient(1300px 420px at 50% -8%, #1a2d4f 0%, transparent 65%),
+        linear-gradient(180deg, #090e17 0%, #0a0f18 50%, #08111f 100%);
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
+      background: transparent;
+    }
+
+    .page { max-width: 1400px; margin: 8px auto; padding: 0 8px; }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: linear-gradient(180deg, #142240 0%, #101a2e 100%);
+      border-bottom: 1px solid var(--line);
+      border-radius: 6px 6px 0 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+
+    .header-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #7af0b7;
+    }
+
+    .back-btn {
+      background: linear-gradient(135deg, #1a2d4d 0%, #23406a 100%);
+      border: 1px solid #3b5a8a;
+      color: #d7e7ff;
+      border-radius: 4px;
+      height: 32px;
+      padding: 0 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: linear-gradient(135deg, #23406a 0%, #2d4f80 100%);
+      border-color: #4b6a9a;
+      color: #fff;
+    }
+
+    /* Content Layout */
+    .content-wrapper {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 200px;
+      flex-shrink: 0;
+    }
+
+    .nav-card {
+      background: #0d1524;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .nav-title {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 10px 14px;
+      background: #111d32;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-item {
+      display: block;
+      padding: 10px 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: rgba(39, 196, 255, 0.1);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: rgba(39, 196, 255, 0.15);
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    .nav-count {
+      float: right;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Heatmap Header */
+    .heatmap-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .heatmap-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .legend {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .legend-item {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 3px;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .legend-item.green-5 { background: #166534; color: #fff; }
+    .legend-item.green-3 { background: #22c55e; color: #fff; }
+    .legend-item.green-1 { background: #86efac; color: #000; }
+    .legend-item.neutral { background: #6b7280; color: #fff; }
+    .legend-item.red-1 { background: #fca5a5; color: #000; }
+    .legend-item.red-3 { background: #ef4444; color: #fff; }
+    .legend-item.red-5 { background: #991b1b; color: #fff; }
+
+    .heatmap-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .streaming-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toggle-switch {
+      width: 36px;
+      height: 18px;
+      background: #374151;
+      border-radius: 9px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .toggle-switch.active {
+      background: var(--good);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s ease;
+    }
+
+    .toggle-switch.active::after {
+      transform: translateX(18px);
+    }
+
+    /* Heatmap Grid */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+
+    .heatmap-cell {
+      border-radius: 6px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .heatmap-cell:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .cell-name {
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cell-ltp {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .cell-change {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Color Classes */
+    .heatmap-cell.green-5 { background: linear-gradient(135deg, #166534 0%, #14532d 100%); color: #fff; }
+    .heatmap-cell.green-4 { background: linear-gradient(135deg, #15803d 0%, #166534 100%); color: #fff; }
+    .heatmap-cell.green-3 { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; }
+    .heatmap-cell.green-2 { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); color: #000; }
+    .heatmap-cell.green-1 { background: linear-gradient(135deg, #86efac 0%, #4ade80 100%); color: #000; }
+    .heatmap-cell.neutral { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: #fff; }
+    .heatmap-cell.red-1 { background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%); color: #000; }
+    .heatmap-cell.red-2 { background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); color: #fff; }
+    .heatmap-cell.red-3 { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; }
+    .heatmap-cell.red-4 { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #fff; }
+    .heatmap-cell.red-5 { background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%); color: #fff; }
+
+    /* Empty State */
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #243b5f;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .content-wrapper {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+      }
+      .nav-list {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .nav-item {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+      }
+      .nav-item.active {
+        border-left: none;
+        border-bottom-color: var(--accent);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .heatmap-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .heatmap-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <a href="/dashboard" class="back-btn">
+            <span>&#8592;</span>
+            <span>Back</span>
+          </a>
+          <h1 class="page-title">Market Heatmap</h1>
+          <span class="header-badge">LIVE</span>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content-wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="nav-card">
+            <div class="nav-title">Index Categories</div>
+            <ul class="nav-list" id="categoryNav">
+              <li class="nav-item active" data-category="BROAD_MARKET">
+                Broad Market <span class="nav-count" id="broadCount">19</span>
+              </li>
+              <li class="nav-item" data-category="SECTORAL">
+                Sectoral <span class="nav-count" id="sectoralCount">21</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+          <!-- Heatmap Header -->
+          <div class="heatmap-header">
+            <div>
+              <div class="heatmap-title" id="heatmapTitle">Broad Market Indices (19)</div>
+              <div class="heatmap-meta">
+                <span id="capturedTime">As on -</span>
+                <div class="streaming-toggle">
+                  <span>Streaming</span>
+                  <div class="toggle-switch" id="streamingToggle"></div>
+                </div>
+              </div>
+            </div>
+            <div class="legend">
+              <span class="legend-item green-5">+5%</span>
+              <span class="legend-item green-3">+3%</span>
+              <span class="legend-item green-1">+1%</span>
+              <span class="legend-item neutral">0%</span>
+              <span class="legend-item red-1">-1%</span>
+              <span class="legend-item red-3">-3%</span>
+              <span class="legend-item red-5">-5%</span>
+            </div>
+          </div>
+
+          <!-- Heatmap Grid -->
+          <div class="heatmap-grid" id="heatmapGrid">
+            <div class="loading">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allIndices = [];
+    let currentCategory = "BROAD_MARKET";
+    let isStreaming = false;
+    let refreshInterval = null;
+
+    function getColorClass(changePct) {
+      if (changePct === null || changePct === undefined) return "neutral";
+      const pct = parseFloat(changePct);
+      if (pct >= 5) return "green-5";
+      if (pct >= 3) return "green-4";
+      if (pct >= 2) return "green-3";
+      if (pct >= 1) return "green-2";
+      if (pct > 0) return "green-1";
+      if (pct === 0) return "neutral";
+      if (pct > -1) return "red-1";
+      if (pct > -2) return "red-2";
+      if (pct > -3) return "red-3";
+      if (pct > -5) return "red-4";
+      return "red-5";
+    }
+
+    function fmt(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+      return Number(v).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    }
+
+    function fmtChange(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+      const num = parseFloat(v);
+      const sign = num >= 0 ? "+" : "";
+      return `${sign}${num.toFixed(2)}%`;
+    }
+
+    function escHtml(v) {
+      return String(v)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function toIST(iso) {
+      if (!iso) return "-";
+      const d = new Date(iso);
+      return d.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Kolkata"
+      }) + " IST";
+    }
+
+    function renderHeatmap(indices) {
+      const grid = document.getElementById("heatmapGrid");
+
+      if (!indices || indices.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">&#128200;</div>
+            <div class="empty-state-text">No index data available</div>
+          </div>
+        `;
+        return;
+      }
+
+      // Sort by change_pct descending
+      const sorted = [...indices].sort((a, b) => {
+        const aPct = a.change_pct || 0;
+        const bPct = b.change_pct || 0;
+        return bPct - aPct;
+      });
+
+      grid.innerHTML = sorted.map(item => {
+        const colorClass = getColorClass(item.change_pct);
+        const changeClass = Number(item.change_pct) >= 0 ? "pos" : "neg";
+
+        return `
+          <div class="heatmap-cell ${colorClass}" title="${escHtml(item.name || item.symbol)}">
+            <div class="cell-name">${escHtml(item.name || item.symbol)}</div>
+            <div class="cell-ltp">${fmt(item.ltp)}</div>
+            <div class="cell-change">${fmtChange(item.change_pct)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateCounts(data) {
+      const broadCount = allIndices.filter(i => i.category === "BROAD_MARKET").length;
+      const sectoralCount = allIndices.filter(i => i.category === "SECTORAL").length;
+      document.getElementById("broadCount").textContent = broadCount;
+      document.getElementById("sectoralCount").textContent = sectoralCount;
+    }
+
+    function updateTitle(category, count) {
+      const titles = {
+        "BROAD_MARKET": "Broad Market Indices",
+        "SECTORAL": "Sectoral Indices"
+      };
+      document.getElementById("heatmapTitle").textContent = `${titles[category] || category} (${count})`;
+    }
+
+    async function loadData() {
+      try {
+        const response = await fetch(`/api/v1/index-snapshot/heatmap?category=${currentCategory}`, {
+          credentials: "include"
+        });
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const data = result.data;
+          allIndices = Array.isArray(data.indices) ? data.indices : [];
+
+          // Update counts on first load
+          if (currentCategory === "BROAD_MARKET") {
+            updateCounts(data);
+          }
+
+          renderHeatmap(allIndices);
+          updateTitle(currentCategory, allIndices.length);
+          document.getElementById("capturedTime").textContent = `As on ${toIST(data.captured_at)}`;
+        }
+      } catch (error) {
+        console.error("Failed to load heatmap data:", error);
+        document.getElementById("heatmapGrid").innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">&#9888;</div>
+            <div class="empty-state-text">Failed to load data. Please try again.</div>
+          </div>
+        `;
+      }
+    }
+
+    function startStreaming() {
+      if (refreshInterval) return;
+      refreshInterval = setInterval(loadData, 10000); // Refresh every 10 seconds
+    }
+
+    function stopStreaming() {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+      }
+    }
+
+    // Event Listeners
+    document.querySelectorAll(".nav-item").forEach(item => {
+      item.addEventListener("click", () => {
+        document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
+        currentCategory = item.dataset.category;
+        loadData();
+      });
+    });
+
+    document.getElementById("streamingToggle").addEventListener("click", function() {
+      isStreaming = !isStreaming;
+      this.classList.toggle("active", isStreaming);
+      if (isStreaming) {
+        startStreaming();
+      } else {
+        stopStreaming();
+      }
+    });
+
+    // Initial load
+    loadData();
+  </script>
+</body>
+</html>

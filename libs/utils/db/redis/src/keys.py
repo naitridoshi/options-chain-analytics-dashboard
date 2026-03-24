@@ -88,3 +88,19 @@ def live_app_status_key() -> str:
 def weekly_expiry_close_key(instrument_symbol: str) -> str:
     """Redis key for storing previous weekly expiry close spot price."""
     return _join("weekly-close", instrument_symbol.upper())
+
+
+def index_intraday_snapshot_key(trade_date: str, interval_ts: str) -> str:
+    return _join("indices", "snapshots", trade_date, interval_ts)
+
+
+def index_intraday_timeline_key(trade_date: str) -> str:
+    return _join("indices", "timelines", trade_date)
+
+
+def index_intraday_trade_dates_key() -> str:
+    return _join("indices", "timeline-dates")
+
+
+def index_intraday_latest_snapshot_pointer_key(trade_date: str) -> str:
+    return _join("indices", "latest", trade_date)

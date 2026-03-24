@@ -6,6 +6,9 @@ from fastapi import FastAPI
 from apps.fastapi.auth.src import middlewares
 from apps.fastapi.platform.modules.core.src import core_route
 from apps.fastapi.platform.modules.dashboard.src import dashboard_route
+from apps.fastapi.platform.modules.index_snapshot.src import (
+    index_snapshot_route,
+)
 from apps.fastapi.platform.modules.market_data.src import (
     market_data_route,
     market_data_ws_route,
@@ -48,6 +51,7 @@ app.include_router(snapshot_route)
 app.include_router(market_data_route)
 app.include_router(market_data_ws_route)
 app.include_router(script_snapshot_route)
+app.include_router(index_snapshot_route)
 app.include_router(dashboard_route)
 
 
