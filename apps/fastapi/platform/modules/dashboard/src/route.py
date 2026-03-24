@@ -14,6 +14,7 @@ from apps.fastapi.platform.modules.dashboard.src.service import (
 )
 from libs.utils.common.constants.src.templates import (
     DASHBOARD_TEMPLATE_HTML,
+    HEATMAP_TEMPLATE_HTML,
     LOGIN_TEMPLATE_HTML,
     MARKET_BREADTH_TEMPLATE_HTML,
 )
@@ -60,3 +61,10 @@ async def market_breadth_page(request: Request):
     if not get_current_user(request):
         return RedirectResponse(url="/login", status_code=303)
     return HTMLResponse(MARKET_BREADTH_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/heatmap", response_class=HTMLResponse)
+async def heatmap_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(HEATMAP_TEMPLATE_HTML)

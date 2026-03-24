@@ -4,6 +4,9 @@ from libs.utils.common.runtime_store.src.dashboard_service import (
 from libs.utils.common.runtime_store.src.health_service import (
     RuntimeStoreHealthService,
 )
+from libs.utils.common.runtime_store.src.index_breadth_service import (
+    RuntimeIndexSnapshotService,
+)
 from libs.utils.common.runtime_store.src.script_breadth_service import (
     RuntimeScriptSnapshotService,
 )
@@ -22,6 +25,7 @@ __all__ = [
     "RuntimeDashboardService",
     "RuntimeStoreHealthService",
     "RuntimeScriptSnapshotService",
+    "RuntimeIndexSnapshotService",
     "RuntimeSnapshotService",
     "RuntimeTokenService",
     "RuntimeWebSocketTicketService",

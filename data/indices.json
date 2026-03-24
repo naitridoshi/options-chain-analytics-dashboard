@@ -1,0 +1,322 @@
+[
+  {
+    "name": "NIFTY 50",
+    "symbol": "NIFTY50",
+    "fyers_symbol": "NSE:NIFTY50-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY NEXT 50",
+    "symbol": "NIFTYNXT50",
+    "fyers_symbol": "NSE:NIFTYNXT50-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MIDCAP 50",
+    "symbol": "NIFTYMIDCAP50",
+    "fyers_symbol": "NSE:NIFTYMIDCAP50-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MIDCAP 100",
+    "symbol": "NIFTYMIDCAP100",
+    "fyers_symbol": "NSE:NIFTYMIDCAP100-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MIDCAP 150",
+    "symbol": "NIFTYMIDCAP150",
+    "fyers_symbol": "NSE:NIFTYMIDCAP150-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY SMALLCAP 50",
+    "symbol": "NIFTYSMALLCAP50",
+    "fyers_symbol": "NSE:NIFTYSMLCAP50-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY SMALLCAP 100",
+    "symbol": "NIFTYSMALLCAP100",
+    "fyers_symbol": "NSE:NIFTYSMLCAP100-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY SMALLCAP 250",
+    "symbol": "NIFTYSMALLCAP250",
+    "fyers_symbol": "NSE:NIFTYSMLCAP250-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MIDSMALLCAP 400",
+    "symbol": "NIFTYMIDSMALL400",
+    "fyers_symbol": "NSE:NIFTYMIDSML400-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY 100",
+    "symbol": "NIFTY100",
+    "fyers_symbol": "NSE:NIFTY100-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY 200",
+    "symbol": "NIFTY200",
+    "fyers_symbol": "NSE:NIFTY200-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY500 MULTICAP 50:25:25",
+    "symbol": "NIFTY500MCAP502525",
+    "fyers_symbol": "NSE:NIFTY500MULTICAP-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY LARGEMIDCAP 250",
+    "symbol": "NIFTYLARGEMIDCAP250",
+    "fyers_symbol": "NSE:NIFTYLARGEMID250-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MIDCAP SELECT",
+    "symbol": "NIFTYMIDCAPSELECT",
+    "fyers_symbol": "NSE:NIFTYMIDCAPSELECT-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": false
+  },
+  {
+    "name": "NIFTY TOTAL MARKET",
+    "symbol": "NIFTYTOTALMKT",
+    "fyers_symbol": "NSE:NIFTYTOTALMKT-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MICROCAP 250",
+    "symbol": "NIFTYMICROCAP250",
+    "fyers_symbol": "NSE:NIFTYMICROCAP250-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY 500",
+    "symbol": "NIFTY500",
+    "fyers_symbol": "NSE:NIFTY500-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY INDIA FPI 150",
+    "symbol": "NIFTYFPI150",
+    "fyers_symbol": "NSE:NIFTYFPI150-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": false
+  },
+  {
+    "name": "NIFTY500 LARGEMIDSMALL EQUAL-CAP WEIGHTED",
+    "symbol": "NIFTY500LMSWEQUAL",
+    "fyers_symbol": "NSE:NIFTY500LMSWEQUAL-INDEX",
+    "category": "BROAD_MARKET",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY AUTO",
+    "symbol": "NIFTYAUTO",
+    "fyers_symbol": "NSE:NIFTYAUTO-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY BANK",
+    "symbol": "NIFTYBANK",
+    "fyers_symbol": "NSE:NIFTYBANK-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY FINANCIAL SERVICES",
+    "symbol": "NIFTYFINSERVICE",
+    "fyers_symbol": "NSE:NIFTYFINSERVICE-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY FINANCIAL SERVICES 25/50",
+    "symbol": "NIFTYFINNXT50",
+    "fyers_symbol": "NSE:NIFTYFINNXT50-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY FMCG",
+    "symbol": "NIFTYFMCG",
+    "fyers_symbol": "NSE:NIFTYFMCG-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY IT",
+    "symbol": "NIFTYIT",
+    "fyers_symbol": "NSE:NIFTYIT-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MEDIA",
+    "symbol": "NIFTYMEDIA",
+    "fyers_symbol": "NSE:NIFTYMEDIA-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY METAL",
+    "symbol": "NIFTYMETAL",
+    "fyers_symbol": "NSE:NIFTYMETAL-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY PHARMA",
+    "symbol": "NIFTYPHARMA",
+    "fyers_symbol": "NSE:NIFTYPHARMA-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY PSU BANK",
+    "symbol": "NIFTYPSUBANK",
+    "fyers_symbol": "NSE:NIFTYPSUBANK-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY PRIVATE BANK",
+    "symbol": "NIFTYPVTBANK",
+    "fyers_symbol": "NSE:NIFTYPVTBANK-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY REALTY",
+    "symbol": "NIFTYREALTY",
+    "fyers_symbol": "NSE:NIFTYREALTY-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY HEALTHCARE INDEX",
+    "symbol": "NIFTYHEALTHCARE",
+    "fyers_symbol": "NSE:NIFTYHEALTHCARE-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY CONSUMER DURABLES",
+    "symbol": "NIFTYCONSUMERDUR",
+    "fyers_symbol": "NSE:NIFTYCONSUMERDUR-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY OIL & GAS",
+    "symbol": "NIFTYOILGAS",
+    "fyers_symbol": "NSE:NIFTYOILGAS-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MIDSMALL HEALTHCARE",
+    "symbol": "NIFTYMIDSMALLHC",
+    "fyers_symbol": "NSE:NIFTYMIDSMALLHC-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY CHEMICALS",
+    "symbol": "NIFTYCHEMICALS",
+    "fyers_symbol": "NSE:NIFTYCHEMICALS-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY500 HEALTHCARE",
+    "symbol": "NIFTY500HEALTHCARE",
+    "fyers_symbol": "NSE:NIFTY500HEALTHCARE-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY FINANCIAL SERVICES EX-BANK",
+    "symbol": "NIFTYFINEXBANK",
+    "fyers_symbol": "NSE:NIFTYFINEXBANK-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MIDSMALL FINANCIAL SERVICES",
+    "symbol": "NIFTYMIDSMALLFIN",
+    "fyers_symbol": "NSE:NIFTYMIDSMALLFIN-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  },
+  {
+    "name": "NIFTY MIDSMALL IT & TELECOM",
+    "symbol": "NIFTYMIDSMALLIT",
+    "fyers_symbol": "NSE:NIFTYMIDSMALLIT-INDEX",
+    "category": "SECTORAL",
+    "exchange": "NSE",
+    "is_active": true
+  }
+]

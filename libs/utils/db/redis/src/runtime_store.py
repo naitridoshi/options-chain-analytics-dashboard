@@ -19,6 +19,10 @@ from libs.utils.config.src.redis import (
 from libs.utils.db.redis.src.client import redis_client_manager
 from libs.utils.db.redis.src.keys import (
     fyers_token_key,
+    index_intraday_latest_snapshot_pointer_key,
+    index_intraday_snapshot_key,
+    index_intraday_timeline_key,
+    index_intraday_trade_dates_key,
     intraday_latest_snapshot_pointer_key,
     intraday_snapshot_key,
     intraday_timeline_key,
@@ -562,3 +566,56 @@ def _symbol_storage_key(symbol: str) -> str:
     but callers should normalize for lookup.
     """
     return str(symbol).strip()
+
+
+class RedisIndexSnapshotStore:
+    @staticmethod
+    async def save_intraday_snapshot(
+        *,
+        trade_date: str,
+        interval_ts: str,
+        payload: dict[str, Any],
+    ) -> None:
+        client = await redis_client_manager.get_client()
+        snapshot_key = index_intraday_snapshot_key(trade_date, interval_ts)
+        timeline_key = index_intraday_timeline_key(trade_date)
+        trade_dates_key = index_intraday_trade_dates_key()
+        latest_key = index_intraday_latest_snapshot_pointer_key(trade_date)
+        encoded = json.dumps(payload, separators=(",", ":"))
+        await client.eval(
+            _SAVE_INTRADAY_SNAPSHOT_LUA,
+            3,
+            snapshot_key,
+            timeline_key,
+            latest_key,
+            encoded,
+            REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS,
+            _to_epoch_score(interval_ts),
+            interval_ts,
+        )
+        await client.sadd(trade_dates_key, trade_date)
+        await client.expire(trade_dates_key, REDIS_INTRADAY_SNAPSHOT_TTL_SECONDS)
+
+    @staticmethod
+    async def get_latest_snapshot(*, trade_date: str) -> dict[str, Any] | None:
+        client = await redis_client_manager.get_client()
+        latest_key = index_intraday_latest_snapshot_pointer_key(trade_date)
+        snapshot_key = await client.get(latest_key)
+        if not snapshot_key:
+            return None
+        payload = await client.get(snapshot_key)
+        return json.loads(payload) if payload else None
+
+    @staticmethod
+    async def get_snapshot(
+        *, trade_date: str, interval_ts: str
+    ) -> dict[str, Any] | None:
+        client = await redis_client_manager.get_client()
+        payload = await client.get(index_intraday_snapshot_key(trade_date, interval_ts))
+        return json.loads(payload) if payload else None
+
+    @staticmethod
+    async def list_trade_dates() -> list[str]:
+        client = await redis_client_manager.get_client()
+        trade_dates = await client.smembers(index_intraday_trade_dates_key())
+        return sorted(trade_dates)

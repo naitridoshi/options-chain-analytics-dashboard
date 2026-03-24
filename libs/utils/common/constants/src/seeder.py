@@ -9,3 +9,7 @@ INSTRUMENTS_FILE_PATH = (
 SCRIPTS_FILE_PATH = (
     Path(__file__).parent.parent.parent.parent.parent.parent / "data" / "scripts.json"
 )
+
+INDICES_FILE_PATH = (
+    Path(__file__).parent.parent.parent.parent.parent.parent / "data" / "indices.json"
+)

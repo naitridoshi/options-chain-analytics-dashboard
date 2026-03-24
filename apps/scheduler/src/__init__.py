@@ -2,6 +2,9 @@ import asyncio
 import signal
 import sys
 
+from apps.scheduler.platform.modules.index_snapshot.src import (
+    index_snapshot_scheduler,
+)
 from apps.scheduler.platform.modules.option_chain_snapshot.src import (
     snapshot_scheduler,
 )
@@ -23,8 +26,10 @@ async def run_scheduler() -> None:
 
     await snapshot_scheduler.start()
     await script_snapshot_scheduler.start()
+    await index_snapshot_scheduler.start()
     try:
         await stop_event.wait()
     finally:
         snapshot_scheduler.stop()
         script_snapshot_scheduler.stop()
+        index_snapshot_scheduler.stop()
