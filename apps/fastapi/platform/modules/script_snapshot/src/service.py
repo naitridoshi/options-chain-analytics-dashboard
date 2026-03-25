@@ -1,4 +1,3 @@
-import asyncio
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -8,6 +7,7 @@ from libs.platform.modules.option_chain_snapshot.src import (
 )
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src import FyersClientService
+from libs.utils.common.retry_mechanism.src import async_retry
 from libs.utils.common.runtime_store.src import RuntimeScriptSnapshotService
 from libs.utils.common.script_catalog.src import ScriptCatalogService
 from libs.utils.config.src.fyers import (
@@ -98,23 +98,20 @@ class ScriptSnapshotService:
 
     @classmethod
     async def fetch_ltp_with_retries(cls, script):
-        max_retries = max(1, SNAPSHOT_MAX_RETRIES)
-        for attempt in range(1, max_retries + 1):
-            try:
-                return await FyersClientService.fetch_quote(symbol=script.fyers_symbol)
-            except Exception as error:
-                if attempt >= max_retries:
-                    logger.error(
-                        "Script quote retries exhausted - "
-                        f"symbol: {script.symbol} - attempts: {attempt} - error: {str(error)}"
-                    )
-                    raise
-                delay = SNAPSHOT_RETRY_BASE_DELAY_SECONDS * attempt
-                logger.warning(
-                    "Script quote attempt failed, retrying - "
-                    f"symbol: {script.symbol} - attempts: {attempt} - error: {str(error)}"
-                )
-                await asyncio.sleep(delay)
+        """
+        Fetch LTP with intelligent retry logic.
+
+        Uses the optimized retry mechanism that:
+        - Skips retry for client errors (400, 401, 403, 404, invalid symbols)
+        - Uses exponential backoff for rate limits (429)
+        - Uses exponential backoff for server errors and network issues
+        """
+        return await async_retry(
+            FyersClientService.fetch_quote,
+            symbol=script.fyers_symbol,
+            max_retries=SNAPSHOT_MAX_RETRIES,
+            base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
+        )
 
     @classmethod
     async def get_advance_decline(cls) -> dict:
