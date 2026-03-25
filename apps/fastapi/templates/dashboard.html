@@ -325,10 +325,10 @@
       gap: 3px;
     }
 
-    /* Strategy & Movement Cards Row */
+    /* Strategy, Movement & Breadth Cards Row */
     .strategy-movement-row {
       display: flex;
-      gap: 10px;
+      gap: 0;
       padding: 8px 14px;
       background: #0b1020;
       border-bottom: 1px solid var(--line);
@@ -336,11 +336,14 @@
 
     .strategy-card {
       flex: 0 0 auto;
-      min-width: 160px;
-      padding: 40px 12px;
+      min-width: 184px;
+      padding: 8px 12px;
       background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
       border: 1px solid var(--line);
       border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .strategy-card .card-title {
@@ -363,12 +366,12 @@
     }
 
     .strategy-item .item-label {
-      font-size: 9px;
+      font-size: 12px;
       color: var(--muted);
     }
 
     .strategy-item .item-value {
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 700;
       padding: 2px 6px;
       border-radius: 3px;
@@ -389,17 +392,25 @@
       color: #9ca3af;
     }
 
+    /* Vertical Separator */
+    .section-separator {
+      width: 1px;
+      background: var(--line);
+      margin: 0 10px;
+      align-self: stretch;
+    }
+
     .movement-card {
-      flex: 1;
-      min-width: 0; /* Prevent flex item from overflowing container */
-      padding: 8px 12px;
+      flex: 0 0 auto;
+      min-width: 375px;
+      padding: 8px 10px;
       background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
       border: 1px solid var(--line);
       border-radius: 6px;
     }
 
     .movement-card .card-title {
-      font-size: 10px;
+      font-size: 9px;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -410,14 +421,14 @@
     }
 
     .movement-card .card-title .info-icon {
-      font-size: 10px;
+      font-size: 9px;
       color: #aecdff;
       cursor: help;
       position: relative;
       border: 1px solid #2a3f64;
       border-radius: 999px;
-      width: 12px;
-      height: 12px;
+      width: 11px;
+      height: 11px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -451,20 +462,19 @@
       visibility: visible;
     }
 
-    /* Movement Table Styles */
+    /* Movement Table Styles - Compact */
     .movement-table {
-      width: 100%;
       border-collapse: collapse;
-      font-size: 10px;
+      font-size: 9px;
       min-width: 0;
     }
 
     .movement-table thead th {
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      padding: 4px 6px;
+      letter-spacing: 0.2px;
+      padding: 3px 8px;
       text-align: center;
       background: rgba(0, 0, 0, 0.3);
       border-bottom: 1px solid var(--line);
@@ -473,11 +483,11 @@
 
     .movement-table thead th.range-header {
       text-align: left;
-      width: 80px;
+      width: 70px;
     }
 
     .movement-table tbody td {
-      padding: 5px 6px;
+      padding: 4px 8px;
       text-align: center;
       border-bottom: 1px solid rgba(42, 63, 100, 0.3);
       transition: background 0.2s ease, color 0.2s ease;
@@ -491,12 +501,14 @@
       text-align: left;
       font-weight: 600;
       color: var(--muted);
+      font-size: 9px;
     }
 
     .movement-table .today-cell,
     .movement-table .weekly-cell {
       font-weight: 700;
       color: var(--text);
+      font-size: 10px;
     }
 
     /* Highlighted row styles */
@@ -524,7 +536,7 @@
 
     /* Info icon in table headers */
     .info-icon-small {
-      font-size: 8px;
+      font-size: 7px;
       color: #aecdff;
       cursor: help;
       position: relative;
@@ -560,6 +572,118 @@
       opacity: 1;
       visibility: visible;
     }
+
+    /* Compact Breadth Bar Graph (for row layout) */
+    .breadth-card {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 12px;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .breadth-card .card-title {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .breadth-card .card-title-link {
+      font-size: 9px;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .breadth-card .card-title-link:hover {
+      text-decoration: underline;
+    }
+
+    .breadth-card .graph-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      height: 120px;
+      padding: 16px 0 6px 0;
+    }
+
+    .breadth-card .graph-yaxis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      padding-right: 16px;
+      min-width: 24px;
+      padding-bottom: 16px;
+    }
+
+    .breadth-card .graph-yaxis span {
+      font-size: 8px;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .breadth-card .graph-bars {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .breadth-card .graph-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      max-width: 80px;
+      position: relative;
+    }
+
+    .breadth-card .graph-bar {
+      width: 48px;
+      border-radius: 4px 4px 0 0;
+      transition: height 0.4s ease;
+    }
+
+    .breadth-card .graph-bar.advance {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    }
+
+    .breadth-card .graph-bar.decline {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .breadth-card .graph-bar .bar-value {
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .breadth-card .graph-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .breadth-card .graph-label.advance { color: #22c55e; }
+    .breadth-card .graph-label.decline { color: #ef4444; }
 
     /* Signal Cards Row */
     .signal-cards-row {
@@ -1656,7 +1780,6 @@
             <span id="fyersStatusBadge" class="fyers-badge warn">FYERS: CHECKING</span>
             <span id="liveStatusBadge" class="live-badge pending">LIVE: CONNECTING</span>
           </div>
-          <span class="pill">LATEST SNAPSHOT</span>
         </div>
         <div class="actions">
           <a class="action-btn" href="/login">FYERS Login</a>
@@ -1699,8 +1822,9 @@
         </div>
       </div>
 
-      <!-- Strategy & Movement Cards Row -->
+      <!-- Strategy, Movement & Breadth Cards Row -->
       <div class="strategy-movement-row">
+        <!-- Trading Strategy Card -->
         <div class="strategy-card">
           <div class="card-title">TRADING STRATEGY</div>
           <div class="strategy-item">
@@ -1712,6 +1836,10 @@
             <span id="strategyTrend" class="item-value bullish">BULLISH</span>
           </div>
         </div>
+
+        <div class="section-separator"></div>
+
+        <!-- Movement Probability Card -->
         <div class="movement-card">
           <div class="card-title">
             MOVEMENT PROBABILITY RANGES
@@ -1725,14 +1853,14 @@
               <tr>
                 <th class="range-header">Range</th>
                 <th class="today-header">
-                  Today's Movement from Open
+                  Today
                   <span class="info-icon-small" tabindex="0">
                     i
                     <span class="tooltip" id="todayMovementTooltip">Reference snapshot: --</span>
                   </span>
                 </th>
                 <th class="weekly-header">
-                  Weekly Movement from Prev Week Close
+                  Weekly
                   <span class="info-icon-small" tabindex="0">
                     i
                     <span class="tooltip" id="weeklyMovementTooltip">Reference snapshot: --</span>
@@ -1769,6 +1897,39 @@
             </tbody>
           </table>
         </div>
+
+        <div class="section-separator"></div>
+
+        <!-- Advance/Decline Breadth Card -->
+        <a href="/market-breadth" class="breadth-card" style="text-decoration: none; color: inherit;">
+          <div class="card-title">
+            <span>&#9632; ADVANCE / DECLINE</span>
+            <span class="card-title-link">View Details &#8594;</span>
+          </div>
+          <div class="graph-container">
+            <div class="graph-yaxis">
+              <span>200</span>
+              <span>150</span>
+              <span>100</span>
+              <span>50</span>
+              <span>0</span>
+            </div>
+            <div class="graph-bars">
+              <div class="graph-bar-wrap">
+                <div id="breadthGraphBarAdvance" class="graph-bar advance" style="height: 0px;">
+                  <span class="bar-value" id="breadthGraphAdvanceValue">0</span>
+                </div>
+                <span class="graph-label advance">ADVANCE</span>
+              </div>
+              <div class="graph-bar-wrap">
+                <div id="breadthGraphBarDecline" class="graph-bar decline" style="height: 0px;">
+                  <span class="bar-value" id="breadthGraphDeclineValue">0</span>
+                </div>
+                <span class="graph-label decline">DECLINE</span>
+              </div>
+            </div>
+          </div>
+        </a>
       </div>
 
       <!-- Signal Cards Row (COI PCR, ATM PCR, STRENGTH PCR) -->
@@ -1787,41 +1948,6 @@
         </div>
       </div>
 
-      <!-- Clickable Advance/Decline Bar Graph -->
-      <a href="/market-breadth" style="text-decoration: none; display: block;">
-        <div class="breadth-bar-graph">
-          <div class="breadth-bar-graph-header">
-            <div class="breadth-bar-graph-title">
-              <span>&#9632;</span>
-              Advance / Decline Scripts
-            </div>
-            <span class="breadth-bar-graph-link">View Details &#8594;</span>
-          </div>
-          <div class="breadth-graph-container">
-            <div class="breadth-graph-yaxis">
-              <span>200</span>
-              <span>150</span>
-              <span>100</span>
-              <span>50</span>
-              <span>0</span>
-            </div>
-            <div class="breadth-graph-bars">
-              <div class="breadth-graph-bar-wrap">
-                <div id="breadthGraphBarAdvance" class="breadth-graph-bar advance" style="height: 0px;">
-                  <span class="bar-value" id="breadthGraphAdvanceValue">0</span>
-                </div>
-                <span class="breadth-graph-label advance">ADVANCE</span>
-              </div>
-              <div class="breadth-graph-bar-wrap">
-                <div id="breadthGraphBarDecline" class="breadth-graph-bar decline" style="height: 0px;">
-                  <span class="bar-value" id="breadthGraphDeclineValue">0</span>
-                </div>
-                <span class="breadth-graph-label decline">DECLINE</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </a>
     </div>
 
     <div class="card board">
@@ -2278,7 +2404,7 @@
       if (!advanceBarEl || !declineBarEl) return;
 
       const maxVal = Math.max(advance, decline, 200);
-      const maxHeight = 100; // Max bar height in pixels
+      const maxHeight = 80; // Max bar height in pixels (reduced for compact layout)
 
       const advanceHeight = (advance / maxVal) * maxHeight;
       const declineHeight = (decline / maxVal) * maxHeight;
