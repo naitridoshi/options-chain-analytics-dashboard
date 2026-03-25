@@ -233,7 +233,178 @@
       white-space: nowrap;
     }
 
-    /* Spot KPI Boxes (inline in row) */
+    /* KPI Container - Two Rows Layout */
+    .kpi-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex-shrink: 0;
+      min-width: 300px;
+    }
+
+    .kpi-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .kpi-row-separator {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #3b5998 20%, #3b5998 80%, transparent);
+      margin: 12px 0;
+      opacity: 0.5;
+    }
+
+    .kpi-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 16px;
+      min-width: 90px;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      border-radius: 6px;
+      border: 1px solid #3b82f6;
+      flex: 1;
+    }
+
+    .kpi-box .label {
+      font-size: 8px;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+
+    .kpi-box .val {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .kpi-box .val.pos { color: #86efac; }
+    .kpi-box .val.neg { color: #fca5a5; }
+    .kpi-box .val.pcr-positive { color: #fffff; font-weight: 900; }
+    .kpi-box .val.pcr-negative { color: #fffff; font-weight: 900; }
+
+    /* PCR Box Color Coding */
+    .kpi-box.pcr-positive-box {
+      background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+      border-color: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+    }
+    .kpi-box.pcr-negative-box {
+      background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+      border-color: #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .kpi-box .label-with-tip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .kpi-box .tip-icon {
+      font-size: 7px;
+      color: #aecdff;
+      cursor: help;
+      position: relative;
+      border: 1px solid #2a3f64;
+      border-radius: 999px;
+      width: 10px;
+      height: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .kpi-box .tip-icon .tip-text {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 4px);
+      transform: translateX(-50%);
+      background: #0f1b30;
+      border: 1px solid #2a3f64;
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 9px;
+      font-weight: 400;
+      color: #d6e3ff;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, visibility 0.15s ease;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .kpi-box .tip-icon:hover .tip-text,
+    .kpi-box .tip-icon:focus .tip-text {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Highlighted Strategy Card */
+    .strategy-card-highlighted {
+      min-width: 180px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .strategy-card-highlighted .card-title {
+      font-size: 9px;
+      color: #fbbf24;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .strategy-card-highlighted .strategy-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
+    .strategy-card-highlighted .strategy-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .strategy-card-highlighted .item-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .strategy-card-highlighted .item-value {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .strategy-card-highlighted .item-value.bullish {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .strategy-card-highlighted .item-value.bearish {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .strategy-card-highlighted .item-value.neutral {
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+    }
+
+    /* Spot KPI Boxes (inline in row) - Legacy */
     .spot-kpi-group {
       display: flex;
       gap: 8px;
@@ -268,6 +439,23 @@
     }
     .spot-kpi-box .val.pos { color: #86efac; }
     .spot-kpi-box .val.neg { color: #fca5a5; }
+    .spot-kpi-box .val.pcr-positive { color: #22c55e; font-weight: 900; }
+    .spot-kpi-box .val.pcr-negative { color: #ef4444; font-weight: 900; }
+
+    /* PCR Box Color Coding */
+    .spot-kpi-box.pcr-positive-box {
+      background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+      border-color: #22c55e;
+    }
+    .spot-kpi-box.pcr-negative-box {
+      background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+      border-color: #ef4444;
+    }
+
+    /* PCR Group Styling */
+    .pcr-group .spot-kpi-box {
+      min-width: 90px;
+    }
 
     .spot-kpi-box .label-with-info {
       display: inline-flex;
@@ -493,7 +681,7 @@
       text-align: left;
       font-weight: 600;
       color: var(--muted);
-      font-size: 9px;
+      font-size: 12px;
     }
 
     .movement-table .today-cell,
@@ -1788,38 +1976,52 @@
 
       <!-- Strategy, Movement & Breadth Cards Row -->
       <div class="strategy-movement-row">
-        <!-- Spot KPI Boxes -->
-        <div class="spot-kpi-group">
-          <div class="spot-kpi-box">
-            <span class="label">SPOT</span>
-            <span id="liveSpotValue" class="val">-</span>
-          </div>
-          <div class="spot-kpi-box">
-            <span class="label-with-info">
-              <span class="label">CHANGE</span>
-              <span class="kpi-info-icon" tabindex="0">
-                i
-                <span class="tooltip" id="changeTooltip">Reference snapshot: --</span>
+        <!-- KPI Container - Two Rows -->
+        <div class="kpi-container">
+          <!-- Row 1: Spot KPI Boxes -->
+          <div class="kpi-row">
+            <div class="kpi-box">
+              <span class="label">SPOT</span>
+              <span id="liveSpotValue" class="val">-</span>
+            </div>
+            <div class="kpi-box">
+              <span class="label-with-tip">
+                <span class="label">CHANGE</span>
+                <span class="tip-icon" tabindex="0">i<span class="tip-text" id="changeTooltip">Reference snapshot: --</span></span>
               </span>
-            </span>
-            <span id="liveChangeValue" class="val">-</span>
-          </div>
-          <div class="spot-kpi-box">
-            <span class="label-with-info">
-              <span class="label">% CHANGE</span>
-              <span class="kpi-info-icon" tabindex="0">
-                i
-                <span class="tooltip" id="changePctTooltip">Reference snapshot: --</span>
+              <span id="liveChangeValue" class="val">-</span>
+            </div>
+            <div class="kpi-box">
+              <span class="label-with-tip">
+                <span class="label">% CHANGE</span>
+                <span class="tip-icon" tabindex="0">i<span class="tip-text" id="changePctTooltip">Reference snapshot: --</span></span>
               </span>
-            </span>
-            <span id="liveChangePctValue" class="val">-</span>
+              <span id="liveChangePctValue" class="val">-</span>
+            </div>
+          </div>
+          <!-- Subtle Separator Line -->
+          <div class="kpi-row-separator"></div>
+          <!-- Row 2: PCR KPI Boxes -->
+          <div class="kpi-row">
+            <div class="kpi-box" id="coiPcrBox">
+              <span class="label">COI PCR</span>
+              <span id="liveCoiPcrValue" class="val">-</span>
+            </div>
+            <div class="kpi-box" id="atmPcrBox">
+              <span class="label">ATM PCR</span>
+              <span id="liveAtmPcrValue" class="val">-</span>
+            </div>
+            <div class="kpi-box" id="strengthPcrBox">
+              <span class="label">STRENGTH PCR</span>
+              <span id="liveStrengthPcrValue" class="val">-</span>
+            </div>
           </div>
         </div>
 
         <div class="section-separator"></div>
 
-        <!-- Trading Strategy Card -->
-        <div class="strategy-card">
+        <!-- Trading Strategy Card - Highlighted -->
+        <div class="strategy-card-highlighted">
           <div class="card-title">TRADING STRATEGY</div>
           <div class="strategy-item">
             <span class="item-label">Signal</span>
@@ -1924,22 +2126,6 @@
             </div>
           </div>
         </a>
-      </div>
-
-      <!-- Signal Cards Row (COI PCR, ATM PCR, STRENGTH PCR) -->
-      <div class="signal-cards-row" id="signalCardsRow">
-        <div class="signal-card-box signal-positive">
-          <div class="title">COI PCR</div>
-          <div class="value" id="signalCoi">-</div>
-        </div>
-        <div class="signal-card-box signal-neutral">
-          <div class="title">ATM PCR</div>
-          <div class="value" id="signalAtmPcr">-</div>
-        </div>
-        <div class="signal-card-box signal-positive">
-          <div class="title">STRENGTH PCR</div>
-          <div class="value" id="signalStrengthPcr">-</div>
-        </div>
       </div>
 
     </div>
@@ -2065,35 +2251,52 @@
     }
 
     function updateSignalCards(latest, coiPcr, atmPcr, strengthPcr) {
-      // Update COI signal card
-      const coiEl = document.getElementById("signalCoi");
-      const coiBoxEl = coiEl?.closest(".signal-card-box");
+      // Update COI PCR box
+      const coiEl = document.getElementById("liveCoiPcrValue");
+      const coiBoxEl = document.getElementById("coiPcrBox");
       if (coiEl && latest) {
         coiEl.textContent = fmtPcr(latest.coi_pcr_window);
+        coiEl.className = "val " + getPcrValueClass(coiPcr);
         if (coiBoxEl) {
-          coiBoxEl.className = "signal-card-box " + getSignalClass(coiPcr);
+          coiBoxEl.className = "kpi-box " + getPcrBoxClass(coiPcr);
         }
       }
 
-      // Update ATM PCR signal card
-      const atmPcrEl = document.getElementById("signalAtmPcr");
-      const atmPcrBoxEl = atmPcrEl?.closest(".signal-card-box");
+      // Update ATM PCR box
+      const atmPcrEl = document.getElementById("liveAtmPcrValue");
+      const atmPcrBoxEl = document.getElementById("atmPcrBox");
       if (atmPcrEl && latest) {
         atmPcrEl.textContent = fmtPcr(latest.atm_pcr);
+        atmPcrEl.className = "val " + getPcrValueClass(atmPcr);
         if (atmPcrBoxEl) {
-          atmPcrBoxEl.className = "signal-card-box " + getSignalClass(atmPcr);
+          atmPcrBoxEl.className = "kpi-box " + getPcrBoxClass(atmPcr);
         }
       }
 
-      // Update Strength PCR signal card
-      const strengthPcrEl = document.getElementById("signalStrengthPcr");
-      const strengthPcrBoxEl = strengthPcrEl?.closest(".signal-card-box");
+      // Update Strength PCR box
+      const strengthPcrEl = document.getElementById("liveStrengthPcrValue");
+      const strengthPcrBoxEl = document.getElementById("strengthPcrBox");
       if (strengthPcrEl && latest) {
         strengthPcrEl.textContent = fmtPcr(latest.strength_pcr);
+        strengthPcrEl.className = "val " + getPcrValueClass(strengthPcr);
         if (strengthPcrBoxEl) {
-          strengthPcrBoxEl.className = "signal-card-box " + getSignalClass(strengthPcr);
+          strengthPcrBoxEl.className = "kpi-box " + getPcrBoxClass(strengthPcr);
         }
       }
+    }
+
+    function getPcrValueClass(pcrValue) {
+      if (pcrValue === null || pcrValue === undefined) return "";
+      if (pcrValue > 1.25) return "pcr-positive";
+      if (pcrValue < 0.75) return "pcr-negative";
+      return "";
+    }
+
+    function getPcrBoxClass(pcrValue) {
+      if (pcrValue === null || pcrValue === undefined) return "";
+      if (pcrValue > 1.25) return "pcr-positive-box";
+      if (pcrValue < 0.75) return "pcr-negative-box";
+      return "";
     }
 
     function getSignalClass(pcrValue) {
