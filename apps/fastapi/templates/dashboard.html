@@ -6,43 +6,43 @@
   <title>Options Chain Trading Board</title>
   <style>
     :root {
-      --bg: #0a0f18;
-      --panel: #10192b;
-      --panel-2: #0d1524;
-      --line: #223352;
-      --text: #e6eefc;
-      --muted: #8fa3c7;
-      --accent: #27c4ff;
-      --good: #1ecf7a;
-      --bad: #ff5f6d;
-      --warn: #ffcc66;
-      --gold: #f2c14e;
-      --call-head: #12a150;
-      --put-head: #d46d73;
+      --bg: #000000;
+      --panel: #000000;
+      --panel-2: #000000;
+      --line: #1e3a5f;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --warn: #fbbf24;
+      --gold: #fbbf24;
+      --call-head: #166534;
+      --put-head: #991b1b;
+      --oi-bar: #3b82f6;
+      --coi-highlight: #facc15;
     }
 
     * { box-sizing: border-box; }
     html {
       min-height: 100%;
-      background:
-        radial-gradient(1300px 420px at 50% -8%, #1a2d4f 0%, transparent 65%),
-        linear-gradient(180deg, #090e17 0%, #0a0f18 50%, #08111f 100%);
+      background: #000000;
     }
     body {
       margin: 0;
       min-height: 100vh;
       color: var(--text);
       font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
-      background: transparent;
+      background: #000000;
     }
 
     .page { max-width: 1600px; margin: 4px auto 8px; padding: 0 8px; }
 
     .card {
-      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      background: #000000;
       border: 1px solid var(--line);
       border-radius: 6px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
 
     /* Top Row / Header Styles */
@@ -52,7 +52,7 @@
       justify-content: space-between;
       gap: 12px;
       padding: 10px 14px;
-      background: linear-gradient(180deg, #142240 0%, #101a2e 100%);
+      background: #000000;
       border-bottom: 1px solid var(--line);
       border-radius: 6px 6px 0 0;
     }
@@ -116,7 +116,7 @@
       font-weight: 700;
       padding: 2px 6px;
       border-radius: 3px;
-      background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+      background: #000000;
       color: #dbeafe;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -167,7 +167,7 @@
       justify-content: space-between;
       gap: 10px;
       padding: 6px 10px;
-      background: linear-gradient(180deg, #142240 0%, #101a2e 100%);
+      background: #000000;
       border-bottom: 1px solid var(--line);
       border-radius: 6px 6px 0 0;
     }
@@ -262,15 +262,15 @@
       justify-content: center;
       padding: 18px 16px;
       min-width: 90px;
-      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      background: #000000;
       border-radius: 6px;
-      border: 1px solid #3b82f6;
+      border: 1px solid #475569;
       flex: 1;
     }
 
     .kpi-box .label {
       font-size: 8px;
-      color: #93c5fd;
+      color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.4px;
       margin-bottom: 4px;
@@ -281,22 +281,11 @@
       font-weight: 800;
       color: #fff;
     }
-    .kpi-box .val.pos { color: #86efac; }
-    .kpi-box .val.neg { color: #fca5a5; }
-    .kpi-box .val.pcr-positive { color: #fffff; font-weight: 900; }
-    .kpi-box .val.pcr-negative { color: #fffff; font-weight: 900; }
-
-    /* PCR Box Color Coding */
-    .kpi-box.pcr-positive-box {
-      background: linear-gradient(135deg, #166534 0%, #14532d 100%);
-      border-color: #22c55e;
-      box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
-    }
-    .kpi-box.pcr-negative-box {
-      background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
-      border-color: #ef4444;
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
-    }
+    .kpi-box .val.pos { color: #22c55e; }
+    .kpi-box .val.neg { color: #ef4444; }
+    .kpi-box .val.pcr-positive { color: #22c55e; font-weight: 900; }
+    .kpi-box .val.pcr-negative { color: #ef4444; font-weight: 900; }
+    .kpi-box .val.pcr-neutral { color: #ffffff; font-weight: 900; }
 
     .kpi-box .label-with-tip {
       display: inline-flex;
@@ -324,7 +313,7 @@
       left: 50%;
       bottom: calc(100% + 4px);
       transform: translateX(-50%);
-      background: #0f1b30;
+      background: #000000;
       border: 1px solid #2a3f64;
       border-radius: 4px;
       padding: 3px 6px;
@@ -348,30 +337,30 @@
     /* Highlighted Strategy Card */
     .strategy-card-highlighted {
       min-width: 180px;
-      padding: 10px 14px;
-      background: linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%);
-      border: 2px solid #f59e0b;
+      padding: 12px 16px;
+      background: #000000;
+      border: 2px solid #06b6d4;
       border-radius: 8px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
     }
 
     .strategy-card-highlighted .card-title {
-      font-size: 9px;
-      color: #fbbf24;
+      font-size: 11px;
+      color: #22d3ee;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 6px;
-      font-weight: 700;
+      margin-bottom: 8px;
+      font-weight: 800;
     }
 
     .strategy-card-highlighted .strategy-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
 
     .strategy-card-highlighted .strategy-item:last-child {
@@ -379,15 +368,15 @@
     }
 
     .strategy-card-highlighted .item-label {
-      font-size: 11px;
-      color: var(--muted);
+      font-size: 12px;
+      color: #cbd5e1;
     }
 
     .strategy-card-highlighted .item-value {
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 3px;
+      padding: 3px 8px;
+      border-radius: 4px;
     }
 
     .strategy-card-highlighted .item-value.bullish {
@@ -419,9 +408,9 @@
       justify-content: center;
       padding: 8px 16px;
       min-width: 100px;
-      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      background: #000000;
       border-radius: 6px;
-      border: 1px solid #3b82f6;
+      border: 1px solid #475569;
       flex-shrink: 0;
     }
 
@@ -442,16 +431,7 @@
     .spot-kpi-box .val.neg { color: #fca5a5; }
     .spot-kpi-box .val.pcr-positive { color: #22c55e; font-weight: 900; }
     .spot-kpi-box .val.pcr-negative { color: #ef4444; font-weight: 900; }
-
-    /* PCR Box Color Coding */
-    .spot-kpi-box.pcr-positive-box {
-      background: linear-gradient(135deg, #166534 0%, #14532d 100%);
-      border-color: #22c55e;
-    }
-    .spot-kpi-box.pcr-negative-box {
-      background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
-      border-color: #ef4444;
-    }
+    .spot-kpi-box .val.pcr-neutral { color: #ffffff; font-weight: 900; }
 
     /* PCR Group Styling */
     .pcr-group .spot-kpi-box {
@@ -485,7 +465,7 @@
       left: 50%;
       bottom: calc(100% + 6px);
       transform: translateX(-50%);
-      background: #0f1b30;
+      background: #000000;
       border: 1px solid #2a3f64;
       border-radius: 4px;
       padding: 4px 8px;
@@ -622,7 +602,7 @@
       left: 50%;
       bottom: calc(100% + 6px);
       transform: translateX(-50%);
-      background: #0f1b30;
+      background: #000000;
       border: 1px solid #2a3f64;
       border-radius: 4px;
       padding: 4px 8px;
@@ -733,7 +713,7 @@
       left: 50%;
       bottom: calc(100% + 4px);
       transform: translateX(-50%);
-      background: #0f1b30;
+      background: #000000;
       border: 1px solid #2a3f64;
       border-radius: 4px;
       padding: 3px 6px;
@@ -867,6 +847,56 @@
     .breadth-card .graph-label.advance { color: #22c55e; }
     .breadth-card .graph-label.decline { color: #ef4444; }
 
+    /* OI Support/Resistance Card */
+    .oi-levels-card {
+      min-width: 140px;
+      padding: 12px 16px;
+      background: #000000;
+      border: 2px solid #06b6d4;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .oi-levels-card .card-title {
+      font-size: 11px;
+      color: #22d3ee;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .oi-levels-card .level-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      gap: 16px;
+    }
+
+    .oi-levels-card .level-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .oi-levels-card .level-label {
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .oi-levels-card .level-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .oi-levels-card .item-value.neutral {
+      background: rgba(148, 163, 184, 0.2);
+      color: #f8fafc;
+    }
+
     /* Signal Cards Row */
     .signal-cards-row {
       display: flex;
@@ -916,7 +946,7 @@
     }
 
     .signal-neutral {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
       color: #fff;
     }
 
@@ -1122,7 +1152,7 @@
     }
 
     .signal-neutral {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
       color: #fff;
     }
 
@@ -1437,7 +1467,7 @@
 
     .metric-card.ratio .metric-icon {
       background: rgba(59, 130, 246, 0.15);
-      color: #3b82f6;
+      color: #38bdf8;
       font-size: 8px;
     }
 
@@ -1595,8 +1625,8 @@
     }
 
     .filter-btn.active {
-      background: #2563eb;
-      border-color: #3b82f6;
+      background: #475569;
+      border-color: #38bdf8;
       color: #fff;
     }
 
@@ -1750,7 +1780,7 @@
       width: 280px;
       border: 1px solid #2a3f64;
       border-radius: 8px;
-      background: #0f1b30;
+      background: #000000;
       color: #d6e3ff;
       box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
       padding: 8px;
@@ -1813,7 +1843,7 @@
       color: #fff;
     }
     .signal-neutral {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
       color: #fff;
     }
@@ -1821,7 +1851,7 @@
       position: relative;
       overflow: hidden;
       border-radius: 4px;
-      background: #1a2740;
+      background: #0a0a0a;
     }
     .skeleton::after {
       content: "";
@@ -1855,7 +1885,7 @@
       border-radius: 6px;
       overflow: auto;
       max-height: calc(100vh - 180px);
-      background: #0b1322;
+      background: #000000;
     }
 
     table {
@@ -1886,60 +1916,123 @@
       font-size: 9px;
     }
 
-    thead th.call { background: #142340; color: var(--text); }
-    thead th.put { background: #142340; color: var(--text); }
-    thead th.sp { text-align: center; background: #1a2f51; color: var(--gold); }
+    /* Table Header Colors - Green for Call, Yellow for Strike, Red for Put */
+    thead th.call { background: #166534; color: #fff; }
+    thead th.put { background: #991b1b; color: #fff; }
+    thead th.sp { text-align: center; background: #854d0e; color: #fef08a; font-weight: 700; }
+
+    .table-wrap {
+      border: 1px solid #334155;
+      border-radius: 6px;
+      overflow: auto;
+      max-height: calc(100vh - 180px);
+      background: #000000;
+    }
+
+    #gridTable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      table-layout: fixed;
+    }
 
     tbody td {
-      border-bottom: 1px solid #172845;
-      padding: 3px 4px;
+      border-bottom: 1px solid #334155;
+      padding: 5px 4px;
       text-align: right;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
+      color: #f8fafc;
     }
 
-    tbody tr:nth-child(odd) { background: #0a1220; }
-    tbody tr:nth-child(even) { background: #0c1628; }
-    tbody tr:hover { background: #142542; }
+    tbody tr:nth-child(odd) { background: #000000; }
+    tbody tr:nth-child(even) { background: #050505; }
+    tbody tr:hover { background: #0a0a0a; }
 
-    .call-col {}
-    .put-col {}
+    .call-col { color: #f8fafc; }
+    .put-col { color: #f8fafc; }
 
     .sp-cell {
       text-align: center;
-      color: #ffe08a;
+      color: #ffffff;
       font-weight: 800;
-      background: #131f35;
+      background: #000000;
+      border-left: 1px solid #475569;
+      border-right: 1px solid #475569;
     }
 
     .sp-cell.atm {
-      background: linear-gradient(180deg, #3f3200 0%, #2d2500 100%);
-      color: #ffe88a;
-      outline: 2px solid #ffd84d;
+      background: linear-gradient(180deg, #854d0e 0%, #783508 100%);
+      color: #fef08a;
+      outline: 2px solid #fbbf24;
       outline-offset: -2px;
-      box-shadow: inset 0 0 0 1px #fff2a8, 0 0 12px rgba(255, 216, 77, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(251, 191, 32, 0.3), 0 0 12px rgba(251, 191, 36, 0.45);
       font-weight: 900;
     }
 
     .atm-row td {
-      background: #323d58 !important;
-      box-shadow: inset 0 1px 0 #ffd84d, inset 0 -1px 0 #ffd84d;
+      background: #2a2a2a !important;
+      box-shadow: inset 0 1px 0 #475569, inset 0 -1px 0 #475569;
     }
     .atm-row td:first-child {
-      border-left: 1px solid #ffd84d;
+      border-left: 1px solid #475569;
     }
     .atm-row td:last-child {
-      border-right: 1px solid #ffd84d;
+      border-right: 1px solid #475569;
     }
 
-    .pos { color: var(--good); font-weight: 700; }
-    .neg { color: var(--bad); font-weight: 700; }
+    /* Only Price Change and LTP columns have colors */
+    .pos { color: #22c55e; font-weight: 700; }
+    .neg { color: #ef4444; font-weight: 700; }
+
+    /* OI Bar Cell Styles */
+    .oi-cell {
+      position: relative;
+      overflow: hidden;
+    }
+    .oi-bar-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--oi-bar);
+      opacity: 0.8;
+      z-index: 0;
+    }
+    .oi-cell .oi-value {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* COI Yellow Highlight */
+    .coi-highlight-call {
+      background: rgba(250, 204, 21, 0.35) !important;
+      box-shadow: inset 0 0 0 2px rgba(250, 204, 21, 0.7);
+    }
+    .coi-highlight-put {
+      background: rgba(250, 204, 21, 0.35) !important;
+      box-shadow: inset 0 0 0 2px rgba(250, 204, 21, 0.7);
+    }
+
+    /* Table footer */
+    tfoot td {
+      position: sticky;
+      bottom: 0;
+      z-index: 1;
+      background: #000000;
+      border-top: 1px solid #334155;
+      padding: 8px 6px;
+      font-weight: 800;
+      text-align: right;
+      font-size: 12px;
+      color: #f8fafc;
+    }
 
     tfoot td {
       position: sticky;
       bottom: 0;
       z-index: 1;
-      background: #101a2e;
+      background: #000000;
       border-top: 1px solid #33568b;
       padding: 8px 6px;
       font-weight: 800;
@@ -2133,6 +2226,21 @@
             </div>
           </div>
         </a>
+
+        <div class="section-separator"></div>
+
+        <!-- OI Support/Resistance Card -->
+        <div class="oi-levels-card">
+          <div class="card-title">OI LEVELS</div>
+          <div class="strategy-item">
+            <span class="item-label">Support</span>
+            <span id="oiSupportStrike" class="item-value neutral">-</span>
+          </div>
+          <div class="strategy-item">
+            <span class="item-label">Resistance</span>
+            <span id="oiResistanceStrike" class="item-value neutral">-</span>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -2296,13 +2404,11 @@
       if (pcrValue === null || pcrValue === undefined) return "";
       if (pcrValue > 1.25) return "pcr-positive";
       if (pcrValue < 0.75) return "pcr-negative";
-      return "";
+      return "pcr-neutral";
     }
 
     function getPcrBoxClass(pcrValue) {
-      if (pcrValue === null || pcrValue === undefined) return "";
-      if (pcrValue > 1.25) return "pcr-positive-box";
-      if (pcrValue < 0.75) return "pcr-negative-box";
+      // No longer changing box color - only text color changes
       return "";
     }
 
@@ -2992,6 +3098,34 @@
         }
       });
       Object.keys(optionSymbolToRowMeta).forEach((key) => delete optionSymbolToRowMeta[key]);
+
+      // Calculate max OI for bar widths and find OI Support/Resistance
+      let maxCallOi = 0;
+      let maxPutOi = 0;
+      let oiResistanceStrike = null; // Strike with highest Call OI
+      let oiSupportStrike = null;    // Strike with highest Put OI
+
+      strikes.forEach((row) => {
+        const callOi = Number(row.call_oi ?? 0);
+        const putOi = Number(row.put_oi ?? 0);
+        const strike = Number(row.strike_price);
+
+        if (callOi > maxCallOi) {
+          maxCallOi = callOi;
+          oiResistanceStrike = strike;
+        }
+        if (putOi > maxPutOi) {
+          maxPutOi = putOi;
+          oiSupportStrike = strike;
+        }
+      });
+
+      // Update OI Support/Resistance display
+      const oiSupportEl = document.getElementById("oiSupportStrike");
+      const oiResistanceEl = document.getElementById("oiResistanceStrike");
+      if (oiSupportEl) oiSupportEl.textContent = oiSupportStrike !== null ? fmt2(oiSupportStrike) : "-";
+      if (oiResistanceEl) oiResistanceEl.textContent = oiResistanceStrike !== null ? fmt2(oiResistanceStrike) : "-";
+
       tbody.innerHTML = strikes.map((row) => {
         const callCoi = row.call_oi_change ?? 0;
         const putCoi = row.put_oi_change ?? 0;
@@ -3023,6 +3157,19 @@
         const putCoiPctChng = safeDivPct(putCoi, Number(putOi) - Number(putCoi));
 
         const isAtm = atmStrike !== null && Number(row.strike_price) === Number(atmStrike);
+        const currentStrike = Number(row.strike_price);
+        const isAboveAtm = atmStrike !== null && currentStrike > atmStrike;
+        const isBelowAtm = atmStrike !== null && currentStrike < atmStrike;
+
+        // OI bar widths (percentage of max)
+        const callOiBarWidth = maxCallOi > 0 ? (Number(callOi) / maxCallOi) * 100 : 0;
+        const putOiBarWidth = maxPutOi > 0 ? (Number(putOi) / maxPutOi) * 100 : 0;
+
+        // COI highlighting logic:
+        // Strikes ABOVE ATM: Call COI > Put OI → Yellow highlight on Call COI
+        // Strikes BELOW ATM: Put COI > Call OI → Yellow highlight on Put COI
+        const callCoiHighlight = isAboveAtm && Number(callCoi) > Number(putOi) ? 'coi-highlight-call' : '';
+        const putCoiHighlight = isBelowAtm && Number(putCoi) > Number(callOi) ? 'coi-highlight-put' : '';
 
         return `
           <tr
@@ -3031,10 +3178,10 @@
             data-call-symbol="${escHtml(callSymbol)}"
             data-put-symbol="${escHtml(putSymbol)}"
           >
-            <td class="call-col ${signedClass(callRatio)}">${fmt2(callRatio)}%</td>
-            <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}%</td>
-            <td class="call-col">${fmt(callOi)}</td>
-            <td class="call-col ${signedClass(callCoi)}">${fmt(callCoi)}</td>
+            <td class="call-col">${fmt2(callRatio)}%</td>
+            <td class="call-col">${fmt2(callCoiPctChng)}%</td>
+            <td class="call-col oi-cell"><div class="oi-bar-bg" style="width:${callOiBarWidth}%"></div><span class="oi-value">${fmt(callOi)}</span></td>
+            <td class="call-col ${signedClass(callCoi)} ${callCoiHighlight}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
             <td class="call-col ${getLtpVwapClass(row.call_live_ltp, row.call_live_avg_price)}">${callLiveLtp}</td>
             <td class="call-col call-avg">${callLiveAvg}</td>
@@ -3042,10 +3189,10 @@
             <td class="put-col put-avg">${putLiveAvg}</td>
             <td class="put-col ${getLtpVwapClass(row.put_live_ltp, row.put_live_avg_price)}">${putLiveLtp}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
-            <td class="put-col ${signedClass(putCoi)}">${fmt(putCoi)}</td>
-            <td class="put-col">${fmt(putOi)}</td>
-            <td class="put-col ${signedClass(putCoiPctChng)}">${fmt2(putCoiPctChng)}%</td>
-            <td class="put-col ${signedClass(putRatio)}">${fmt2(putRatio)}%</td>
+            <td class="put-col ${signedClass(putCoi)} ${putCoiHighlight}">${fmt(putCoi)}</td>
+            <td class="put-col oi-cell"><div class="oi-bar-bg" style="width:${putOiBarWidth}%"></div><span class="oi-value">${fmt(putOi)}</span></td>
+            <td class="put-col">${fmt2(putCoiPctChng)}%</td>
+            <td class="put-col">${fmt2(putRatio)}%</td>
           </tr>
         `;
       }).join("");
