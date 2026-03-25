@@ -1,4 +1,3 @@
-import asyncio
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 
@@ -11,6 +10,7 @@ from libs.platform.modules.option_chain_snapshot.src import (
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src import FyersClientService
 from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
+from libs.utils.common.retry_mechanism.src import async_retry
 from libs.utils.common.runtime_store.src import RuntimeSnapshotService
 from libs.utils.config.src.fyers import (
     SNAPSHOT_EXPIRY_COUNT,
@@ -71,29 +71,20 @@ class OptionChainSnapshotService:
 
     @classmethod
     async def capture_with_retries(cls, instrument) -> dict:
-        max_retries = max(1, SNAPSHOT_MAX_RETRIES)
-        for attempt in range(1, max_retries + 1):
-            try:
-                return await cls.capture_for_instrument(instrument)
-            except Exception as error:
-                if attempt >= max_retries:
-                    logger.error(
-                        "Snapshot retries exhausted - "
-                        f"symbol: {instrument.symbol} - "
-                        f"attempts: {attempt} - "
-                        f"error: {str(error)}",
-                    )
-                    raise
-                delay = SNAPSHOT_RETRY_BASE_DELAY_SECONDS * attempt
-                logger.warning(
-                    "Snapshot attempt failed, retrying - "
-                    f"symbol: {instrument.symbol} - "
-                    f"attempts: {attempt} - "
-                    f"error: {str(error)}",
-                )
-                await asyncio.sleep(delay)
+        """
+        Captures option chain data with intelligent retry logic.
 
-        raise RuntimeError("Unreachable retry branch")
+        Uses the optimized retry mechanism that:
+        - Skips retry for client errors (400, 401, 403, 404, invalid symbols)
+        - Uses exponential backoff for rate limits (429)
+        - Uses exponential backoff for server errors and network issues
+        """
+        return await async_retry(
+            cls.capture_for_instrument,
+            instrument,
+            max_retries=SNAPSHOT_MAX_RETRIES,
+            base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
+        )
 
     @classmethod
     async def capture_for_instrument(cls, instrument) -> dict:
