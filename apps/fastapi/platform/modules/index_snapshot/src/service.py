@@ -1,4 +1,3 @@
-import asyncio
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -9,6 +8,7 @@ from libs.platform.modules.option_chain_snapshot.src import (
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src import FyersClientService
 from libs.utils.common.index_catalog.src import IndexCatalogService
+from libs.utils.common.retry_mechanism.src import async_retry
 from libs.utils.common.runtime_store.src import RuntimeIndexSnapshotService
 from libs.utils.config.src.fyers import (
     SCRIPTS_SNAPSHOT_INTERVAL_SECONDS,
@@ -99,23 +99,20 @@ class IndexSnapshotService:
 
     @classmethod
     async def fetch_ltp_with_retries(cls, index):
-        max_retries = max(1, SNAPSHOT_MAX_RETRIES)
-        for attempt in range(1, max_retries + 1):
-            try:
-                return await FyersClientService.fetch_quote(symbol=index.fyers_symbol)
-            except Exception as error:
-                if attempt >= max_retries:
-                    logger.error(
-                        "Index quote retries exhausted - "
-                        f"symbol: {index.symbol} - attempts: {attempt} - error: {str(error)}"
-                    )
-                    raise
-                delay = SNAPSHOT_RETRY_BASE_DELAY_SECONDS * attempt
-                logger.warning(
-                    "Index quote attempt failed, retrying - "
-                    f"symbol: {index.symbol} - attempts: {attempt} - error: {str(error)}"
-                )
-                await asyncio.sleep(delay)
+        """
+        Fetch LTP with intelligent retry logic.
+
+        Uses the optimized retry mechanism that:
+        - Skips retry for client errors (400, 401, 403, 404, invalid symbols)
+        - Uses exponential backoff for rate limits (429)
+        - Uses exponential backoff for server errors and network issues
+        """
+        return await async_retry(
+            FyersClientService.fetch_quote,
+            symbol=index.fyers_symbol,
+            max_retries=SNAPSHOT_MAX_RETRIES,
+            base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
+        )
 
     @classmethod
     async def get_heatmap_data(cls, category: str | None = None) -> dict:

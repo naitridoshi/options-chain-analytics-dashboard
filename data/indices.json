@@ -146,7 +146,7 @@
   {
     "name": "NIFTY500 LARGEMIDSMALL EQUAL-CAP WEIGHTED",
     "symbol": "NIFTY500LMSWEQUAL",
-    "fyers_symbol": "NSE:NIFTY500LMSWEQUAL-INDEX",
+    "fyers_symbol": "NSE:NIFTY500LMSEQL-INDEX",
     "category": "BROAD_MARKET",
     "exchange": "NSE",
     "is_active": true
@@ -173,12 +173,12 @@
     "fyers_symbol": "NSE:NIFTYFINSERVICE-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
-    "is_active": true
+    "is_active": false
   },
   {
     "name": "NIFTY FINANCIAL SERVICES 25/50",
     "symbol": "NIFTYFINNXT50",
-    "fyers_symbol": "NSE:NIFTYFINNXT50-INDEX",
+    "fyers_symbol": "NSE:NIFTYFINSRV2550-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
     "is_active": true
@@ -258,7 +258,7 @@
   {
     "name": "NIFTY CONSUMER DURABLES",
     "symbol": "NIFTYCONSUMERDUR",
-    "fyers_symbol": "NSE:NIFTYCONSUMERDUR-INDEX",
+    "fyers_symbol": "NSE:NIFTYCONSRDURBL-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
     "is_active": true
@@ -266,7 +266,7 @@
   {
     "name": "NIFTY OIL & GAS",
     "symbol": "NIFTYOILGAS",
-    "fyers_symbol": "NSE:NIFTYOILGAS-INDEX",
+    "fyers_symbol": "NSE:NIFTYOILANDGAS-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
     "is_active": true
@@ -274,7 +274,7 @@
   {
     "name": "NIFTY MIDSMALL HEALTHCARE",
     "symbol": "NIFTYMIDSMALLHC",
-    "fyers_symbol": "NSE:NIFTYMIDSMALLHC-INDEX",
+    "fyers_symbol": "NSE:NIFTYMIDSMLHLTH-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
     "is_active": true
@@ -285,7 +285,7 @@
     "fyers_symbol": "NSE:NIFTYCHEMICALS-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
-    "is_active": true
+    "is_active": false
   },
   {
     "name": "NIFTY500 HEALTHCARE",
@@ -293,12 +293,12 @@
     "fyers_symbol": "NSE:NIFTY500HEALTHCARE-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
-    "is_active": true
+    "is_active": false
   },
   {
     "name": "NIFTY FINANCIAL SERVICES EX-BANK",
     "symbol": "NIFTYFINEXBANK",
-    "fyers_symbol": "NSE:NIFTYFINEXBANK-INDEX",
+    "fyers_symbol": "NSE:NIFTYFINSEREXBNK-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
     "is_active": true
@@ -306,7 +306,7 @@
   {
     "name": "NIFTY MIDSMALL FINANCIAL SERVICES",
     "symbol": "NIFTYMIDSMALLFIN",
-    "fyers_symbol": "NSE:NIFTYMIDSMALLFIN-INDEX",
+    "fyers_symbol": "NSE:NIFTYMSFINSERV-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
     "is_active": true
@@ -314,7 +314,7 @@
   {
     "name": "NIFTY MIDSMALL IT & TELECOM",
     "symbol": "NIFTYMIDSMALLIT",
-    "fyers_symbol": "NSE:NIFTYMIDSMALLIT-INDEX",
+    "fyers_symbol": "NSE:NIFTYMSITTELCM-INDEX",
     "category": "SECTORAL",
     "exchange": "NSE",
     "is_active": true
