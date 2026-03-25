@@ -70,6 +70,12 @@
       flex-wrap: wrap;
     }
 
+    .meta-text {
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: 8px;
+    }
+
     .symbol-meta > span:first-child {
       font-size: 18px;
       font-weight: 800;
@@ -148,11 +154,6 @@
       color: #fff;
     }
 
-    .meta-row {
-      padding: 6px 14px;
-      background: #0d1524;
-      border-bottom: 1px solid var(--line);
-    }
 
     .meta {
       font-size: 10px;
@@ -654,7 +655,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.2px;
-      padding: 3px 8px;
+      padding: 1px 8px;
       text-align: center;
       background: rgba(0, 0, 0, 0.3);
       border-bottom: 1px solid var(--line);
@@ -1864,18 +1865,25 @@
       min-width: 1400px;
     }
 
+    #gridTable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      table-layout: fixed;
+    }
+
     thead th {
       position: sticky;
       top: 0;
       z-index: 2;
       border-bottom: 1px solid #33568b;
-      padding: 8px 6px;
+      padding: 6px 4px;
       font-weight: 700;
-      letter-spacing: 0.2px;
+      letter-spacing: 0.1px;
       text-align: right;
       white-space: nowrap;
       background: #142340;
-      font-size: 11px;
+      font-size: 9px;
     }
 
     thead th.call { background: #142340; color: var(--text); }
@@ -1884,7 +1892,7 @@
 
     tbody td {
       border-bottom: 1px solid #172845;
-      padding: 6px 8px;
+      padding: 3px 4px;
       text-align: right;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
@@ -1960,6 +1968,7 @@
             <span id="symbolBadge">NIFTY</span>
             <span id="fyersStatusBadge" class="fyers-badge warn">FYERS: CHECKING</span>
             <span id="liveStatusBadge" class="live-badge pending">LIVE: CONNECTING</span>
+            <span id="meta" class="meta-text">Market date: -</span>
           </div>
         </div>
         <div class="actions">
@@ -1971,9 +1980,6 @@
       </div>
 
       <div id="dataStatus" class="status warn" style="display:none;"></div>
-      <div class="meta-row">
-        <div id="meta" class="meta">Market date: -</div>
-      </div>
 
       <!-- Strategy, Movement & Breadth Cards Row -->
       <div class="strategy-movement-row">
