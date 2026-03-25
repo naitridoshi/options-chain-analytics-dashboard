@@ -259,7 +259,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 14px 16px;
+      padding: 18px 16px;
       min-width: 90px;
       background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
       border-radius: 6px;
@@ -2374,13 +2374,10 @@
         row.classList.remove("highlighted-today", "highlighted-weekly", "negative");
       });
 
-      // Update today's movement from open
-      if (movements.today_from_open && movements.today_from_open.movement_pct !== null) {
-        highlightMovementRow("today", movements.today_from_open.movement_pct);
-        const todayTooltip = document.getElementById("todayMovementTooltip");
-        if (todayTooltip && movements.today_from_open.captured_at_open) {
-          todayTooltip.textContent = "Reference snapshot: " + formatTooltipTimestamp(movements.today_from_open.captured_at_open);
-        }
+      // Update today's movement using Change% (from prev close to current price)
+      const todayChangePct = lastLiveUnderlying?.change_pct_from_prev_close;
+      if (todayChangePct !== null && todayChangePct !== undefined) {
+        highlightMovementRow("today", todayChangePct);
       }
 
       // Update weekly movement from close
@@ -2468,6 +2465,14 @@
     function signedClass(v) {
       if (v === null || v === undefined || Number(v) === 0) return "";
       return Number(v) > 0 ? "pos" : "neg";
+    }
+
+    function getLtpVwapClass(ltp, vwap) {
+      if (ltp === null || ltp === undefined || vwap === null || vwap === undefined) return "";
+      const ltpNum = Number(ltp);
+      const vwapNum = Number(vwap);
+      if (ltpNum === vwapNum) return "";
+      return ltpNum > vwapNum ? "pos" : "neg";
     }
 
     function safeDivPct(num, den) {
@@ -3021,17 +3026,17 @@
           >
             <td class="call-col ${signedClass(callRatio)}">${fmt2(callRatio)}%</td>
             <td class="call-col ${signedClass(callCoiPctChng)}">${fmt2(callCoiPctChng)}%</td>
-            <td class="call-col ${signedClass(callOi)}">${fmt(callOi)}</td>
+            <td class="call-col">${fmt(callOi)}</td>
             <td class="call-col ${signedClass(callCoi)}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
-            <td class="call-col call-ltp">${callLiveLtp}</td>
+            <td class="call-col ${getLtpVwapClass(row.call_live_ltp, row.call_live_avg_price)}">${callLiveLtp}</td>
             <td class="call-col call-avg">${callLiveAvg}</td>
             <td class="sp-cell ${isAtm ? 'atm' : ''}">${fmt2(row.strike_price)}</td>
             <td class="put-col put-avg">${putLiveAvg}</td>
-            <td class="put-col put-ltp">${putLiveLtp}</td>
+            <td class="put-col ${getLtpVwapClass(row.put_live_ltp, row.put_live_avg_price)}">${putLiveLtp}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${signedClass(putCoi)}">${fmt(putCoi)}</td>
-            <td class="put-col ${signedClass(putOi)}">${fmt(putOi)}</td>
+            <td class="put-col">${fmt(putOi)}</td>
             <td class="put-col ${signedClass(putCoiPctChng)}">${fmt2(putCoiPctChng)}%</td>
             <td class="put-col ${signedClass(putRatio)}">${fmt2(putRatio)}%</td>
           </tr>
