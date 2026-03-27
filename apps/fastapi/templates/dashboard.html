@@ -3481,12 +3481,22 @@
         putCoiSum += Number(row.put_oi_change ?? 0);
       });
 
-      document.getElementById("footCallOi").textContent = "";
-      document.getElementById("footPutOi").textContent = "";
-      document.getElementById("footCallCoi").textContent = "";
-      document.getElementById("footPutCoi").textContent = "";
-      document.getElementById("footOiPcr").textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
-      document.getElementById("footCoiPcr").textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
+      // Debug: Log the calculated values
+      console.log('[OI Summary] strikes:', strikes.length, 'callOiSum:', callOiSum, 'putOiSum:', putOiSum, 'callCoiSum:', callCoiSum, 'putCoiSum:', putCoiSum);
+
+      const footCallOiEl = document.getElementById("footCallOi");
+      const footPutOiEl = document.getElementById("footPutOi");
+      const footCallCoiEl = document.getElementById("footCallCoi");
+      const footPutCoiEl = document.getElementById("footPutCoi");
+      const footOiPcrEl = document.getElementById("footOiPcr");
+      const footCoiPcrEl = document.getElementById("footCoiPcr");
+
+      if (footCallOiEl) footCallOiEl.textContent = "";
+      if (footPutOiEl) footPutOiEl.textContent = "";
+      if (footCallCoiEl) footCallCoiEl.textContent = "";
+      if (footPutCoiEl) footPutCoiEl.textContent = "";
+      if (footOiPcrEl) footOiPcrEl.textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
+      if (footCoiPcrEl) footCoiPcrEl.textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
 
       // Update OI Summary table
       const totalCoi = (callCoiSum || 0) + (putCoiSum || 0);
@@ -3531,14 +3541,8 @@
         footOiNetEl.className = `foot-value ${oiNet >= 0 ? 'positive' : 'negative'}`;
       }
 
-      connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
-      refreshLiveStatusHeartbeat();
-      setTimeout(() => {
-        refreshAdvanceDecline().catch(() => {});
-      }, 0);
-
-      if (timerId) clearTimeout(timerId);
-      timerId = setTimeout(load, refreshMs);
+      // Refresh Advance/Decline immediately (no delay)
+      refreshAdvanceDecline().catch(() => {});
     }
 
     setInterval(refreshLiveStatusHeartbeat, 5000);
