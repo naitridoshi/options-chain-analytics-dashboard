@@ -407,88 +407,80 @@
     /* Combined Strategy & OI Levels Card */
     .strategy-oi-card {
       flex: 0 0 auto;
-      min-width: 160px;
-      padding: 8px 10px;
+      min-width: 220px;
+      padding: 16px 24px;
       background: #000000;
       border: 2px solid #06b6d4;
-      border-radius: 8px;
+      border-radius: 10px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      box-shadow: 0 0 16px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
-      max-height: 210px;
+      align-items: center;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+      max-height: 240px;
       overflow: hidden;
     }
 
     .strategy-oi-card .card-title {
-      font-size: 9px;
+      font-size: 12px;
       color: #22d3ee;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
       font-weight: 800;
-      text-align:center;
+      text-align: center;
     }
 
     .strategy-oi-card .strategy-signal-box {
       display: flex;
       justify-content: center;
-      margin-bottom: 4px;
+      margin-bottom: 14px;
     }
 
     .strategy-oi-card .signal-badge {
-      font-size: 10px;
-      font-weight: 800;
-      padding: 3px 10px;
-      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 5px;
       text-align: center;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
 
     .strategy-oi-card .signal-badge.bullish {
-      background: linear-gradient(135deg, #166534 0%, #14532d 100%);
-      color: #4ade80;
-      border: 1px solid #22c55e;
-      box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
     }
 
     .strategy-oi-card .signal-badge.bearish {
-      background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
-      color: #f87171;
-      border: 1px solid #ef4444;
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
     }
 
     .strategy-oi-card .signal-badge.neutral {
       background: rgba(148, 163, 184, 0.2);
       color: #f8fafc;
-      border: none;
-      box-shadow: none;
     }
 
-    .strategy-oi-card .strategy-item {
+    .strategy-oi-card .strategy-trend-box {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      margin-bottom: 4px;
-      gap: 1px;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
     }
 
-    .strategy-oi-card .strategy-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .strategy-oi-card .item-label {
-      font-size: 9px;
+    .strategy-oi-card .trend-label {
+      font-size: 12px;
       color: #94a3b8;
       font-weight: 600;
+      text-transform: uppercase;
     }
 
     .strategy-oi-card .item-value {
-      font-size: 11px;
+      font-size: 16px;
       font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 3px;
+      padding: 5px 14px;
+      border-radius: 5px;
     }
 
     .strategy-oi-card .item-value.bullish {
@@ -504,39 +496,6 @@
     .strategy-oi-card .item-value.neutral {
       background: rgba(148, 163, 184, 0.2);
       color: #f8fafc;
-    }
-
-    .strategy-oi-card .card-divider {
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #22d3ee 20%, #22d3ee 80%, transparent);
-      margin: 6px 0;
-    }
-
-    .strategy-oi-card .level-item {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      margin-bottom: 4px;
-      gap: 1px;
-    }
-
-    .strategy-oi-card .level-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .strategy-oi-card .level-label {
-      font-size: 12px;
-      color: #94a3b8;
-      font-weight: 600;
-    }
-
-    .strategy-oi-card .level-value {
-      font-size: 11px;
-      font-weight: 700;
-      color: #f8fafc;
-      padding: 2px 6px;
-      border-radius: 3px;
-      background: rgba(148, 163, 184, 0.2);
     }
 
     /* Spot KPI Boxes (inline in row) - Legacy */
@@ -988,8 +947,8 @@
     /* OI Summary Card - Stacked Layout */
     .oi-summary-card {
       flex: 0 0 auto;
-      min-width: 325px;
-      padding: 6px 4px;
+      min-width: 275px;
+      padding: 8px 12px;
       background: #000000;
       border: 2px solid #06b6d4;
       border-radius: 8px;
@@ -997,6 +956,7 @@
       flex-direction: column;
       justify-content: center;
       box-shadow: 0 0 16px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+      min-height:202px;
     }
 
     .oi-summary-card .card-title {
@@ -1004,62 +964,101 @@
       color: #22d3ee;
       text-transform: uppercase;
       letter-spacing: 0.3px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       font-weight: 800;
+      text-align: center;
+    }
+
+    .oi-summary-headings {
+      display: grid;
+      grid-template-columns: 50px 1fr 1fr 1fr;
+      gap: 4px;
+      margin-bottom: 4px;
+      padding: 0 4px;
+    }
+
+    .oi-heading {
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
       text-align: center;
     }
 
     .oi-summary-content {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
 
     .oi-row {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      padding: 2px 0;
-      border-bottom: 1px solid rgba(30, 58, 95, 0.3);
-    }
-
-    .oi-row:last-child {
-      border-bottom: none;
+      display: grid;
+      grid-template-columns: 50px 1fr 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 4px;
     }
 
     .oi-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #f8fafc;
-      text-transform: uppercase;
     }
 
     .oi-net {
-      font-size: 17px;
+      font-size: 14px;
       font-weight: 700;
-      color: #f8fafc;
+      text-align: center;
     }
 
-    .oi-net.positive {
-      color: #22c55e;
-    }
-
-    .oi-net.negative {
-      color: #ef4444;
-    }
-
-    .oi-pct-group {
-      display: flex;
-      gap: 2px;
-      font-size: 19px;
-    }
+    .oi-net.positive { color: #22c55e; }
+    .oi-net.negative { color: #ef4444; }
 
     .oi-call {
+      font-size: 11px;
+      font-weight: 600;
       color: #22c55e;
+      text-align: center;
     }
 
     .oi-put {
+      font-size: 11px;
+      font-weight: 600;
       color: #ef4444;
+      text-align: center;
+    }
+
+    .oi-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #22d3ee 20%, #22d3ee 80%, transparent);
+      margin: 8px 0;
+    }
+
+    .oi-levels-row {
+      display: flex;
+      justify-content: space-around;
+      gap: 16px;
+    }
+
+    .oi-levels-row .level-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .oi-levels-row .level-label {
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .oi-levels-row .level-value {
+      font-size: 12px;
+      color: #f8fafc;
+      font-weight: 700;
     }
 
     /* Signal Cards Row */
@@ -2152,6 +2151,25 @@
       border-right: 1px solid #475569;
     }
 
+    /* Table Footer Styles */
+    tfoot .foot-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-align: right;
+      padding-right: 4px;
+    }
+
+    tfoot .foot-value {
+      font-size: 11px;
+      font-weight: 700;
+      text-align: left;
+      padding-left: 4px;
+    }
+
+    tfoot .foot-value.positive { color: #22c55e; }
+    tfoot .foot-value.negative { color: #ef4444; }
+
     /* Only Price Change and LTP columns have colors */
     .pos { color: #22c55e; font-weight: 700; }
     .neg { color: #ef4444; font-weight: 700; }
@@ -2293,25 +2311,15 @@
 
         <div class="section-separator"></div>
 
-        <!-- Trading Strategy & OI Levels Combined Card -->
+        <!-- Trading Strategy Card -->
         <div class="strategy-oi-card">
           <div class="card-title">TRADING STRATEGY</div>
           <div class="strategy-signal-box">
             <span id="strategySignal" class="signal-badge bullish">BUY ON DIPS</span>
           </div>
-          <div class="strategy-item">
-            <span class="item-label">Trend</span>
+          <div class="strategy-trend-box">
+            <span class="trend-label">Trend</span>
             <span id="strategyTrend" class="item-value bullish">BULLISH</span>
-          </div>
-          <div class="card-divider"></div>
-          <div class="card-title">OI LEVELS</div>
-          <div class="level-item">
-            <span class="level-label">Support</span>
-            <span id="oiSupportStrike" class="level-value">-</span>
-          </div>
-          <div class="level-item">
-            <span class="level-label">Resistance</span>
-            <span id="oiResistanceStrike" class="level-value">-</span>
           </div>
         </div>
 
@@ -2413,22 +2421,35 @@
         <!-- OI Summary Card -->
         <div class="oi-summary-card">
           <div class="card-title">OI SUMMARY</div>
+          <div class="oi-summary-headings">
+            <span class="oi-heading"></span>
+            <span class="oi-heading">Net</span>
+            <span class="oi-heading">Call%</span>
+            <span class="oi-heading">Put%</span>
+          </div>
           <div class="oi-summary-content">
             <div class="oi-row">
-              <span class="oi-label">COI</span>
+              <span class="oi-label">COI:</span>
               <span id="oiSummaryCoiNet" class="oi-net">-</span>
-              <span class="oi-pct-group">
-                <span id="oiSummaryCoiCallPct" class="oi-call">-</span>
-                <span id="oiSummaryCoiPutPct" class="oi-put">-</span>
-              </span>
+              <span id="oiSummaryCoiCallPct" class="oi-call">-</span>
+              <span id="oiSummaryCoiPutPct" class="oi-put">-</span>
             </div>
             <div class="oi-row">
-              <span class="oi-label">OI</span>
+              <span class="oi-label">OI:</span>
               <span id="oiSummaryOiNet" class="oi-net">-</span>
-              <span class="oi-pct-group">
-                <span id="oiSummaryOiCallPct" class="oi-call">-</span>
-                <span id="oiSummaryOiPutPct" class="oi-put">-</span>
-              </span>
+              <span id="oiSummaryOiCallPct" class="oi-call">-</span>
+              <span id="oiSummaryOiPutPct" class="oi-put">-</span>
+            </div>
+          </div>
+          <div class="oi-divider"></div>
+          <div class="oi-levels-row">
+            <div class="level-item">
+              <span class="level-label">Support</span>
+              <span id="oiSupportStrike" class="level-value">-</span>
+            </div>
+            <div class="level-item">
+              <span class="level-label">Resistance</span>
+              <span id="oiResistanceStrike" class="level-value">-</span>
             </div>
           </div>
         </div>
@@ -2468,14 +2489,14 @@
               <td></td>
               <td></td>
               <td></td>
-              <td id="footOiPcr" class="sp-cell"></td>
+              <td class="sp-cell"></td>
               <td></td>
               <td></td>
               <td></td>
               <td id="footPutCoi"></td>
               <td id="footPutOi"></td>
               <td></td>
-              <td id="footCoiPcr"></td>
+              <td></td>
             </tr>
           </tfoot>
         </table>
@@ -3311,11 +3332,11 @@
         }
       });
 
-      // Update OI Support/Resistance display
+      // Update OI Support/Resistance display (no decimals)
       const oiSupportEl = document.getElementById("oiSupportStrike");
       const oiResistanceEl = document.getElementById("oiResistanceStrike");
-      if (oiSupportEl) oiSupportEl.textContent = oiSupportStrike !== null ? fmt2(oiSupportStrike) : "-";
-      if (oiResistanceEl) oiResistanceEl.textContent = oiResistanceStrike !== null ? fmt2(oiResistanceStrike) : "-";
+      if (oiSupportEl) oiSupportEl.textContent = oiSupportStrike !== null ? Math.floor(oiSupportStrike).toLocaleString() : "-";
+      if (oiResistanceEl) oiResistanceEl.textContent = oiResistanceStrike !== null ? Math.floor(oiResistanceStrike).toLocaleString() : "-";
 
       tbody.innerHTML = strikes.map((row) => {
         const callCoi = row.call_oi_change ?? 0;
@@ -3489,6 +3510,18 @@
       }
       document.getElementById("oiSummaryOiCallPct").textContent = oiCallPct !== "-" ? `${oiCallPct}%` : "-";
       document.getElementById("oiSummaryOiPutPct").textContent = oiPutPct !== "-" ? `${oiPutPct}%` : "-";
+
+      // Update table footer with COI Net and OI Net
+      const footCoiNetEl = document.getElementById("footCoiNet");
+      const footOiNetEl = document.getElementById("footOiNet");
+      if (footCoiNetEl) {
+        footCoiNetEl.textContent = coiNet >= 0 ? `+${fmt(coiNet)}` : fmt(coiNet);
+        footCoiNetEl.className = `foot-value ${coiNet >= 0 ? 'positive' : 'negative'}`;
+      }
+      if (footOiNetEl) {
+        footOiNetEl.textContent = oiNet >= 0 ? `+${fmt(oiNet)}` : fmt(oiNet);
+        footOiNetEl.className = `foot-value ${oiNet >= 0 ? 'positive' : 'negative'}`;
+      }
 
       connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
       refreshLiveStatusHeartbeat();
