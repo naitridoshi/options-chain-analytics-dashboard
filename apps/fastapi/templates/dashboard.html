@@ -947,7 +947,7 @@
     /* OI Summary Card - Stacked Layout */
     .oi-summary-card {
       flex: 0 0 auto;
-      min-width: 275px;
+      min-width: 255px;
       padding: 8px 12px;
       background: #000000;
       border: 2px solid #06b6d4;
@@ -3468,10 +3468,18 @@
 
       flushPendingOptionUpdates();
 
-      const callOiSum = latest ? latest.call_oi_sum : null;
-      const putOiSum = latest ? latest.put_oi_sum : null;
-      const callCoiSum = latest ? latest.call_oi_change_sum : null;
-      const putCoiSum = latest ? latest.put_oi_change_sum : null;
+      // Calculate OI sums from strike data (API doesn't return these in latest)
+      let callOiSum = 0;
+      let putOiSum = 0;
+      let callCoiSum = 0;
+      let putCoiSum = 0;
+
+      strikes.forEach((row) => {
+        callOiSum += Number(row.call_oi ?? 0);
+        putOiSum += Number(row.put_oi ?? 0);
+        callCoiSum += Number(row.call_oi_change ?? 0);
+        putCoiSum += Number(row.put_oi_change ?? 0);
+      });
 
       document.getElementById("footCallOi").textContent = "";
       document.getElementById("footPutOi").textContent = "";
