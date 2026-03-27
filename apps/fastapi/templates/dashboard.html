@@ -269,11 +269,18 @@
     }
 
     .kpi-box .label {
-      font-size: 8px;
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.4px;
       margin-bottom: 4px;
+    }
+
+    .kpi-box {
+      font-size: 8px;
+    }
+
+    .label {
+        font-size: 10px;
     }
 
     .kpi-box .val {
@@ -336,6 +343,7 @@
 
     /* Highlighted Strategy Card */
     .strategy-card-highlighted {
+      flex: 0 0 auto;
       min-width: 180px;
       padding: 12px 16px;
       background: #000000;
@@ -358,9 +366,10 @@
 
     .strategy-card-highlighted .strategy-item {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      gap: 2px;
     }
 
     .strategy-card-highlighted .strategy-item:last-child {
@@ -368,14 +377,15 @@
     }
 
     .strategy-card-highlighted .item-label {
-      font-size: 12px;
-      color: #cbd5e1;
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 600;
     }
 
     .strategy-card-highlighted .item-value {
       font-size: 13px;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 3px 10px;
       border-radius: 4px;
     }
 
@@ -392,6 +402,141 @@
     .strategy-card-highlighted .item-value.neutral {
       background: rgba(107, 114, 128, 0.2);
       color: #9ca3af;
+    }
+
+    /* Combined Strategy & OI Levels Card */
+    .strategy-oi-card {
+      flex: 0 0 auto;
+      min-width: 160px;
+      padding: 8px 10px;
+      background: #000000;
+      border: 2px solid #06b6d4;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+      max-height: 210px;
+      overflow: hidden;
+    }
+
+    .strategy-oi-card .card-title {
+      font-size: 9px;
+      color: #22d3ee;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      font-weight: 800;
+      text-align:center;
+    }
+
+    .strategy-oi-card .strategy-signal-box {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+
+    .strategy-oi-card .signal-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 4px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+
+    .strategy-oi-card .signal-badge.bullish {
+      background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+      color: #4ade80;
+      border: 1px solid #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .strategy-oi-card .signal-badge.bearish {
+      background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+      color: #f87171;
+      border: 1px solid #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .strategy-oi-card .signal-badge.neutral {
+      background: rgba(148, 163, 184, 0.2);
+      color: #f8fafc;
+      border: none;
+      box-shadow: none;
+    }
+
+    .strategy-oi-card .strategy-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 4px;
+      gap: 1px;
+    }
+
+    .strategy-oi-card .strategy-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .strategy-oi-card .item-label {
+      font-size: 9px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .strategy-oi-card .item-value {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .strategy-oi-card .item-value.bullish {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .strategy-oi-card .item-value.bearish {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .strategy-oi-card .item-value.neutral {
+      background: rgba(148, 163, 184, 0.2);
+      color: #f8fafc;
+    }
+
+    .strategy-oi-card .card-divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #22d3ee 20%, #22d3ee 80%, transparent);
+      margin: 6px 0;
+    }
+
+    .strategy-oi-card .level-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 4px;
+      gap: 1px;
+    }
+
+    .strategy-oi-card .level-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .strategy-oi-card .level-label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .strategy-oi-card .level-value {
+      font-size: 11px;
+      font-weight: 700;
+      color: #f8fafc;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(148, 163, 184, 0.2);
     }
 
     /* Spot KPI Boxes (inline in row) - Legacy */
@@ -489,6 +634,8 @@
     /* Strategy, Movement & Breadth Cards Row */
     .strategy-movement-row {
       display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
       gap: 0;
       padding: 8px 14px;
       background: #0b1020;
@@ -631,7 +778,7 @@
     }
 
     .movement-table thead th {
-      font-size: 8px;
+      font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.2px;
@@ -651,7 +798,12 @@
       padding: 4px 8px;
       text-align: center;
       border-bottom: 1px solid rgba(42, 63, 100, 0.3);
+      border-right: 1px solid rgba(30, 58, 95, 0.4);
       transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .movement-table tbody td:last-child {
+      border-right: none;
     }
 
     .movement-table tbody tr:last-child td {
@@ -736,14 +888,16 @@
 
     /* Compact Breadth Bar Graph (for row layout) */
     .breadth-card {
-      flex: 1;
-      min-width: 0;
-      padding: 8px 12px;
-      background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+      flex: 0 0 auto;
+      min-width: 160px;
+      max-width: 180px;
+      padding: 8px 10px;
+      background: #000000;
       border: 1px solid var(--line);
       border-radius: 6px;
       display: flex;
       flex-direction: column;
+      min-height:201px;
     }
 
     .breadth-card .card-title {
@@ -752,30 +906,14 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .breadth-card .card-title-link {
-      font-size: 9px;
-      color: var(--accent);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .breadth-card .card-title-link:hover {
-      text-decoration: underline;
     }
 
     .breadth-card .graph-container {
       display: flex;
       align-items: flex-end;
-      gap: 16px;
-      height: 120px;
-      padding: 16px 0 6px 0;
+      gap: 12px;
+      height: 100px;
+      padding: 12px 0 4px 0;
       margin-top: auto;
     }
 
@@ -783,7 +921,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 100%;
+      height: 160%;
       padding-right: 16px;
       min-width: 24px;
       padding-bottom: 16px;
@@ -800,7 +938,7 @@
       display: flex;
       align-items: flex-end;
       gap: 16px;
-      height: 100%;
+      height: 160%;
     }
 
     .breadth-card .graph-bar-wrap {
@@ -847,10 +985,11 @@
     .breadth-card .graph-label.advance { color: #22c55e; }
     .breadth-card .graph-label.decline { color: #ef4444; }
 
-    /* OI Support/Resistance Card */
-    .oi-levels-card {
-      min-width: 140px;
-      padding: 12px 16px;
+    /* OI Summary Card - Stacked Layout */
+    .oi-summary-card {
+      flex: 0 0 auto;
+      min-width: 332px;
+      padding: 6px 4px;
       background: #000000;
       border: 2px solid #06b6d4;
       border-radius: 8px;
@@ -860,41 +999,67 @@
       box-shadow: 0 0 16px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
     }
 
-    .oi-levels-card .card-title {
-      font-size: 11px;
+    .oi-summary-card .card-title {
+      font-size: 10px;
       color: #22d3ee;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-      font-weight: 800;
-    }
-
-    .oi-levels-card .level-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      letter-spacing: 0.3px;
       margin-bottom: 4px;
-      gap: 16px;
+      font-weight: 800;
+      text-align: center;
     }
 
-    .oi-levels-card .level-item:last-child {
-      margin-bottom: 0;
+    .oi-summary-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
     }
 
-    .oi-levels-card .level-label {
+    .oi-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(30, 58, 95, 0.3);
+    }
+
+    .oi-row:last-child {
+      border-bottom: none;
+    }
+
+    .oi-label {
       font-size: 12px;
-      color: #cbd5e1;
+      font-weight: 700;
+      color: #f8fafc;
+      text-transform: uppercase;
     }
 
-    .oi-levels-card .level-value {
-      font-size: 13px;
+    .oi-net {
+      font-size: 17px;
       font-weight: 700;
       color: #f8fafc;
     }
 
-    .oi-levels-card .item-value.neutral {
-      background: rgba(148, 163, 184, 0.2);
-      color: #f8fafc;
+    .oi-net.positive {
+      color: #22c55e;
+    }
+
+    .oi-net.negative {
+      color: #ef4444;
+    }
+
+    .oi-pct-group {
+      display: flex;
+      gap: 2px;
+      font-size: 32px;
+    }
+
+    .oi-call {
+      color: #22c55e;
+    }
+
+    .oi-put {
+      color: #ef4444;
     }
 
     /* Signal Cards Row */
@@ -1907,18 +2072,19 @@
       top: 0;
       z-index: 2;
       border-bottom: 1px solid #33568b;
+      border-right: 1px solid rgba(30, 58, 95, 0.4);
       padding: 6px 4px;
       font-weight: 700;
       letter-spacing: 0.1px;
-      text-align: right;
+      text-align: center;
       white-space: nowrap;
       background: #142340;
-      font-size: 9px;
+      font-size: 12px;
     }
 
     /* Table Header Colors - Green for Call, Yellow for Strike, Red for Put */
-    thead th.call { background: #166534; color: #fff; }
-    thead th.put { background: #991b1b; color: #fff; }
+    thead th.call { background: #166534; color: #fff; text-align: center; }
+    thead th.put { background: #991b1b; color: #fff; text-align: center; }
     thead th.sp { text-align: center; background: #854d0e; color: #fef08a; font-weight: 700; }
 
     .table-wrap {
@@ -1938,26 +2104,31 @@
 
     tbody td {
       border-bottom: 1px solid #334155;
+      border-right: 1px solid rgba(30, 58, 95, 0.4);
       padding: 5px 4px;
-      text-align: right;
+      text-align: center !important;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
       color: #f8fafc;
+    }
+
+    thead th:last-child,
+    tbody td:last-child {
+      border-right: none;
     }
 
     tbody tr:nth-child(odd) { background: #000000; }
     tbody tr:nth-child(even) { background: #050505; }
     tbody tr:hover { background: #0a0a0a; }
 
-    .call-col { color: #f8fafc; }
-    .put-col { color: #f8fafc; }
+    .call-col { color: #f8fafc; text-align: center; border-right: 1px solid rgba(30, 58, 95, 0.4); }
+    .put-col { color: #f8fafc; text-align: center; border-right: 1px solid rgba(30, 58, 95, 0.4); }
 
     .sp-cell {
       text-align: center;
       color: #ffffff;
       font-weight: 800;
-      background: #000000;
-      border-left: 1px solid #475569;
+      background: #1a1a1a;
       border-right: 1px solid #475569;
     }
 
@@ -2065,6 +2236,8 @@
           </div>
         </div>
         <div class="actions">
+          <a class="action-btn" href="/heatmap">Heatmap</a>
+          <a class="action-btn" href="/market-breadth">Market Breadth</a>
           <a class="action-btn" href="/login">FYERS Login</a>
           <form method="post" action="/logout" style="margin:0;">
             <button type="submit" class="action-btn">Sign Out</button>
@@ -2120,16 +2293,25 @@
 
         <div class="section-separator"></div>
 
-        <!-- Trading Strategy Card - Highlighted -->
-        <div class="strategy-card-highlighted">
+        <!-- Trading Strategy & OI Levels Combined Card -->
+        <div class="strategy-oi-card">
           <div class="card-title">TRADING STRATEGY</div>
-          <div class="strategy-item">
-            <span class="item-label">Signal</span>
-            <span id="strategySignal" class="item-value bullish">BUY ON DIPS</span>
+          <div class="strategy-signal-box">
+            <span id="strategySignal" class="signal-badge bullish">BUY ON DIPS</span>
           </div>
           <div class="strategy-item">
-            <span class="item-label">Data Trend</span>
+            <span class="item-label">Trend</span>
             <span id="strategyTrend" class="item-value bullish">BULLISH</span>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-title">OI LEVELS</div>
+          <div class="level-item">
+            <span class="level-label">Support</span>
+            <span id="oiSupportStrike" class="level-value">-</span>
+          </div>
+          <div class="level-item">
+            <span class="level-label">Resistance</span>
+            <span id="oiResistanceStrike" class="level-value">-</span>
           </div>
         </div>
 
@@ -2197,10 +2379,9 @@
         <div class="section-separator"></div>
 
         <!-- Advance/Decline Breadth Card -->
-        <a href="/market-breadth" class="breadth-card" style="text-decoration: none; color: inherit;">
+        <div class="breadth-card">
           <div class="card-title">
             <span>&#9632; ADVANCE / DECLINE</span>
-            <span class="card-title-link">View Details &#8594;</span>
           </div>
           <div class="graph-container">
             <div class="graph-yaxis">
@@ -2225,20 +2406,30 @@
               </div>
             </div>
           </div>
-        </a>
+        </div>
 
         <div class="section-separator"></div>
 
-        <!-- OI Support/Resistance Card -->
-        <div class="oi-levels-card">
-          <div class="card-title">OI LEVELS</div>
-          <div class="strategy-item">
-            <span class="item-label">Support</span>
-            <span id="oiSupportStrike" class="item-value neutral">-</span>
-          </div>
-          <div class="strategy-item">
-            <span class="item-label">Resistance</span>
-            <span id="oiResistanceStrike" class="item-value neutral">-</span>
+        <!-- OI Summary Card -->
+        <div class="oi-summary-card">
+          <div class="card-title">OI SUMMARY</div>
+          <div class="oi-summary-content">
+            <div class="oi-row">
+              <span class="oi-label">COI</span>
+              <span id="oiSummaryCoiNet" class="oi-net">-</span>
+              <span class="oi-pct-group">
+                <span id="oiSummaryCoiCallPct" class="oi-call">-</span>
+                <span id="oiSummaryCoiPutPct" class="oi-put">-</span>
+              </span>
+            </div>
+            <div class="oi-row">
+              <span class="oi-label">OI</span>
+              <span id="oiSummaryOiNet" class="oi-net">-</span>
+              <span class="oi-pct-group">
+                <span id="oiSummaryOiCallPct" class="oi-call">-</span>
+                <span id="oiSummaryOiPutPct" class="oi-put">-</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -2424,7 +2615,7 @@
       const signalEl = document.getElementById("strategySignal");
       if (signalEl) {
         signalEl.textContent = tradingStrategy.value;
-        signalEl.className = "item-value " + (tradingStrategy.tone === "positive" ? "bullish" : tradingStrategy.tone === "negative" ? "bearish" : "neutral");
+        signalEl.className = "signal-badge " + (tradingStrategy.tone === "positive" ? "bullish" : tradingStrategy.tone === "negative" ? "bearish" : "neutral");
       }
 
       // Update data trend
@@ -3267,6 +3458,37 @@
       document.getElementById("footPutCoi").textContent = "";
       document.getElementById("footOiPcr").textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
       document.getElementById("footCoiPcr").textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
+
+      // Update OI Summary table
+      const totalCoi = (callCoiSum || 0) + (putCoiSum || 0);
+      const totalOi = (callOiSum || 0) + (putOiSum || 0);
+
+      // COI Row
+      const coiNet = (putCoiSum || 0) - (callCoiSum || 0);
+      const coiCallPct = totalCoi > 0 ? ((callCoiSum / totalCoi) * 100).toFixed(1) : "-";
+      const coiPutPct = totalCoi > 0 ? ((putCoiSum / totalCoi) * 100).toFixed(1) : "-";
+
+      // OI Row
+      const oiNet = (putOiSum || 0) - (callOiSum || 0);
+      const oiCallPct = totalOi > 0 ? ((callOiSum / totalOi) * 100).toFixed(1) : "-";
+      const oiPutPct = totalOi > 0 ? ((putOiSum / totalOi) * 100).toFixed(1) : "-";
+
+      const coiNetEl = document.getElementById("oiSummaryCoiNet");
+      const oiNetEl = document.getElementById("oiSummaryOiNet");
+
+      if (coiNetEl) {
+        coiNetEl.textContent = coiNet >= 0 ? `+${fmt(coiNet)}` : fmt(coiNet);
+        coiNetEl.className = `oi-net ${coiNet >= 0 ? 'positive' : 'negative'}`;
+      }
+      document.getElementById("oiSummaryCoiCallPct").textContent = coiCallPct !== "-" ? `${coiCallPct}%` : "-";
+      document.getElementById("oiSummaryCoiPutPct").textContent = coiPutPct !== "-" ? `${coiPutPct}%` : "-";
+
+      if (oiNetEl) {
+        oiNetEl.textContent = oiNet >= 0 ? `+${fmt(oiNet)}` : fmt(oiNet);
+        oiNetEl.className = `oi-net ${oiNet >= 0 ? 'positive' : 'negative'}`;
+      }
+      document.getElementById("oiSummaryOiCallPct").textContent = oiCallPct !== "-" ? `${oiCallPct}%` : "-";
+      document.getElementById("oiSummaryOiPutPct").textContent = oiPutPct !== "-" ? `${oiPutPct}%` : "-";
 
       connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
       refreshLiveStatusHeartbeat();
