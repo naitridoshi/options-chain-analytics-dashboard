@@ -269,7 +269,7 @@
     }
 
     .kpi-box .label {
-      color: #94a3b8;
+      color: #99bdf0;
       text-transform: uppercase;
       letter-spacing: 0.4px;
       margin-bottom: 4px;
@@ -280,7 +280,8 @@
     }
 
     .label {
-        font-size: 10px;
+        font-size: 11px;
+         text-decoration: underline;
     }
 
     .kpi-box .val {
@@ -429,6 +430,7 @@
       margin-bottom: 14px;
       font-weight: 800;
       text-align: center;
+      text-decoration: underline;
     }
 
     .strategy-oi-card .strategy-signal-box {
@@ -471,9 +473,13 @@
 
     .strategy-oi-card .trend-label {
       font-size: 12px;
-      color: #94a3b8;
-      font-weight: 600;
+      color: #22d3ee;
       text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: underline;
     }
 
     .strategy-oi-card .item-value {
@@ -592,14 +598,41 @@
 
     /* Strategy, Movement & Breadth Cards Row */
     .strategy-movement-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 0;
+   display: grid;
+  grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
       padding: 8px 14px;
       background: #0b1020;
       border-bottom: 1px solid var(--line);
     }
+        @media (max-width: 1440px) {
+  .strategy-movement-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+    @media (max-width: 1024px) {
+  .strategy-movement-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .strategy-movement-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .strategy-movement-row {
+    grid-template-columns: 1fr;
+  }
+}
+    .kpi-container,
+.strategy-oi-card,
+.movement-card,
+.breadth-card,
+.oi-summary-card,.breadth-card {
+  width: 100%  !important;
+
+}
 
     .strategy-card {
       flex: 0 0 auto;
@@ -848,8 +881,8 @@
     /* Compact Breadth Bar Graph (for row layout) */
     .breadth-card {
       flex: 0 0 auto;
-      min-width: 160px;
-      max-width: 180px;
+      /* min-width: 160px;
+      max-width: 180px; */
       padding: 8px 10px;
       background: #000000;
       border: 1px solid var(--line);
@@ -860,11 +893,12 @@
     }
 
     .breadth-card .card-title {
-      font-size: 9px;
+      font-size: 11px;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 6px;
+      text-decoration: underline;
     }
 
     .breadth-card .graph-container {
@@ -947,7 +981,7 @@
     /* OI Summary Card - Stacked Layout */
     .oi-summary-card {
       flex: 0 0 auto;
-      max-width: 265px;
+      /* max-width: 265px; */
       padding: 8px 12px;
       background: #000000;
       border: 2px solid #06b6d4;
@@ -967,13 +1001,14 @@
       margin-bottom: 13px;
       font-weight: 800;
       text-align: center;
+      text-decoration: underline;
     }
 
     .oi-summary-headings {
       display: grid;
       grid-template-columns: 50px 1fr 1fr 1fr;
       gap: 4px;
-      margin-bottom: 4px;
+      margin-bottom: 16px;
       padding: 0 4px;
     }
 
@@ -1053,6 +1088,7 @@
       color: #94a3b8;
       font-weight: 600;
       text-transform: uppercase;
+      text-decoration: underline;
     }
 
     .oi-levels-row .level-value {
@@ -2286,7 +2322,7 @@
             </div>
           </div>
           <!-- Subtle Separator Line -->
-          <div class="kpi-row-separator"></div>
+          <!-- <div class="kpi-row-separator"></div> -->
           <!-- Row 2: PCR KPI Boxes -->
           <div class="kpi-row">
             <div class="kpi-box" id="coiPcrBox">
@@ -2304,7 +2340,7 @@
           </div>
         </div>
 
-        <div class="section-separator"></div>
+        <!-- <div class="section-separator"></div> -->
 
         <!-- Trading Strategy Card -->
         <div class="strategy-oi-card">
@@ -2318,7 +2354,7 @@
           </div>
         </div>
 
-        <div class="section-separator"></div>
+        <!-- <div class="section-separator"></div> -->
 
         <!-- Movement Probability Card -->
         <div class="movement-card">
@@ -2379,7 +2415,7 @@
           </table>
         </div>
 
-        <div class="section-separator"></div>
+        <!-- <div class="section-separator"></div> -->
 
         <!-- Advance/Decline Breadth Card -->
         <div class="breadth-card">
@@ -2411,7 +2447,7 @@
           </div>
         </div>
 
-        <div class="section-separator"></div>
+        <!-- <div class="section-separator"></div> -->
 
         <!-- OI Summary Card -->
         <div class="oi-summary-card">
@@ -2608,9 +2644,8 @@
     }
 
     function getPcrValueClass(pcrValue) {
+      // PCR values always show in neutral white color
       if (pcrValue === null || pcrValue === undefined) return "";
-      if (pcrValue > 1.25) return "pcr-positive";
-      if (pcrValue < 0.75) return "pcr-negative";
       return "pcr-neutral";
     }
 
@@ -3388,7 +3423,7 @@
             <td class="call-col">${fmt2(callRatio)}%</td>
             <td class="call-col">${fmt2(callCoiPctChng)}%</td>
             <td class="call-col oi-cell"><div class="oi-bar-bg" style="width:${callOiBarWidth}%"></div><span class="oi-value">${fmt(callOi)}</span></td>
-            <td class="call-col ${signedClass(callCoi)} ${callCoiHighlight}">${fmt(callCoi)}</td>
+            <td class="call-col ${callCoiHighlight}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
             <td class="call-col ${getLtpVwapClass(row.call_live_ltp, row.call_live_avg_price)}">${callLiveLtp}</td>
             <td class="call-col call-avg">${callLiveAvg}</td>
@@ -3396,7 +3431,7 @@
             <td class="put-col put-avg">${putLiveAvg}</td>
             <td class="put-col ${getLtpVwapClass(row.put_live_ltp, row.put_live_avg_price)}">${putLiveLtp}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
-            <td class="put-col ${signedClass(putCoi)} ${putCoiHighlight}">${fmt(putCoi)}</td>
+            <td class="put-col ${putCoiHighlight}">${fmt(putCoi)}</td>
             <td class="put-col oi-cell"><div class="oi-bar-bg" style="width:${putOiBarWidth}%"></div><span class="oi-value">${fmt(putOi)}</span></td>
             <td class="put-col">${fmt2(putCoiPctChng)}%</td>
             <td class="put-col">${fmt2(putRatio)}%</td>
