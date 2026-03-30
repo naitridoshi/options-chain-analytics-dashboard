@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from libs.platform.modules.option_chain_snapshot.src import (
     normalize_interval_boundary,
 )
+from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.script_catalog.src import ScriptCatalogService
 from libs.utils.config.src.fyers import (
     MARKET_CLOSE_HOUR,
@@ -17,6 +18,9 @@ from libs.utils.config.src.fyers import (
 from libs.utils.db.redis.src import RedisScriptSnapshotStore
 
 IST = ZoneInfo("Asia/Kolkata")
+log = CustomLogger("RuntimeScriptSnapshotService")
+logger, listener = log.get_logger()
+listener.start()
 
 
 @dataclass
@@ -155,11 +159,14 @@ class RuntimeScriptSnapshotService:
     @classmethod
     async def get_latest_advance_decline(cls) -> dict:
         trade_date = datetime.now(IST).date().isoformat()
-        latest_snapshot = await RedisScriptSnapshotStore.get_latest_snapshot(
-            trade_date=trade_date
-        )
-        if latest_snapshot:
-            return latest_snapshot
+        try:
+            latest_snapshot = await RedisScriptSnapshotStore.get_latest_snapshot(
+                trade_date=trade_date
+            )
+            if latest_snapshot:
+                return latest_snapshot
+        except Exception as e:
+            logger.warning(f"Failed to get latest snapshot from Redis: {e}")
 
         active_scripts = ScriptCatalogService.get_active_scripts()
         return {

@@ -38,11 +38,24 @@ async def dashboard_data(
     timeline_limit: int = Query(default=100, ge=1, le=1000),
     _: str = Depends(verify_basic_auth),
 ):
-    data = await OptionChainDashboardService.get_dashboard_data(
-        symbol=symbol,
-        timeline_limit=timeline_limit,
-    )
-    return JSONResponse(status_code=200, content={"success": True, "data": data})
+    try:
+        data = await OptionChainDashboardService.get_dashboard_data(
+            symbol=symbol,
+            timeline_limit=timeline_limit,
+        )
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )
 
 
 @dashboard_route.get("/login", response_class=HTMLResponse)
@@ -89,8 +102,21 @@ async def coi_live_data(
         COILiveService,
     )
 
-    data = await COILiveService.get_coi_live_data(symbol=symbol)
-    return JSONResponse(status_code=200, content={"success": True, "data": data})
+    try:
+        data = await COILiveService.get_coi_live_data(symbol=symbol)
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )
 
 
 @dashboard_route.get("/coi-pcr-live", response_class=HTMLResponse)
@@ -110,5 +136,18 @@ async def coi_pcr_live_data(
         COIPCRLiveService,
     )
 
-    data = await COIPCRLiveService.get_coi_pcr_live_data(symbol=symbol)
-    return JSONResponse(status_code=200, content={"success": True, "data": data})
+    try:
+        data = await COIPCRLiveService.get_coi_pcr_live_data(symbol=symbol)
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )

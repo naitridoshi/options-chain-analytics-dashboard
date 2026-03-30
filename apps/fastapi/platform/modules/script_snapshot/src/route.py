@@ -27,5 +27,18 @@ async def script_snapshot_status(_: bool = Depends(verify_basic_auth)):
 
 @script_snapshot_route.get("/advance-decline")
 async def script_advance_decline(_: bool = Depends(verify_basic_auth)):
-    result = await ScriptSnapshotService.get_advance_decline()
-    return JSONResponse(status_code=200, content={"success": True, "data": result})
+    try:
+        result = await ScriptSnapshotService.get_advance_decline()
+        return JSONResponse(status_code=200, content={"success": True, "data": result})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )

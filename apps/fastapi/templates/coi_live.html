@@ -177,7 +177,6 @@
     .table-container {
       overflow-x: auto;
       overflow-y: auto;
-      max-height: calc(100vh - 140px);
     }
 
     /* COI Table */
@@ -343,7 +342,16 @@
 
     /* Time Slot Header */
     .time-header {
-      min-width: 120px;
+      min-width: 80px;
+    }
+
+    /* Time Column */
+    .time-cell {
+      font-weight: 600;
+      text-align: left;
+      min-width: 80px;
+      background: #0a0a0a;
+      color: var(--text);
     }
 
     /* Loading */
@@ -507,58 +515,47 @@
 
       const timeSlots = data.time_slots || [];
       const strikes = data.strikes || [];
+      const atmStrike = data.atm_strike;
 
-      // Build table HTML
+      // Build table HTML - PIVOTED: Time as rows, Strikes as columns
       let html = '<table class="coi-table">';
 
-      // Header Row 1: Strike prices (colspan 2 for each)
+      // Header Row 1: Time | Strike 1 | Strike 2 | ... | Strike N
       html += '<thead>';
       html += '<tr>';
-      html += '<th class="strike-header">Strike</th>';
+      html += '<th class="time-header">Time</th>';
 
-      // Time slot columns (each with colspan 2 for Intraday/Weekly)
-      for (const time of timeSlots) {
-        html += `<th class="time-header strike-header" colspan="2">${escHtml(time)}</th>`;
+      // Strike price columns (each with colspan 2 for Intraday/Weekly)
+      for (const strike of strikes) {
+        const isAtm = strike.strike_price === atmStrike;
+        const headerClass = isAtm ? 'strike-header atm' : 'strike-header';
+        html += `<th class="${headerClass}" colspan="2">${fmt(strike.strike_price)}</th>`;
       }
 
-      // Live column
-      html += '<th class="live-header" colspan="2">LIVE</th>';
       html += '</tr>';
 
-      // Header Row 2: Intraday/Weekly sub-headers
+      // Header Row 2: | Intraday | Weekly | Intraday | Weekly | ...
       html += '<tr>';
-      html += '<th></th>'; // Empty for strike column
+      html += '<th></th>'; // Empty for time column
 
-      for (const time of timeSlots) {
+      for (const strike of strikes) {
         html += '<th class="intraday-header">Intraday</th>';
         html += '<th class="weekly-header">Weekly</th>';
       }
 
-      // Live sub-headers
-      html += '<th class="intraday-header">Intraday</th>';
-      html += '<th class="weekly-header">Weekly</th>';
       html += '</tr>';
       html += '</thead>';
 
-      // Body rows - one row per strike
+      // Body rows - one row per time slot
       html += '<tbody>';
 
-      for (const strike of strikes) {
-        const isAtm = strike.is_atm;
-        const rowClass = isAtm ? 'atm-row' : '';
+      // Render time slot rows
+      for (const time of timeSlots) {
+        html += '<tr>';
+        html += `<td class="time-cell">${escHtml(time)}</td>`;
 
-        html += `<tr class="${rowClass}">`;
-        html += '<td class="strike-cell">';
-        html += '<div class="strike-label">';
-        html += `<span class="strike-value">${fmt(strike.strike_price)}</span>`;
-        if (isAtm) {
-          html += '<span class="atm-badge">ATM</span>';
-        }
-        html += '</div>';
-        html += '</td>';
-
-        // Time slot data cells
-        for (const time of timeSlots) {
+        // Data cells for each strike
+        for (const strike of strikes) {
           const timeData = strike.data?.[time] || { intraday: null, weekly: null };
           const intradayClass = getValueClass(timeData.intraday);
           const weeklyClass = getValueClass(timeData.weekly);
@@ -567,16 +564,23 @@
           html += `<td class="value-cell ${weeklyClass}">${fmt(timeData.weekly)}</td>`;
         }
 
-        // Live data cells
+        html += '</tr>';
+      }
+
+      // Render LIVE row (last row)
+      html += '<tr class="live-row">';
+      html += '<td class="time-cell"><span class="live-indicator">● LIVE</span></td>';
+
+      for (const strike of strikes) {
         const liveData = strike.live || { intraday: null, weekly: null };
         const liveIntradayClass = getValueClass(liveData.intraday);
         const liveWeeklyClass = getValueClass(liveData.weekly);
 
         html += `<td class="value-cell ${liveIntradayClass}">${fmt(liveData.intraday)}</td>`;
         html += `<td class="value-cell ${liveWeeklyClass}">${fmt(liveData.weekly)}</td>`;
-
-        html += '</tr>';
       }
+
+      html += '</tr>';
 
       html += '</tbody>';
       html += '</table>';

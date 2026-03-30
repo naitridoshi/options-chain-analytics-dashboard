@@ -129,17 +129,21 @@ class COIPCRLiveService:
         trade_date = datetime.now(IST).date()
         time_slots = cls._get_time_slots(trade_date)
 
-        # Get all snapshots from timeline
-        timeline = await RedisOptionChainSnapshotStore.get_timeline(
-            instrument_symbol=instrument.symbol,
-            trade_date=trade_date.isoformat(),
-            limit=100,
-        )
+        # Get all snapshots from timeline with error handling
+        try:
+            timeline = await RedisOptionChainSnapshotStore.get_timeline(
+                instrument_symbol=instrument.symbol,
+                trade_date=trade_date.isoformat(),
+                limit=100,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get timeline from Redis: {e}")
+            timeline = []
 
         if not timeline:
             return {
                 "instrument": {
-                    "id": str(instrument.id),
+                    "id": str(getattr(instrument, "id", instrument.symbol)),
                     "symbol": instrument.symbol,
                     "name": getattr(instrument, "name", None) or instrument.symbol,
                 },
@@ -242,7 +246,7 @@ class COIPCRLiveService:
 
         return {
             "instrument": {
-                "id": str(instrument.id),
+                "id": str(getattr(instrument, "id", instrument.symbol)),
                 "symbol": instrument.symbol,
                 "name": getattr(instrument, "name", None) or instrument.symbol,
             },

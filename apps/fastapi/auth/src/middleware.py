@@ -119,6 +119,12 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
                 logger.info("✅ Request completed successfully", extra=extra)
         except Exception as error:
+            import traceback
+
+            logger.error(
+                f"❌ Request failed with exception: {error}\n{traceback.format_exc()}"
+            )
+
             response = JSONResponse(
                 status_code=500, content={"success": False, "error": str(error)}
             )
