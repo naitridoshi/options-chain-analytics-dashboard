@@ -13,6 +13,8 @@ from apps.fastapi.platform.modules.dashboard.src.service import (
     OptionChainDashboardService,
 )
 from libs.utils.common.constants.src.templates import (
+    COI_LIVE_TEMPLATE_HTML,
+    COI_PCR_LIVE_TEMPLATE_HTML,
     DASHBOARD_TEMPLATE_HTML,
     HEATMAP_TEMPLATE_HTML,
     LOGIN_TEMPLATE_HTML,
@@ -36,11 +38,24 @@ async def dashboard_data(
     timeline_limit: int = Query(default=100, ge=1, le=1000),
     _: str = Depends(verify_basic_auth),
 ):
-    data = await OptionChainDashboardService.get_dashboard_data(
-        symbol=symbol,
-        timeline_limit=timeline_limit,
-    )
-    return JSONResponse(status_code=200, content={"success": True, "data": data})
+    try:
+        data = await OptionChainDashboardService.get_dashboard_data(
+            symbol=symbol,
+            timeline_limit=timeline_limit,
+        )
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )
 
 
 @dashboard_route.get("/login", response_class=HTMLResponse)
@@ -68,3 +83,71 @@ async def heatmap_page(request: Request):
     if not get_current_user(request):
         return RedirectResponse(url="/login", status_code=303)
     return HTMLResponse(HEATMAP_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/coi-live", response_class=HTMLResponse)
+async def coi_live_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(COI_LIVE_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/api/v1/coi-live/data")
+async def coi_live_data(
+    symbol: str | None = Query(default=None),
+    _: str = Depends(verify_basic_auth),
+):
+    """Get COI Live data for the dashboard."""
+    from apps.fastapi.platform.modules.coi_live.src.service import (
+        COILiveService,
+    )
+
+    try:
+        data = await COILiveService.get_coi_live_data(symbol=symbol)
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )
+
+
+@dashboard_route.get("/coi-pcr-live", response_class=HTMLResponse)
+async def coi_pcr_live_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(COI_PCR_LIVE_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/api/v1/coi-pcr-live/data")
+async def coi_pcr_live_data(
+    symbol: str | None = Query(default=None),
+    _: str = Depends(verify_basic_auth),
+):
+    """Get COI PCR Live data for the dashboard."""
+    from apps.fastapi.platform.modules.coi_live.src.pcr_service import (
+        COIPCRLiveService,
+    )
+
+    try:
+        data = await COIPCRLiveService.get_coi_pcr_live_data(symbol=symbol)
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )

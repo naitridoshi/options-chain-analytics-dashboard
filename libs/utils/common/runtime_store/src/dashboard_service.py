@@ -40,18 +40,34 @@ class RuntimeDashboardService:
             return cls._build_empty_payload(symbol=symbol)
 
         trade_date = datetime.now(IST).date().isoformat()
-        latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
-            instrument_symbol=instrument.symbol,
-            trade_date=trade_date,
-        )
-        previous_day_final = (
-            await RedisOptionChainSnapshotStore.get_previous_day_final_snapshot(
+
+        # Add error handling for Redis operations
+        try:
+            latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
+                instrument_symbol=instrument.symbol,
+                trade_date=trade_date,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get latest snapshot from Redis: {e}")
+            latest_snapshot = None
+
+        try:
+            previous_day_final = (
+                await RedisOptionChainSnapshotStore.get_previous_day_final_snapshot(
+                    instrument.symbol
+                )
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get previous day final snapshot from Redis: {e}")
+            previous_day_final = None
+
+        try:
+            live_underlying = await RedisLiveMarketStore.get_live_underlying(
                 instrument.symbol
             )
-        )
-        live_underlying = await RedisLiveMarketStore.get_live_underlying(
-            instrument.symbol
-        )
+        except Exception as e:
+            logger.warning(f"Failed to get live underlying from Redis: {e}")
+            live_underlying = None
         if not latest_snapshot:
             return cls._build_empty_payload(
                 instrument=instrument,
@@ -60,11 +76,15 @@ class RuntimeDashboardService:
                 live_underlying=live_underlying,
             )
 
-        timeline_snapshots = await RedisOptionChainSnapshotStore.get_timeline(
-            instrument_symbol=instrument.symbol,
-            trade_date=trade_date,
-            limit=timeline_limit,
-        )
+        try:
+            timeline_snapshots = await RedisOptionChainSnapshotStore.get_timeline(
+                instrument_symbol=instrument.symbol,
+                trade_date=trade_date,
+                limit=timeline_limit,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get timeline from Redis: {e}")
+            timeline_snapshots = []
 
         latest_payload = dict(latest_snapshot.get("latest") or {})
         if (
