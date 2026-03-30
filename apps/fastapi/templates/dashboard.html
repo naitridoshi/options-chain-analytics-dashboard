@@ -901,6 +901,15 @@
       text-decoration: underline;
     }
 
+    .breadth-card .card-title-link {
+      text-decoration: none;
+      display: block;
+    }
+
+    .breadth-card .card-title-link:hover .card-title {
+      color: var(--accent);
+    }
+
     .breadth-card .graph-container {
       display: flex;
       align-items: flex-end;
@@ -1061,6 +1070,13 @@
       font-size: 14px;
       font-weight: 600;
       color: #ef4444;
+      text-align: center;
+    }
+
+    .oi-pct-neutral {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f8fafc;
       text-align: center;
     }
 
@@ -2203,6 +2219,13 @@
     tfoot .foot-value.positive { color: #22c55e; }
     tfoot .foot-value.negative { color: #ef4444; }
 
+    tfoot .foot-total {
+      font-size: 11px;
+      font-weight: 700;
+      color: #f8fafc;
+      text-align: right;
+    }
+
     /* Only Price Change and LTP columns have colors */
     .pos { color: #22c55e; font-weight: 700; }
     .neg { color: #ef4444; font-weight: 700; }
@@ -2421,9 +2444,9 @@
 
         <!-- Advance/Decline Breadth Card -->
         <div class="breadth-card">
-          <div class="card-title">
-            <span>&#9632; ADVANCE / DECLINE</span>
-          </div>
+          <a href="/market-breadth" class="card-title-link" title="View Market Breadth">
+            <span class="card-title">&#9632; ADVANCE / DECLINE</span>
+          </a>
           <div class="graph-container">
             <div class="graph-yaxis">
               <span>200</span>
@@ -2517,8 +2540,8 @@
             <tr>
               <td></td>
               <td></td>
-              <td id="footCallOi"></td>
-              <td id="footCallCoi"></td>
+              <td id="footCallOi" class="foot-total"></td>
+              <td id="footCallCoi" class="foot-total"></td>
               <td></td>
               <td></td>
               <td></td>
@@ -2526,8 +2549,8 @@
               <td></td>
               <td></td>
               <td></td>
-              <td id="footPutCoi"></td>
-              <td id="footPutOi"></td>
+              <td id="footPutCoi" class="foot-total"></td>
+              <td id="footPutOi" class="foot-total"></td>
               <td></td>
               <td></td>
             </tr>
@@ -3523,10 +3546,11 @@
       const footOiPcrEl = document.getElementById("footOiPcr");
       const footCoiPcrEl = document.getElementById("footCoiPcr");
 
-      if (footCallOiEl) footCallOiEl.textContent = "";
-      if (footPutOiEl) footPutOiEl.textContent = "";
-      if (footCallCoiEl) footCallCoiEl.textContent = "";
-      if (footPutCoiEl) footPutCoiEl.textContent = "";
+      // Populate footer with OI and COI totals
+      if (footCallOiEl) footCallOiEl.textContent = fmt(callOiSum);
+      if (footPutOiEl) footPutOiEl.textContent = fmt(putOiSum);
+      if (footCallCoiEl) footCallCoiEl.textContent = fmt(callCoiSum);
+      if (footPutCoiEl) footPutCoiEl.textContent = fmt(putCoiSum);
       if (footOiPcrEl) footOiPcrEl.textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
       if (footCoiPcrEl) footCoiPcrEl.textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
 
@@ -3534,15 +3558,15 @@
       const totalCoi = (callCoiSum || 0) + (putCoiSum || 0);
       const totalOi = (callOiSum || 0) + (putOiSum || 0);
 
-      // COI Row
+      // COI Row - Net = PUT COI - CALL COI
       const coiNet = (putCoiSum || 0) - (callCoiSum || 0);
-      const coiCallPct = totalCoi > 0 ? ((callCoiSum / totalCoi) * 100).toFixed(1) : "-";
-      const coiPutPct = totalCoi > 0 ? ((putCoiSum / totalCoi) * 100).toFixed(1) : "-";
+      const coiCallPct = totalCoi > 0 ? Math.round((callCoiSum / totalCoi) * 100) : "-";
+      const coiPutPct = totalCoi > 0 ? Math.round((putCoiSum / totalCoi) * 100) : "-";
 
-      // OI Row
+      // OI Row - Net = PUT OI - CALL OI
       const oiNet = (putOiSum || 0) - (callOiSum || 0);
-      const oiCallPct = totalOi > 0 ? ((callOiSum / totalOi) * 100).toFixed(1) : "-";
-      const oiPutPct = totalOi > 0 ? ((putOiSum / totalOi) * 100).toFixed(1) : "-";
+      const oiCallPct = totalOi > 0 ? Math.round((callOiSum / totalOi) * 100) : "-";
+      const oiPutPct = totalOi > 0 ? Math.round((putOiSum / totalOi) * 100) : "-";
 
       const coiNetEl = document.getElementById("oiSummaryCoiNet");
       const oiNetEl = document.getElementById("oiSummaryOiNet");
@@ -3551,15 +3575,33 @@
         coiNetEl.textContent = coiNet >= 0 ? `+${fmt(coiNet)}` : fmt(coiNet);
         coiNetEl.className = `oi-net ${coiNet >= 0 ? 'positive' : 'negative'}`;
       }
-      document.getElementById("oiSummaryCoiCallPct").textContent = coiCallPct !== "-" ? `${coiCallPct}%` : "-";
-      document.getElementById("oiSummaryCoiPutPct").textContent = coiPutPct !== "-" ? `${coiPutPct}%` : "-";
+      // Call% and Put% shown as integer without color (neutral white)
+      const coiCallPctEl = document.getElementById("oiSummaryCoiCallPct");
+      const coiPutPctEl = document.getElementById("oiSummaryCoiPutPct");
+      if (coiCallPctEl) {
+        coiCallPctEl.textContent = coiCallPct !== "-" ? `${coiCallPct}%` : "-";
+        coiCallPctEl.className = "oi-pct-neutral";
+      }
+      if (coiPutPctEl) {
+        coiPutPctEl.textContent = coiPutPct !== "-" ? `${coiPutPct}%` : "-";
+        coiPutPctEl.className = "oi-pct-neutral";
+      }
 
       if (oiNetEl) {
         oiNetEl.textContent = oiNet >= 0 ? `+${fmt(oiNet)}` : fmt(oiNet);
         oiNetEl.className = `oi-net ${oiNet >= 0 ? 'positive' : 'negative'}`;
       }
-      document.getElementById("oiSummaryOiCallPct").textContent = oiCallPct !== "-" ? `${oiCallPct}%` : "-";
-      document.getElementById("oiSummaryOiPutPct").textContent = oiPutPct !== "-" ? `${oiPutPct}%` : "-";
+      // Call% and Put% shown as integer without color (neutral white)
+      const oiCallPctEl = document.getElementById("oiSummaryOiCallPct");
+      const oiPutPctEl = document.getElementById("oiSummaryOiPutPct");
+      if (oiCallPctEl) {
+        oiCallPctEl.textContent = oiCallPct !== "-" ? `${oiCallPct}%` : "-";
+        oiCallPctEl.className = "oi-pct-neutral";
+      }
+      if (oiPutPctEl) {
+        oiPutPctEl.textContent = oiPutPct !== "-" ? `${oiPutPct}%` : "-";
+        oiPutPctEl.className = "oi-pct-neutral";
+      }
 
       // Update table footer with COI Net and OI Net
       const footCoiNetEl = document.getElementById("footCoiNet");

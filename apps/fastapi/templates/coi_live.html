@@ -546,10 +546,25 @@
       html += '</tr>';
       html += '</thead>';
 
-      // Body rows - one row per time slot
+      // Body rows - LIVE row first, then time slots
       html += '<tbody>';
 
-      // Render time slot rows
+      // Render LIVE row (FIRST row after headers)
+      html += '<tr class="live-row">';
+      html += '<td class="time-cell"><span class="live-indicator">● LIVE</span></td>';
+
+      for (const strike of strikes) {
+        const liveData = strike.live || { intraday: null, weekly: null };
+        const liveIntradayClass = getValueClass(liveData.intraday);
+        const liveWeeklyClass = getValueClass(liveData.weekly);
+
+        html += `<td class="value-cell ${liveIntradayClass}">${fmt(liveData.intraday)}</td>`;
+        html += `<td class="value-cell ${liveWeeklyClass}">${fmt(liveData.weekly)}</td>`;
+      }
+
+      html += '</tr>';
+
+      // Render time slot rows (after LIVE row)
       for (const time of timeSlots) {
         html += '<tr>';
         html += `<td class="time-cell">${escHtml(time)}</td>`;
@@ -566,21 +581,6 @@
 
         html += '</tr>';
       }
-
-      // Render LIVE row (last row)
-      html += '<tr class="live-row">';
-      html += '<td class="time-cell"><span class="live-indicator">● LIVE</span></td>';
-
-      for (const strike of strikes) {
-        const liveData = strike.live || { intraday: null, weekly: null };
-        const liveIntradayClass = getValueClass(liveData.intraday);
-        const liveWeeklyClass = getValueClass(liveData.weekly);
-
-        html += `<td class="value-cell ${liveIntradayClass}">${fmt(liveData.intraday)}</td>`;
-        html += `<td class="value-cell ${liveWeeklyClass}">${fmt(liveData.weekly)}</td>`;
-      }
-
-      html += '</tr>';
 
       html += '</tbody>';
       html += '</table>';
