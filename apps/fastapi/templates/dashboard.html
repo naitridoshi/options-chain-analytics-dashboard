@@ -2579,6 +2579,7 @@
 
     function scheduleReload(delayMs = refreshMs) {
       if (timerId) clearTimeout(timerId);
+      console.log(`[SCHEDULE] Scheduling next reload in ${delayMs}ms (${delayMs/1000}s)`);
       timerId = setTimeout(load, delayMs);
     }
 
@@ -3267,6 +3268,7 @@
           : null);
       const strikes = data.strikes || [];
       refreshMs = (data.refresh_seconds || 300) * 1000;
+      console.log(`[REFRESH] API returned refresh_seconds: ${data.refresh_seconds}, setting refreshMs: ${refreshMs}ms (${refreshMs/1000}s)`);
       const refreshLabel = refreshMs >= 60000
         ? `${(refreshMs / 60000).toFixed(2)}m`
         : `${(refreshMs / 1000).toFixed(0)}s`;
@@ -3617,6 +3619,13 @@
 
       // Refresh Advance/Decline immediately (no delay)
       refreshAdvanceDecline().catch(() => {});
+
+      // Connect WebSocket for live LTP/VWAP updates
+      connectWebSocket(symbol).catch(() => setLiveStatus("warn"));
+
+      // Schedule next refresh based on API-provided interval (default 5 minutes)
+      console.log(`[SCHEDULE] Calling scheduleReload(${refreshMs}) at end of load()`);
+      scheduleReload(refreshMs);
     }
 
     setInterval(refreshLiveStatusHeartbeat, 5000);

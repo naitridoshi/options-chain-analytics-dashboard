@@ -190,6 +190,20 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
+    /* Sticky Header */
+    .pcr-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .pcr-table th:first-child,
+    .pcr-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+    }
+
     /* Yellow Header Row */
     .pcr-table thead tr {
       background: var(--header-yellow);
@@ -240,6 +254,14 @@
       padding-left: 20px;
       font-weight: 600;
       color: var(--text);
+      background: var(--blue-bg);
+      position: sticky;
+      left: 0;
+      z-index: 2;
+    }
+
+    .pcr-table tbody tr.after-threshold td.time-col {
+      background: var(--black-bg);
     }
 
     /* Value Columns */
