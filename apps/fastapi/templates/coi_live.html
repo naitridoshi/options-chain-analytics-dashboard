@@ -195,6 +195,13 @@
       white-space: nowrap;
     }
 
+    /* Sticky Header */
+    .coi-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
     .coi-table th:first-child,
     .coi-table td:first-child {
       position: sticky;
@@ -230,7 +237,20 @@
       border-color: rgba(34, 197, 94, 0.3);
     }
 
-    .coi-table thead tr:nth-child(2) th {
+    /* LIVE Header Row */
+    .coi-table thead tr.live-header-row th {
+      background: rgba(34, 197, 94, 0.12);
+      font-weight: 700;
+      padding: 8px 10px;
+    }
+
+    .coi-table thead tr.live-header-row th.live-time-header {
+      background: rgba(34, 197, 94, 0.15);
+      border-left: 2px solid var(--good);
+    }
+
+    /* Sub-header Row (Intraday/Weekly) */
+    .coi-table thead tr.sub-header-row th {
       background: #0a0a0a;
       color: var(--muted);
       font-weight: 600;
@@ -240,11 +260,11 @@
       padding: 4px 6px;
     }
 
-    .coi-table thead tr:nth-child(2) th.intraday-header {
+    .coi-table thead tr.sub-header-row th.intraday-header {
       color: #fbbf24;
     }
 
-    .coi-table thead tr:nth-child(2) th.weekly-header {
+    .coi-table thead tr.sub-header-row th.weekly-header {
       color: #a78bfa;
     }
 
@@ -297,21 +317,7 @@
       text-transform: uppercase;
     }
 
-    /* Live Row */
-    .coi-table tbody tr.live-row {
-      background: rgba(34, 197, 94, 0.08);
-    }
-
-    .coi-table tbody tr.live-row:hover {
-      background: rgba(34, 197, 94, 0.12);
-    }
-
-    .coi-table tbody tr.live-row td:first-child {
-      background: rgba(34, 197, 94, 0.1);
-      color: var(--good);
-      font-weight: 700;
-    }
-
+    /* Live Indicator Animation */
     .live-indicator {
       font-size: 8px;
       color: var(--good);
@@ -329,11 +335,13 @@
     }
 
     .value-positive {
-      color: var(--good);
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--text);
     }
 
     .value-negative {
-      color: var(--bad);
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--text);
     }
 
     .value-neutral {
@@ -534,8 +542,23 @@
 
       html += '</tr>';
 
+      // LIVE Row - Part of header (above Intraday/Weekly)
+      html += '<tr class="live-header-row">';
+      html += '<th class="time-header live-time-header"><span class="live-indicator">● LIVE</span></th>';
+
+      for (const strike of strikes) {
+        const liveData = strike.live || { intraday: null, weekly: null };
+        const liveIntradayClass = getValueClass(liveData.intraday);
+        const liveWeeklyClass = getValueClass(liveData.weekly);
+
+        html += `<th class="value-cell ${liveIntradayClass}">${fmt(liveData.intraday)}</th>`;
+        html += `<th class="value-cell ${liveWeeklyClass}">${fmt(liveData.weekly)}</th>`;
+      }
+
+      html += '</tr>';
+
       // Header Row 2: | Intraday | Weekly | Intraday | Weekly | ...
-      html += '<tr>';
+      html += '<tr class="sub-header-row">';
       html += '<th></th>'; // Empty for time column
 
       for (const strike of strikes) {
@@ -546,25 +569,10 @@
       html += '</tr>';
       html += '</thead>';
 
-      // Body rows - LIVE row first, then time slots
+      // Body rows - time slots only (LIVE row is now in header)
       html += '<tbody>';
 
-      // Render LIVE row (FIRST row after headers)
-      html += '<tr class="live-row">';
-      html += '<td class="time-cell"><span class="live-indicator">● LIVE</span></td>';
-
-      for (const strike of strikes) {
-        const liveData = strike.live || { intraday: null, weekly: null };
-        const liveIntradayClass = getValueClass(liveData.intraday);
-        const liveWeeklyClass = getValueClass(liveData.weekly);
-
-        html += `<td class="value-cell ${liveIntradayClass}">${fmt(liveData.intraday)}</td>`;
-        html += `<td class="value-cell ${liveWeeklyClass}">${fmt(liveData.weekly)}</td>`;
-      }
-
-      html += '</tr>';
-
-      // Render time slot rows (after LIVE row)
+      // Render time slot rows
       for (const time of timeSlots) {
         html += '<tr>';
         html += `<td class="time-cell">${escHtml(time)}</td>`;

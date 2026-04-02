@@ -26,6 +26,16 @@ from libs.utils.db.redis.src import RedisOptionChainSnapshotStore
 
 IST = ZoneInfo("Asia/Kolkata")
 
+
+def _round_to_interval(dt: datetime, interval_minutes: int) -> datetime:
+    """Round datetime to nearest interval boundary."""
+    minutes = dt.hour * 60 + dt.minute
+    rounded_minutes = round(minutes / interval_minutes) * interval_minutes
+    new_hour = int(rounded_minutes // 60)
+    new_minute = int(rounded_minutes % 60)
+    return dt.replace(hour=new_hour, minute=new_minute, second=0, microsecond=0)
+
+
 log = CustomLogger("COILiveService")
 logger, listener = log.get_logger()
 listener.start()
@@ -128,11 +138,12 @@ class COILiveService:
         time_slots = cls._get_time_slots(trade_date)
 
         # Get all snapshots from timeline with error handling
+        # Use higher limit to ensure we get all snapshots for the day (75 slots from 9:15 to 15:30)
         try:
             timeline = await RedisOptionChainSnapshotStore.get_timeline(
                 instrument_symbol=instrument.symbol,
                 trade_date=trade_date.isoformat(),
-                limit=100,
+                limit=200,
             )
         except Exception as e:
             logger.warning(f"Failed to get timeline from Redis: {e}")
@@ -170,7 +181,9 @@ class COILiveService:
             # Parse the timestamp and get IST time
             captured_dt = datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
             captured_ist = captured_dt.astimezone(IST)
-            time_key = captured_ist.strftime("%H:%M")
+            # Round to nearest interval to align with predefined time slots
+            rounded_ist = _round_to_interval(captured_ist, COI_LIVE_INTERVAL_MINUTES)
+            time_key = rounded_ist.strftime("%H:%M")
 
             strikes = snapshot.get("strikes", [])
             for strike in strikes:
@@ -236,7 +249,12 @@ class COILiveService:
             captured_at = latest_snapshot.get("latest", {}).get("captured_at")
             if captured_at:
                 captured_dt = datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
-                latest_time_key = captured_dt.astimezone(IST).strftime("%H:%M")
+                captured_ist = captured_dt.astimezone(IST)
+                # Round to nearest interval to align with predefined time slots
+                rounded_ist = _round_to_interval(
+                    captured_ist, COI_LIVE_INTERVAL_MINUTES
+                )
+                latest_time_key = rounded_ist.strftime("%H:%M")
 
         # Build final strikes data with live values
         result_strikes = []
