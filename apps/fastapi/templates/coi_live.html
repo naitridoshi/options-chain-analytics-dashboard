@@ -178,6 +178,7 @@
     .table-container {
       overflow-x: auto;
       overflow-y: auto;
+      max-height: calc(100vh - 120px);
     }
 
     /* COI Table */
@@ -238,7 +239,7 @@
       border-color: rgba(34, 197, 94, 0.3);
     }
 
-    /* LIVE Header Row - No special background, values show green/red based on value */
+    /* LIVE Header Row - Static colors for Intraday/Weekly */
     .coi-table thead tr.live-header-row th {
       font-weight: 700;
       padding: 8px 10px;
@@ -247,6 +248,25 @@
     .coi-table thead tr.live-header-row th.live-time-header {
       background: #0a0a0a;
       border-left: 2px solid var(--good);
+    }
+
+    /* Live row - Intraday: Black bg, White font */
+    .coi-table thead tr.live-header-row th.live-intraday {
+      background: #000000 !important;
+      color: #ffffff !important;
+    }
+
+    /* Live row - Weekly: Gray bg, Black font */
+    .coi-table thead tr.live-header-row th.live-weekly {
+      background: #6b7280 !important;
+      color: #000000 !important;
+    }
+
+    /* Ensure ATM border still works on live row */
+    .coi-table thead tr.live-header-row th.live-intraday.atm-strike-live,
+    .coi-table thead tr.live-header-row th.live-weekly.atm-strike-live {
+      border-left: 3px solid #000000 !important;
+      border-right: 3px solid #000000 !important;
     }
 
     /* Sub-header Row (Intraday/Weekly) */
@@ -302,16 +322,31 @@
     .coi-table thead tr:first-child {
       top: 0;
       z-index: 15;
+      background: #0a0a0a;
+    }
+
+    .coi-table thead tr:first-child th {
+      background: #0a0a0a;
     }
 
     .coi-table thead tr.live-header-row {
       top: 32px;
       z-index: 14;
+      background: #000000;
+    }
+
+    .coi-table thead tr.live-header-row th {
+      background: #000000;
     }
 
     .coi-table thead tr.sub-header-row {
       top: 64px;
       z-index: 13;
+      background: #0a0a0a;
+    }
+
+    .coi-table thead tr.sub-header-row th {
+      background: #0a0a0a;
     }
 
     /* Sticky first column z-index for header rows */
@@ -394,12 +429,12 @@
     }
 
     .value-positive {
-      background: rgba(74, 222, 128, 0.55);
+      background: rgba(74, 222, 128, 0.75);
       color: #000000;
     }
 
     .value-negative {
-      background: rgba(248, 113, 113, 0.55);
+      background: rgba(248, 113, 113, 0.75);
       color: #000000;
     }
 
@@ -610,11 +645,9 @@
         const isAtm = strike.strike_price === atmStrike;
         const atmClass = isAtm ? ' atm-strike-live' : '';
         const liveData = strike.live || { intraday: null, weekly: null };
-        const liveIntradayClass = getValueClass(liveData.intraday);
-        const liveWeeklyClass = getValueClass(liveData.weekly);
 
-        html += `<th class="value-cell ${liveIntradayClass}${atmClass}">${fmt(liveData.intraday)}</th>`;
-        html += `<th class="value-cell ${liveWeeklyClass}${atmClass}">${fmt(liveData.weekly)}</th>`;
+        html += `<th class="value-cell live-intraday${atmClass}">${fmt(liveData.intraday)}</th>`;
+        html += `<th class="value-cell live-weekly${atmClass}">${fmt(liveData.weekly)}</th>`;
       }
 
       html += '</tr>';

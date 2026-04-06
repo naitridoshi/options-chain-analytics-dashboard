@@ -174,6 +174,7 @@
     .table-container {
       overflow-x: auto;
       overflow-y: auto;
+      max-height: calc(100vh - 120px);
     }
 
     /* PCR Table */
@@ -181,13 +182,14 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
+      border: 1px solid var(--line);
     }
 
     .pcr-table th,
     .pcr-table td {
       padding: 10px 16px;
       text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--line);
     }
 
     /* Sticky Header */
@@ -212,7 +214,7 @@
     .pcr-table thead th {
       color: #000000;
       font-weight: 700;
-      border: none;
+      background: var(--header-yellow);
     }
 
     .pcr-table thead th.time-col {
@@ -249,6 +251,13 @@
     }
 
     /* Time Column */
+    .pcr-table thead th.time-col {
+      position: sticky;
+      left: 0;
+      z-index: 12;
+      background: var(--header-yellow);
+    }
+
     .pcr-table tbody td.time-col {
       text-align: left;
       padding-left: 20px;
