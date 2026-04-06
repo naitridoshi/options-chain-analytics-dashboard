@@ -238,20 +238,15 @@
       border-color: rgba(34, 197, 94, 0.3);
     }
 
-    /* LIVE Header Row */
+    /* LIVE Header Row - No special background, values show green/red based on value */
     .coi-table thead tr.live-header-row th {
-      background: rgba(34, 197, 94, 0.12);
       font-weight: 700;
       padding: 8px 10px;
     }
 
     .coi-table thead tr.live-header-row th.live-time-header {
-      background: rgba(34, 197, 94, 0.15);
+      background: #0a0a0a;
       border-left: 2px solid var(--good);
-    }
-
-    .coi-table thead tr.live-header-row th.atm-strike-live {
-      background: rgba(251, 191, 36, 0.5) !important;
     }
 
     /* Sub-header Row (Intraday/Weekly) */
@@ -277,6 +272,27 @@
 
     /* ATM Strike Column Highlight - Yellow only for strike price header */
     /* Note: Intraday/Weekly sub-headers keep their orange/blue colors */
+
+    /* ATM Strike Column - Black Border on all cells */
+    .coi-table thead tr:first-child th.strike-header.atm {
+      border-left: 3px solid #000000 !important;
+      border-right: 3px solid #000000 !important;
+    }
+
+    .coi-table thead tr.live-header-row th.atm-strike-live {
+      border-left: 3px solid #000000 !important;
+      border-right: 3px solid #000000 !important;
+    }
+
+    .coi-table thead tr.sub-header-row th.atm-strike {
+      border-left: 3px solid #000000 !important;
+      border-right: 3px solid #000000 !important;
+    }
+
+    .coi-table tbody td.atm-strike-data {
+      border-left: 3px solid #000000 !important;
+      border-right: 3px solid #000000 !important;
+    }
 
     /* Sticky Header Rows */
     .coi-table thead tr {
@@ -378,17 +394,18 @@
     }
 
     .value-positive {
-      background: rgba(34, 197, 94, 1);
-      color: var(--black);
+      background: rgba(74, 222, 128, 0.55);
+      color: #000000;
     }
 
     .value-negative {
-      background: rgba(239, 68, 68, 1);
-      color: var(--black);
+      background: rgba(248, 113, 113, 0.55);
+      color: #000000;
     }
 
     .value-neutral {
-      color: var(--black);
+      color: var(--text);
+      background: transparent;
     }
 
     /* Time Slot Header */

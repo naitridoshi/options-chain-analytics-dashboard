@@ -138,12 +138,14 @@ class COILiveService:
         time_slots = cls._get_time_slots(trade_date)
 
         # Get all snapshots from timeline with error handling
-        # Use higher limit to ensure we get all snapshots for the day (75 slots from 9:15 to 15:30)
+        # Trading day: 9:15 to 15:30 IST = 375 minutes
+        # At 40-second intervals: 375 * 60 / 40 = ~563 snapshots max per day
+        # Use limit of 600 to cover full trading day with buffer
         try:
             timeline = await RedisOptionChainSnapshotStore.get_timeline(
                 instrument_symbol=instrument.symbol,
                 trade_date=trade_date.isoformat(),
-                limit=200,
+                limit=600,
             )
         except Exception as e:
             logger.warning(f"Failed to get timeline from Redis: {e}")
