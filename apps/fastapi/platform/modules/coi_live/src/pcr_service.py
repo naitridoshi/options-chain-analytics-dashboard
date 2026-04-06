@@ -145,7 +145,7 @@ class COIPCRLiveService:
             timeline = await RedisOptionChainSnapshotStore.get_timeline(
                 instrument_symbol=instrument.symbol,
                 trade_date=trade_date.isoformat(),
-                limit=200,
+                limit=600,
             )
         except Exception as e:
             logger.warning(f"Failed to get timeline from Redis: {e}")
