@@ -118,6 +118,31 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 )
 
                 logger.info("✅ Request completed successfully", extra=extra)
+        except RecursionError as error:
+            import traceback
+
+            logger.error(
+                f"❌ RecursionError (likely Redis health check bug): {error}\n"
+                f"{traceback.format_exc()}"
+            )
+
+            response = JSONResponse(
+                status_code=503,
+                content={
+                    "success": False,
+                    "error": "Service temporarily unavailable - please retry",
+                    "retry_after": 5,
+                },
+            )
+
+            extra = extra_details_for_req(
+                inspect,
+                __class__.__name__,
+                response=response,
+                start_time=start_time,
+            )
+            logger.info("❌ Request failed (RecursionError)...", extra=extra)
+
         except Exception as error:
             import traceback
 
