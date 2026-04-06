@@ -40,7 +40,11 @@ def redirect_to_login():
 @core_route.get("/health")
 async def root():
     logger.info("Backend app health endpoint accessed")
-    runtime_store_status = await RuntimeStoreHealthService.get_status()
+    try:
+        runtime_store_status = await RuntimeStoreHealthService.get_status()
+    except Exception as e:
+        logger.error(f"Health check failed for runtime store: {e}")
+        runtime_store_status = {"healthy": False, "error": str(e)}
     return JSONResponse(
         status_code=200,
         content={
@@ -65,14 +69,54 @@ def fyers_login(request: Request):
 
 @core_route.get("/api/v1/fyers/status")
 async def fyers_token_status(_: str = Depends(verify_basic_auth)):
-    data = await FyersClientService.get_today_token_status()
-    return JSONResponse(status_code=200, content={"success": True, "data": data})
+    try:
+        data = await FyersClientService.get_today_token_status()
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except RecursionError:
+        # Redis health check bug - server may be unavailable
+        logger.error("RecursionError in fyers_token_status - Redis may be unavailable")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "success": False,
+                "error": "Service temporarily unavailable - please try again",
+                "retry_after": 5,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error in fyers_token_status: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "success": False,
+                "error": "Service temporarily unavailable",
+            },
+        )
 
 
 @core_route.get("/api/v1/runtime-store/status")
 async def runtime_store_status(_: str = Depends(verify_basic_auth)):
-    data = await RuntimeStoreHealthService.get_status()
-    return JSONResponse(status_code=200, content={"success": True, "data": data})
+    try:
+        data = await RuntimeStoreHealthService.get_status()
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except RecursionError:
+        logger.error(
+            "RecursionError in runtime-store status - Redis may be unavailable"
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "success": False,
+                "error": "Service temporarily unavailable - please try again",
+                "retry_after": 5,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error in runtime-store status: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"success": False, "error": "Service temporarily unavailable"},
+        )
 
 
 @core_route.post("/api/v1/market-data/ws-ticket")
@@ -86,14 +130,31 @@ async def issue_market_data_ws_ticket(
             status_code=400,
             content={"success": False, "error": "Missing symbol query parameter"},
         )
-    ticket = await RuntimeWebSocketTicketService.create_ticket(
-        subject="dashboard",
-        symbol=normalized_symbol,
-    )
-    return JSONResponse(
-        status_code=200,
-        content={"success": True, "data": {"ticket": ticket}},
-    )
+    try:
+        ticket = await RuntimeWebSocketTicketService.create_ticket(
+            subject="dashboard",
+            symbol=normalized_symbol,
+        )
+        return JSONResponse(
+            status_code=200,
+            content={"success": True, "data": {"ticket": ticket}},
+        )
+    except RecursionError:
+        logger.error("RecursionError in ws-ticket - Redis may be unavailable")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "success": False,
+                "error": "Service temporarily unavailable - please try again",
+                "retry_after": 5,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error in ws-ticket: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"success": False, "error": "Service temporarily unavailable"},
+        )
 
 
 @core_route.post("/login")

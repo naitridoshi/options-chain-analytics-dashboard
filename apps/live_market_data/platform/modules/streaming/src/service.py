@@ -396,11 +396,26 @@ class LiveMarketStreamingService:
         )
 
     def _on_error(self, error: Exception) -> None:
+        error_str = str(error)
+
+        # Check for event loop closed error - this is a terminal state
+        if (
+            "Event loop is closed" in error_str
+            or "event loop is closed" in error_str.lower()
+        ):
+            self._handle_closed_loop()
+            return
+
+        # Check if loop is closed before continuing
+        if self._loop and self._loop.is_closed():
+            self._handle_closed_loop()
+            return
+
         self._pause_socket()
         self._is_connected = False
         _log_throttled(
             level="error",
-            message=f"Live websocket error - error: {str(error)}",
+            message=f"Live websocket error - error: {error_str}",
             last_logged_at_attr="_last_ws_error_log_at",
             suppressed_count_attr="_suppressed_ws_error_count",
             owner=self,
@@ -411,9 +426,13 @@ class LiveMarketStreamingService:
         if not isinstance(message, dict):
             return
 
+        # Early exit if loop is closed to prevent cascading errors
+        if not self._loop or self._loop.is_closed():
+            return
+
         symbol = message.get("symbol")
         ltp = message.get("ltp")
-        if not symbol or not self._loop:
+        if not symbol:
             return
         normalized_symbol = _normalize_symbol_key(symbol)
 
@@ -727,13 +746,39 @@ class LiveMarketStreamingService:
         if not self._loop:
             return
 
+        # Defensive check: ensure the loop is still running before scheduling work
+        if self._loop.is_closed():
+            self._handle_closed_loop()
+            return
+
         now = monotonic()
         if now < self._redis_retry_after:
             return
 
-        coroutine = coroutine_factory()
-        future = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
-        future.add_done_callback(self._handle_live_write_result)
+        try:
+            coroutine = coroutine_factory()
+            future = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
+            future.add_done_callback(self._handle_live_write_result)
+        except RuntimeError as e:
+            if "Event loop is closed" in str(e) or "no running event loop" in str(e):
+                self._handle_closed_loop()
+            else:
+                raise
+
+    def _handle_closed_loop(self) -> None:
+        """Handle the case where the event loop has been closed unexpectedly."""
+        if not self._ws_client:
+            return  # Already cleaned up
+
+        # Log once per occurrence
+        logger.error(
+            "Event loop closed unexpectedly - pausing websocket and clearing state. "
+            "The app should be restarted to resume live streaming."
+        )
+
+        # Clean up websocket state to prevent further errors
+        self._pause_socket(clear_symbols=True)
+        self._running = False
 
     def _handle_live_write_result(self, future) -> None:
         try:
