@@ -20,6 +20,7 @@ from libs.utils.common.constants.src.templates import (
     COI_PCR_LIVE_TEMPLATE_HTML,
     DASHBOARD_TEMPLATE_HTML,
     HEATMAP_TEMPLATE_HTML,
+    INDEX_SCRIPTS_TEMPLATE_HTML,
     LOGIN_TEMPLATE_HTML,
     MARKET_BREADTH_TEMPLATE_HTML,
     MOST_ACTIVE_TEMPLATE_HTML,
@@ -183,3 +184,10 @@ async def most_active_data(
                 "traceback": traceback.format_exc(),
             },
         )
+
+
+@dashboard_route.get("/index-scripts", response_class=HTMLResponse)
+async def index_scripts_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(INDEX_SCRIPTS_TEMPLATE_HTML)

@@ -1,3 +1,6 @@
+from libs.utils.common.runtime_store.src.constituent_service import (
+    RuntimeConstituentService,
+)
 from libs.utils.common.runtime_store.src.dashboard_service import (
     RuntimeDashboardService,
 )
@@ -23,6 +26,7 @@ from libs.utils.common.runtime_store.src.websocket_ticket_service import (
 
 __all__ = [
     "RuntimeDashboardService",
+    "RuntimeConstituentService",
     "RuntimeStoreHealthService",
     "RuntimeScriptSnapshotService",
     "RuntimeIndexSnapshotService",

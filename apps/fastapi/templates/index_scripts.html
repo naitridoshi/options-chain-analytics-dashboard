@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Index Constituents - Options Chain Analytics</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #000000;
+      --line: #1e3a5f;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { min-height: 100%; background: #000000; }
+    body { font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif; background: #000000; min-height: 100vh; color: var(--text); }
+    .page { max-width: 1400px; margin: 8px auto; padding: 0 8px; }
+    .card { background: #000000; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+
+    /* Navbar */
+    .navbar { display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: #0a0a0a; border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0; flex-wrap: wrap; }
+    .nav-link { background: transparent; border: 1px solid transparent; color: var(--muted); border-radius: 4px; height: 28px; padding: 0 10px; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease; white-space: nowrap; }
+    .nav-link:hover { background: #141414; color: var(--text); border-color: var(--line); }
+    .nav-link.active { background: rgba(56,189,248,0.1); color: var(--accent); border-color: rgba(56,189,248,0.3); }
+    .nav-sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; flex-shrink: 0; }
+
+    /* Header */
+    .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #000000; border-bottom: 1px solid var(--line); }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .page-title { font-size: 18px; font-weight: 800; color: var(--accent); letter-spacing: 0.5px; }
+    .header-badge { font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .captured-time { font-size: 10px; color: var(--muted); }
+    .back-btn { background: #0a0a0a; border: 1px solid var(--line); color: var(--text); border-radius: 4px; height: 32px; padding: 0 14px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; }
+    .back-btn:hover { background: #141414; border-color: var(--accent); color: var(--accent); }
+
+    /* Content */
+    .content { padding: 16px; }
+
+    /* Metrics */
+    .metrics-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+    .metric-card { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; background: #000000; transition: all 0.2s ease; }
+    .metric-card:hover { border-color: var(--accent); }
+    .metric-icon { font-size: 18px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 700; flex-shrink: 0; }
+    .metric-card.advance .metric-icon { background: rgba(34,197,94,0.15); color: var(--good); }
+    .metric-card.decline .metric-icon { background: rgba(239,68,68,0.15); color: var(--bad); }
+    .metric-card.unchanged .metric-icon { background: rgba(107,114,128,0.15); color: #6b7280; }
+    .metric-card.total .metric-icon { background: rgba(56,189,248,0.15); color: var(--accent); }
+    .metric-content { display: flex; flex-direction: column; min-width: 0; }
+    .metric-value { font-size: 22px; font-weight: 800; line-height: 1.2; }
+    .metric-card.advance .metric-value { color: var(--good); }
+    .metric-card.decline .metric-value { color: var(--bad); }
+    .metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+
+    /* Breadth Bar */
+    .breadth-bar-section { margin-bottom: 16px; }
+    .breadth-bar-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+    .breadth-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; background: #0a0a0a; border: 1px solid var(--line); }
+    .breadth-bar-segment { transition: width 0.4s ease; min-width: 2px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9); }
+    .breadth-bar-segment.advance { background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%); }
+    .breadth-bar-segment.decline { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
+    .breadth-bar-segment.unchanged { background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%); }
+    .breadth-bar-legend { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; font-weight: 600; }
+    .legend-advance { color: var(--good); }
+    .legend-decline { color: var(--bad); }
+    .legend-unchanged { color: #6b7280; }
+
+    /* Actions */
+    .actions-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .search-box { display: flex; align-items: center; gap: 8px; background: #0a0a0a; border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; flex: 1; max-width: 300px; }
+    .search-box input { background: transparent; border: none; color: var(--text); font-size: 12px; outline: none; width: 100%; font-family: inherit; }
+    .search-box input::placeholder { color: var(--muted); }
+    .filter-group { display: flex; gap: 6px; }
+    .filter-btn { background: #0a0a0a; border: 1px solid var(--line); color: var(--muted); border-radius: 4px; padding: 8px 14px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-family: inherit; }
+    .filter-btn:hover { background: #141414; color: var(--text); }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #000; }
+
+    /* Table */
+    .script-list-wrap { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #000000; }
+    .script-list-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #0a0a0a; border-bottom: 1px solid var(--line); }
+    .list-count { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .script-list { max-height: 500px; overflow: auto; }
+    .script-list-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .script-list-table thead th { position: sticky; top: 0; z-index: 1; background: #0a0a0a; border-bottom: 1px solid var(--line); padding: 10px 12px; font-weight: 700; color: var(--text); text-align: left; cursor: pointer; transition: color 0.2s ease; white-space: nowrap; }
+    .script-list-table thead th:hover { color: var(--accent); }
+    .script-list-table tbody tr { border-bottom: 1px solid var(--line); transition: background 0.2s ease; }
+    .script-list-table tbody tr:hover { background: rgba(56,189,248,0.05); }
+    .script-list-table tbody tr:nth-child(odd) { background: #000000; }
+    .script-list-table tbody tr:nth-child(even) { background: #050505; }
+    .script-list-table tbody td { padding: 10px 12px; color: var(--text); }
+    .pos { color: var(--good); font-weight: 700; }
+    .neg { color: var(--bad); font-weight: 700; }
+    .trend-badge { font-size: 9px; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; }
+    .trend-badge.advance { background: rgba(34,197,94,0.15); color: var(--good); border: 1px solid rgba(34,197,94,0.3); }
+    .trend-badge.decline { background: rgba(239,68,68,0.15); color: var(--bad); border: 1px solid rgba(239,68,68,0.3); }
+    .trend-badge.unchanged { background: rgba(107,114,128,0.15); color: #9ca3af; border: 1px solid rgba(107,114,128,0.3); }
+    .empty-state { padding: 60px 20px; text-align: center; color: var(--muted); }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-state-text { font-size: 14px; }
+    .loading { display: flex; align-items: center; justify-content: center; padding: 60px; }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 900px) { .metrics-summary { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 600px) { .metrics-summary { grid-template-columns: 1fr; } .actions-bar { flex-direction: column; align-items: stretch; } .search-box { max-width: none; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <!-- Navbar -->
+      <div class="navbar" id="navbar"></div>
+
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <a href="/heatmap" class="back-btn"><span>&#8592;</span><span>Back to Heatmap</span></a>
+          <h1 class="page-title" id="indexTitle">Index Constituents</h1>
+          <span class="header-badge">LIVE</span>
+        </div>
+        <div class="header-right">
+          <span class="captured-time" id="capturedTime">-</span>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <div class="metrics-summary">
+          <div class="metric-card advance"><div class="metric-icon">&#9650;</div><div class="metric-content"><span class="metric-value" id="mAdvance">-</span><span class="metric-label">Advancing</span></div></div>
+          <div class="metric-card decline"><div class="metric-icon">&#9660;</div><div class="metric-content"><span class="metric-value" id="mDecline">-</span><span class="metric-label">Declining</span></div></div>
+          <div class="metric-card unchanged"><div class="metric-icon">&#9679;</div><div class="metric-content"><span class="metric-value" id="mUnchanged">-</span><span class="metric-label">Unchanged</span></div></div>
+          <div class="metric-card total"><div class="metric-icon">TOT</div><div class="metric-content"><span class="metric-value" id="mTotal">-</span><span class="metric-label">Total Scripts</span></div></div>
+        </div>
+        <div class="breadth-bar-section">
+          <div class="breadth-bar-label">Market Distribution</div>
+          <div class="breadth-bar">
+            <div id="barAdvance" class="breadth-bar-segment advance" style="width:0%"></div>
+            <div id="barUnchanged" class="breadth-bar-segment unchanged" style="width:0%"></div>
+            <div id="barDecline" class="breadth-bar-segment decline" style="width:0%"></div>
+          </div>
+          <div class="breadth-bar-legend">
+            <span class="legend-advance" id="pctAdvance">0%</span>
+            <span class="legend-unchanged" id="pctUnchanged">0%</span>
+            <span class="legend-decline" id="pctDecline">0%</span>
+          </div>
+        </div>
+        <div class="actions-bar">
+          <div class="search-box"><span>&#128269;</span><input type="text" id="searchInput" placeholder="Search by symbol or name..." /></div>
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="ADVANCE">Advance</button>
+            <button class="filter-btn" data-filter="DECLINE">Decline</button>
+            <button class="filter-btn" data-filter="UNCHANGED">Unchanged</button>
+          </div>
+        </div>
+        <div class="script-list-wrap">
+          <div class="script-list-header"><span class="list-count" id="listCount">0 scripts</span></div>
+          <div class="script-list">
+            <table class="script-list-table">
+              <thead><tr><th data-sort="symbol">Symbol</th><th data-sort="name">Name</th><th data-sort="ltp">LTP</th><th data-sort="previous_close">Prev Close</th><th data-sort="change">Change</th><th data-sort="change_pct">Change %</th><th data-sort="trend">Trend</th></tr></thead>
+              <tbody id="scriptBody"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const indexName = params.get("index") || "";
+    let allScripts = [];
+    let currentFilter = "all";
+    let currentSearch = "";
+    let currentSort = { field: "symbol", dir: "asc" };
+
+    function fmt(v) { if (v===null||v===undefined||Number.isNaN(Number(v))) return "-"; return Number(v).toLocaleString(); }
+    function fmt2(v) { if (v===null||v===undefined||Number.isNaN(Number(v))) return "-"; return Number(v).toFixed(2); }
+    function escHtml(v) { return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
+    function toIST(iso) { if(!iso) return "-"; const d=new Date(iso); return d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false,timeZone:"Asia/Kolkata"}); }
+
+    function renderNavbar() {
+      const pages = [
+        { href: "/dashboard", label: "Dashboard" },
+        { href: "/heatmap", label: "Heatmap" },
+        { href: "/market-breadth", label: "Market Breadth" },
+        { href: "/most-active", label: "Most Active" },
+        { href: "/coi-live", label: "COI Live" },
+        { href: "/coi-pcr-live", label: "COI PCR Live" },
+      ];
+      const nav = document.getElementById("navbar");
+      nav.innerHTML = pages.map(p => {
+        const active = window.location.pathname === p.href ? " active" : "";
+        return `<a href="${p.href}" class="nav-link${active}">${escHtml(p.label)}</a>`;
+      }).join("<div class='nav-sep'></div>");
+    }
+
+    if (indexName) {
+      document.getElementById("indexTitle").textContent = indexName + " Constituents";
+      document.title = indexName + " - Options Chain Analytics";
+    }
+
+    function updateMetrics(data) {
+      const advance = Number(data.advance_count||0);
+      const decline = Number(data.decline_count||0);
+      const unchanged = Number(data.unchanged_count||0);
+      const total = advance + decline + unchanged;
+      document.getElementById("mAdvance").textContent = fmt(advance);
+      document.getElementById("mDecline").textContent = fmt(decline);
+      document.getElementById("mUnchanged").textContent = fmt(unchanged);
+      document.getElementById("mTotal").textContent = fmt(total);
+      if (total > 0) {
+        const ap = (advance/total)*100, dp = (decline/total)*100, up = (unchanged/total)*100;
+        document.getElementById("barAdvance").style.width = ap+"%";
+        document.getElementById("barUnchanged").style.width = up+"%";
+        document.getElementById("barDecline").style.width = dp+"%";
+        document.getElementById("pctAdvance").textContent = ap.toFixed(1)+"%";
+        document.getElementById("pctUnchanged").textContent = up.toFixed(1)+"%";
+        document.getElementById("pctDecline").textContent = dp.toFixed(1)+"%";
+      }
+    }
+
+    function renderScripts() {
+      const tbody = document.getElementById("scriptBody");
+      let filtered = allScripts;
+      if (currentFilter !== "all") filtered = filtered.filter(s => (s.trend||"UNCHANGED")===currentFilter);
+      if (currentSearch) { const q=currentSearch.toLowerCase(); filtered = filtered.filter(s => (s.symbol||"").toLowerCase().includes(q)||(s.name||"").toLowerCase().includes(q)); }
+      filtered.sort((a,b) => { let av=a[currentSort.field], bv=b[currentSort.field]; if(typeof av==="number"&&typeof bv==="number") return currentSort.dir==="asc"?av-bv:bv-av; av=String(av||""); bv=String(bv||""); return currentSort.dir==="asc"?av.localeCompare(bv):bv.localeCompare(av); });
+      document.getElementById("listCount").textContent = filtered.length+" script"+(filtered.length!==1?"s":"");
+      if (!filtered.length) { tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">&#128269;</div><div class="empty-state-text">No scripts found</div></div></td></tr>'; return; }
+      tbody.innerHTML = filtered.map(item => {
+        const trend = item.trend||"UNCHANGED";
+        const tc = trend.toLowerCase();
+        const chgCls = Number(item.change)>0?"pos":Number(item.change)<0?"neg":"";
+        const pctCls = Number(item.change_pct)>0?"pos":Number(item.change_pct)<0?"neg":"";
+        return `<tr><td>${escHtml(item.symbol||"-")}</td><td title="${escHtml(item.name||item.symbol||"-")}">${escHtml(item.name||item.symbol||"-")}</td><td>${fmt2(item.ltp)}</td><td>${fmt2(item.previous_close)}</td><td class="${chgCls}">${fmt2(item.change)}</td><td class="${pctCls}">${item.change_pct===null||item.change_pct===undefined?"-":fmt2(item.change_pct)+"%"}</td><td><span class="trend-badge ${tc}">${escHtml(trend)}</span></td></tr>`;
+      }).join("");
+    }
+
+    async function loadData() {
+      if (!indexName) return;
+      try {
+        const resp = await fetch("/api/v1/index-snapshot/constituents?index="+encodeURIComponent(indexName), { credentials: "include" });
+        const result = await resp.json();
+        if (result.success && result.data) {
+          const data = result.data;
+          updateMetrics(data);
+          allScripts = Array.isArray(data.scripts) ? data.scripts : [];
+          renderScripts();
+          if (data.captured_at) document.getElementById("capturedTime").textContent = "Updated: "+toIST(data.captured_at);
+        }
+      } catch (e) {
+        console.error("Failed to load:", e);
+        document.getElementById("scriptBody").innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">&#9888;</div><div class="empty-state-text">Failed to load data</div></div></td></tr>';
+      }
+    }
+
+    document.getElementById("searchInput").addEventListener("input", e => { currentSearch=e.target.value; renderScripts(); });
+    document.querySelectorAll(".filter-btn").forEach(btn => btn.addEventListener("click", () => { document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); currentFilter=btn.dataset.filter; renderScripts(); }));
+    document.querySelectorAll(".script-list-table th[data-sort]").forEach(th => th.addEventListener("click", () => { const f=th.dataset.sort; if(currentSort.field===f) currentSort.dir=currentSort.dir==="asc"?"desc":"asc"; else { currentSort.field=f; currentSort.dir="asc"; } renderScripts(); }));
+
+    renderNavbar();
+    loadData();
+    setInterval(loadData, 30000);
+  </script>
+</body>
+</html>
