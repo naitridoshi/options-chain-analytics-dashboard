@@ -9,6 +9,9 @@ from apps.fastapi.auth.src.basic_auth import (
     get_current_user,
     verify_basic_auth,
 )
+from apps.fastapi.platform.modules.dashboard.src.most_active_service import (
+    MostActiveService,
+)
 from apps.fastapi.platform.modules.dashboard.src.service import (
     OptionChainDashboardService,
 )
@@ -19,6 +22,7 @@ from libs.utils.common.constants.src.templates import (
     HEATMAP_TEMPLATE_HTML,
     LOGIN_TEMPLATE_HTML,
     MARKET_BREADTH_TEMPLATE_HTML,
+    MOST_ACTIVE_TEMPLATE_HTML,
 )
 
 dashboard_route = APIRouter(tags=["Dashboard"])
@@ -138,6 +142,34 @@ async def coi_pcr_live_data(
 
     try:
         data = await COIPCRLiveService.get_coi_pcr_live_data(symbol=symbol)
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )
+
+
+@dashboard_route.get("/most-active", response_class=HTMLResponse)
+async def most_active_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(MOST_ACTIVE_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/api/v1/most-active/data")
+async def most_active_data(
+    _: str = Depends(verify_basic_auth),
+):
+    try:
+        data = await MostActiveService.get_most_active_data()
         return JSONResponse(status_code=200, content={"success": True, "data": data})
     except Exception as e:
         import traceback
