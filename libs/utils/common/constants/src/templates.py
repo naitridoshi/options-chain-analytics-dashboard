@@ -24,3 +24,9 @@ COI_LIVE_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "coi_live.html").read_text(
 COI_PCR_LIVE_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "coi_pcr_live.html").read_text(
     encoding="utf-8"
 )
+MOST_ACTIVE_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "most_active.html").read_text(
+    encoding="utf-8"
+)
+INDEX_SCRIPTS_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "index_scripts.html").read_text(
+    encoding="utf-8"
+)

@@ -104,3 +104,19 @@ def index_intraday_trade_dates_key() -> str:
 
 def index_intraday_latest_snapshot_pointer_key(trade_date: str) -> str:
     return _join("indices", "latest", trade_date)
+
+
+def constituent_intraday_snapshot_key(trade_date: str, interval_ts: str) -> str:
+    return _join("constituents", "snapshots", trade_date, interval_ts)
+
+
+def constituent_intraday_timeline_key(trade_date: str) -> str:
+    return _join("constituents", "timelines", trade_date)
+
+
+def constituent_intraday_trade_dates_key() -> str:
+    return _join("constituents", "timeline-dates")
+
+
+def constituent_intraday_latest_snapshot_pointer_key(trade_date: str) -> str:
+    return _join("constituents", "latest", trade_date)

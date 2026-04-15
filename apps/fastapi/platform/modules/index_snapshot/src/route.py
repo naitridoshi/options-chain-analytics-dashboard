@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from apps.fastapi.auth.src.basic_auth import verify_basic_auth
+from apps.fastapi.platform.modules.index_snapshot.src.constituent_service import (
+    ConstituentSnapshotService,
+)
 from apps.fastapi.platform.modules.index_snapshot.src.service import (
     IndexSnapshotService,
 )
@@ -32,3 +35,27 @@ async def get_heatmap_data(
 ):
     result = await IndexSnapshotService.get_heatmap_data(category=category)
     return JSONResponse(status_code=200, content={"success": True, "data": result})
+
+
+@index_snapshot_route.get("/constituents")
+async def get_constituents(
+    index: str = Query(default=None),
+    _: bool = Depends(verify_basic_auth),
+):
+    """Get constituent scripts for a specific index/sector."""
+    if not index:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "index parameter is required"},
+        )
+    try:
+        data = await ConstituentSnapshotService.get_constituents_for_index(index)
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)},
+        )
