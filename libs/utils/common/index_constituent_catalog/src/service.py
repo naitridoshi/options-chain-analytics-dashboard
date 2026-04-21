@@ -30,7 +30,7 @@ class IndexConstituentCatalogService:
     @classmethod
     def get_constituents(cls, index_name: str) -> list[ConstituentDefinition]:
         cls._ensure_loaded()
-        normalized = index_name.strip().upper()
+        normalized = index_name.strip().upper().replace(" ", "")
         return cls._index_map.get(normalized, [])
 
     @classmethod
@@ -75,7 +75,7 @@ class IndexConstituentCatalogService:
                 symbol = row.get("Symbol", "").strip().upper()
                 if not symbol:
                     continue
-                index_name = row.get(index_col, "").strip().upper()
+                index_name = row.get(index_col, "").strip().upper().replace(" ", "")
                 if not index_name:
                     continue
                 if symbol not in all_symbols:
@@ -109,7 +109,7 @@ class IndexConstituentCatalogService:
                 symbol = row.get("Symbol", "").strip().upper()
                 if not symbol:
                     continue
-                sector_name = row.get("SECTOR", "").strip().upper()
+                sector_name = row.get("SECTOR", "").strip().upper().replace(" ", "")
                 if not sector_name:
                     continue
                 if symbol not in all_symbols:

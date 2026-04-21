@@ -54,12 +54,18 @@ class ScriptSnapshotService:
 
             snapshot_rows: list[dict] = []
             processed = 0
+            failed = 0
             for script in scripts:
-                ltp = await cls.fetch_ltp_with_retries(script)
+                try:
+                    ltp = await cls.fetch_ltp_with_retries(script)
+                except Exception as e:
+                    logger.warning(f"Failed to fetch LTP for {script.symbol}: {e}")
+                    ltp = None
+                    failed += 1
                 previous_close = previous_close_map.get(script.symbol)
                 change = None
                 change_pct = None
-                if previous_close is not None:
+                if ltp is not None and previous_close is not None:
                     previous_close_decimal = Decimal(str(previous_close))
                     change = ltp - previous_close_decimal
                     if previous_close_decimal != 0:
@@ -89,6 +95,7 @@ class ScriptSnapshotService:
             return {
                 "processed_scripts": processed,
                 "snapshots_created": snapshots_created,
+                "failed_scripts": failed,
             }
         except Exception as error:
             cls._status.last_error = str(error)

@@ -135,7 +135,7 @@
     .section-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       padding: 10px 14px;
       background: #0a0a0a;
       border: 1px solid var(--line);
@@ -149,12 +149,20 @@
       color: var(--text);
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
     }
 
     .section-title .icon {
       font-size: 14px;
     }
+
+    /* Title color variants */
+    .section-title.title-yellow { color: #fbbf24; }
+    .section-title.title-orange { color: #f97316; }
+    .section-title.title-green  { color: #22c55e; }
+    .section-title.title-blue   { color: #38bdf8; }
+    .section-title.title-red    { color: #ef4444; }
 
     .section-badge {
       font-size: 9px;
@@ -189,7 +197,7 @@
       border: 1px solid rgba(239, 68, 68, 0.4);
     }
 
-    /* Data Table */
+    /* Data Table - with grid borders like dashboard */
     .data-table-wrap {
       border: 1px solid var(--line);
       border-radius: 0 0 6px 6px;
@@ -201,6 +209,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 11px;
+      table-layout: fixed;
     }
 
     .data-table thead th {
@@ -208,15 +217,20 @@
       top: 0;
       z-index: 1;
       background: #0f1b2d;
-      border-bottom: 1px solid var(--line);
-      padding: 9px 12px;
+      border-bottom: 1px solid #33568b;
+      border-right: 1px solid rgba(30, 58, 95, 0.4);
+      padding: 9px 8px;
       font-weight: 700;
       color: var(--muted);
-      text-align: right;
+      text-align: center;
       white-space: nowrap;
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+    }
+
+    .data-table thead th:last-child {
+      border-right: none;
     }
 
     .data-table thead th:first-child {
@@ -224,20 +238,8 @@
       width: 30px;
     }
 
-    .data-table thead th.col-strike {
-      text-align: right;
-    }
-
-    .data-table thead th.col-type {
-      text-align: center;
-    }
-
-    .data-table thead th.col-symbol {
-      text-align: left;
-    }
-
     .data-table tbody tr {
-      border-bottom: 1px solid rgba(30, 58, 95, 0.4);
+      border-bottom: 1px solid #334155;
       transition: background 0.2s ease;
     }
 
@@ -250,28 +252,27 @@
     }
 
     .data-table tbody tr:nth-child(even) {
-      background: #040810;
+      background: #050505;
     }
 
     .data-table tbody td {
-      padding: 9px 12px;
+      border-bottom: 1px solid #334155;
+      border-right: 1px solid rgba(30, 58, 95, 0.4);
+      padding: 9px 8px;
       color: var(--text);
-      text-align: right;
+      text-align: center;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .data-table tbody td:last-child {
+      border-right: none;
     }
 
     .data-table tbody td:first-child {
       text-align: center;
       color: var(--muted);
       font-weight: 600;
-    }
-
-    .data-table tbody td.col-type {
-      text-align: center;
-    }
-
-    .data-table tbody td.col-symbol {
-      text-align: left;
     }
 
     .pos { color: var(--good); font-weight: 700; }
@@ -334,7 +335,7 @@
     /* Responsive */
     @media (max-width: 900px) {
       .data-table { font-size: 10px; }
-      .data-table thead th, .data-table tbody td { padding: 7px 8px; }
+      .data-table thead th, .data-table tbody td { padding: 7px 4px; }
     }
   </style>
 </head>
@@ -363,27 +364,30 @@
         <!-- Table 1: Most Active Contracts by Volume -->
         <div class="table-section">
           <div class="section-header">
-            <span class="section-title">
+            <span class="section-title title-yellow">
               <span class="icon">&#128200;</span>
               Most Active Contracts by Volume
             </span>
-            <span class="section-badge volume">TOP 5</span>
           </div>
           <div class="data-table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th class="col-strike">Strike</th>
+                  <th>Strike</th>
+                  <th>Type</th>
                   <th>Price Chg</th>
-                  <th class="col-type">Type</th>
+                  <th>LTP</th>
+                  <th>VWAP</th>
                   <th>Volume</th>
                   <th>OI</th>
                   <th>COI</th>
+                  <th>COI %</th>
+                  <th>Ratio</th>
                 </tr>
               </thead>
               <tbody id="table1Body">
-                <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="11"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -392,30 +396,29 @@
         <!-- Table 2: Most Active Calls by Open Interest -->
         <div class="table-section">
           <div class="section-header">
-            <span class="section-title">
+            <span class="section-title title-orange">
               <span class="icon">&#128200;</span>
               Most Active Calls by Open Interest
             </span>
-            <div style="display:flex;gap:6px;">
-              <span class="section-badge call">CALLS</span>
-              <span class="section-badge oi">OI</span>
-            </div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th class="col-strike">Strike</th>
+                  <th>Strike</th>
                   <th>Price Chg</th>
                   <th>LTP</th>
                   <th>VWAP</th>
+                  <th>Volume</th>
                   <th>OI</th>
                   <th>COI</th>
+                  <th>COI %</th>
+                  <th>Ratio</th>
                 </tr>
               </thead>
               <tbody id="table2Body">
-                <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -424,30 +427,29 @@
         <!-- Table 3: Most Active Calls by Volume -->
         <div class="table-section">
           <div class="section-header">
-            <span class="section-title">
+            <span class="section-title title-green">
               <span class="icon">&#128200;</span>
               Most Active Calls by Volume
             </span>
-            <div style="display:flex;gap:6px;">
-              <span class="section-badge call">CALLS</span>
-              <span class="section-badge volume">VOL</span>
-            </div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th class="col-strike">Strike</th>
+                  <th>Strike</th>
                   <th>Price Chg</th>
                   <th>LTP</th>
                   <th>VWAP</th>
+                  <th>Volume</th>
                   <th>OI</th>
                   <th>COI</th>
+                  <th>COI %</th>
+                  <th>Ratio</th>
                 </tr>
               </thead>
               <tbody id="table3Body">
-                <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -456,30 +458,29 @@
         <!-- Table 4: Most Active Puts by Open Interest -->
         <div class="table-section">
           <div class="section-header">
-            <span class="section-title">
+            <span class="section-title title-blue">
               <span class="icon">&#128200;</span>
               Most Active Puts by Open Interest
             </span>
-            <div style="display:flex;gap:6px;">
-              <span class="section-badge put">PUTS</span>
-              <span class="section-badge oi">OI</span>
-            </div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th class="col-strike">Strike</th>
+                  <th>Strike</th>
                   <th>Price Chg</th>
                   <th>LTP</th>
                   <th>VWAP</th>
+                  <th>Volume</th>
                   <th>OI</th>
                   <th>COI</th>
+                  <th>COI %</th>
+                  <th>Ratio</th>
                 </tr>
               </thead>
               <tbody id="table4Body">
-                <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -488,30 +489,29 @@
         <!-- Table 5: Most Active Puts by Volume -->
         <div class="table-section">
           <div class="section-header">
-            <span class="section-title">
+            <span class="section-title title-red">
               <span class="icon">&#128200;</span>
               Most Active Puts by Volume
             </span>
-            <div style="display:flex;gap:6px;">
-              <span class="section-badge put">PUTS</span>
-              <span class="section-badge volume">VOL</span>
-            </div>
           </div>
           <div class="data-table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th class="col-strike">Strike</th>
+                  <th>Strike</th>
                   <th>Price Chg</th>
                   <th>LTP</th>
                   <th>VWAP</th>
+                  <th>Volume</th>
                   <th>OI</th>
                   <th>COI</th>
+                  <th>COI %</th>
+                  <th>Ratio</th>
                 </tr>
               </thead>
               <tbody id="table5Body">
-                <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -521,7 +521,7 @@
   </div>
 
   <script>
-    (function(){var pages=[{href:"/dashboard",label:"Dashboard"},{href:"/heatmap",label:"Heatmap"},{href:"/market-breadth",label:"Market Breadth"},{href:"/most-active",label:"Most Active"},{href:"/coi-live",label:"COI Live"},{href:"/coi-pcr-live",label:"COI PCR Live"}];var nav=document.getElementById("navbar");if(!nav)return;var css="display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";var sep="<div style='width:1px;height:20px;background:var(--line);margin:0 4px;flex-shrink:0;'></div>";nav.innerHTML=pages.map(function(p){return"<a href='"+p.href+"' style='"+css+(window.location.pathname===p.href?"background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);":"")+"'>"+p.label+"</a>"}).join(sep)})();
+    (function(){var pages=[{href:"/dashboard",label:"Dashboard"},{href:"/heatmap",label:"Heatmap"},{href:"/market-breadth",label:"A2D"},{href:"/most-active",label:"Most Active"},{href:"/coi-live",label:"COI Live"},{href:"/coi-pcr-live",label:"Ratio"}];var nav=document.getElementById("navbar");if(!nav)return;var css="display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";var sep="<div style='width:1px;height:20px;background:var(--line);margin:0 4px;flex-shrink:0;'></div>";nav.innerHTML=pages.map(function(p){return"<a href='"+p.href+"' style='"+css+(window.location.pathname===p.href?"background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);":"")+"'>"+p.label+"</a>"}).join(sep)})();
     function fmt(v) {
       if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
       return Number(v).toLocaleString();
@@ -532,12 +532,25 @@
       return Number(v).toFixed(2);
     }
 
+    function fmtPct(v) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+      return Number(v).toFixed(1) + "%";
+    }
+
     function valClass(v) {
       if (v === null || v === undefined) return "";
       const n = Number(v);
       if (n > 0) return "pos";
       if (n < 0) return "neg";
       return "";
+    }
+
+    function ltpVwapClass(ltp, vwap) {
+      if (ltp === null || ltp === undefined || vwap === null || vwap === undefined) return "";
+      const l = Number(ltp);
+      const w = Number(vwap);
+      if (l === w) return "";
+      return l > w ? "pos" : "neg";
     }
 
     function escHtml(v) {
@@ -564,41 +577,50 @@
       });
     }
 
+    /* Table 1: combined CE+PE - has Type column */
     function renderTable1(rows) {
       const tbody = document.getElementById("table1Body");
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">No data available</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state">No data available</div></td></tr>';
         return;
       }
       tbody.innerHTML = rows.map((r, i) => {
         const typeClass = (r.type || "").toUpperCase() === "PE" ? "pe" : "ce";
         return `<tr>
           <td class="${rankClass(i)}">${i + 1}</td>
-          <td style="text-align:right">${fmt2(r.strike_price)}</td>
+          <td>${fmt2(r.strike_price)}</td>
+          <td><span class="type-badge ${typeClass}">${escHtml(r.type || "-")}</span></td>
           <td class="${valClass(r.ltp_change)}">${fmt2(r.ltp_change)}</td>
-          <td class="col-type"><span class="type-badge ${typeClass}">${escHtml(r.type || "-")}</span></td>
+          <td class="${ltpVwapClass(r.ltp, r.vwap)}">${fmt2(r.ltp)}</td>
+          <td>${fmt2(r.vwap)}</td>
           <td style="font-weight:700">${fmt(r.volume)}</td>
           <td>${fmt(r.oi)}</td>
           <td class="${valClass(r.oi_change)}">${fmt(r.oi_change)}</td>
+          <td class="${valClass(r.coi_pct)}">${fmtPct(r.coi_pct)}</td>
+          <td>${fmtPct(r.ratio)}</td>
         </tr>`;
       }).join("");
     }
 
+    /* Tables 2-5: type-specific - no Type column */
     function renderDetailTable(tbodyId, rows) {
       const tbody = document.getElementById(tbodyId);
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No data available</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state">No data available</div></td></tr>';
         return;
       }
       tbody.innerHTML = rows.map((r, i) => {
         return `<tr>
           <td class="${rankClass(i)}">${i + 1}</td>
-          <td style="text-align:right">${fmt2(r.strike_price)}</td>
+          <td>${fmt2(r.strike_price)}</td>
           <td class="${valClass(r.ltp_change)}">${fmt2(r.ltp_change)}</td>
-          <td>${fmt2(r.ltp)}</td>
+          <td class="${ltpVwapClass(r.ltp, r.vwap)}">${fmt2(r.ltp)}</td>
           <td>${fmt2(r.vwap)}</td>
-          <td style="font-weight:700">${fmt(r.oi)}</td>
+          <td style="font-weight:700">${fmt(r.volume)}</td>
+          <td>${fmt(r.oi)}</td>
           <td class="${valClass(r.oi_change)}">${fmt(r.oi_change)}</td>
+          <td class="${valClass(r.coi_pct)}">${fmtPct(r.coi_pct)}</td>
+          <td>${fmtPct(r.ratio)}</td>
         </tr>`;
       }).join("");
     }
@@ -628,12 +650,13 @@
         }
       } catch (error) {
         console.error("Failed to load most active data:", error);
-        const emptyRow = '<tr><td colspan="7"><div class="empty-state">Failed to load data. Retrying...</div></td></tr>';
-        document.getElementById("table1Body").innerHTML = '<tr><td colspan="9"><div class="empty-state">Failed to load data. Retrying...</div></td></tr>';
-        document.getElementById("table2Body").innerHTML = emptyRow;
-        document.getElementById("table3Body").innerHTML = emptyRow;
-        document.getElementById("table4Body").innerHTML = emptyRow;
-        document.getElementById("table5Body").innerHTML = emptyRow;
+        const empty1 = '<tr><td colspan="11"><div class="empty-state">Failed to load data. Retrying...</div></td></tr>';
+        const emptyN = '<tr><td colspan="10"><div class="empty-state">Failed to load data. Retrying...</div></td></tr>';
+        document.getElementById("table1Body").innerHTML = empty1;
+        document.getElementById("table2Body").innerHTML = emptyN;
+        document.getElementById("table3Body").innerHTML = emptyN;
+        document.getElementById("table4Body").innerHTML = emptyN;
+        document.getElementById("table5Body").innerHTML = emptyN;
       }
     }
 
