@@ -43,12 +43,21 @@ def _merge_live(strikes: list[dict], live_map: dict) -> list[dict]:
     return merged
 
 
+def _safe_div_pct(num, den) -> float | None:
+    """Safely compute (num / den) * 100."""
+    if num is None or den is None or den == 0:
+        return None
+    return (float(num) / float(den)) * 100
+
+
 def _extract_calls(strikes: list[dict]) -> list[dict]:
     """Extract call-side data from merged strikes."""
     rows = []
     for s in strikes:
         if not s.get("call_trading_symbol"):
             continue
+        oi = s.get("call_oi") or 0
+        oi_change = s.get("call_oi_change") or 0
         rows.append(
             {
                 "strike_price": s["strike_price"],
@@ -58,8 +67,10 @@ def _extract_calls(strikes: list[dict]) -> list[dict]:
                 "ltp_change": s.get("call_ltp_change"),
                 "vwap": s.get("call_live_avg_price"),
                 "volume": s.get("call_volume") or 0,
-                "oi": s.get("call_oi") or 0,
-                "oi_change": s.get("call_oi_change") or 0,
+                "oi": oi,
+                "oi_change": oi_change,
+                "coi_pct": _safe_div_pct(oi_change, oi - oi_change),
+                "put_oi_change": s.get("put_oi_change") or 0,
             }
         )
     return rows
@@ -71,6 +82,8 @@ def _extract_puts(strikes: list[dict]) -> list[dict]:
     for s in strikes:
         if not s.get("put_trading_symbol"):
             continue
+        oi = s.get("put_oi") or 0
+        oi_change = s.get("put_oi_change") or 0
         rows.append(
             {
                 "strike_price": s["strike_price"],
@@ -80,10 +93,25 @@ def _extract_puts(strikes: list[dict]) -> list[dict]:
                 "ltp_change": s.get("put_ltp_change"),
                 "vwap": s.get("put_live_avg_price"),
                 "volume": s.get("put_volume") or 0,
-                "oi": s.get("put_oi") or 0,
-                "oi_change": s.get("put_oi_change") or 0,
+                "oi": oi,
+                "oi_change": oi_change,
+                "coi_pct": _safe_div_pct(oi_change, oi - oi_change),
+                "call_oi_change": s.get("call_oi_change") or 0,
             }
         )
+    return rows
+
+
+def _add_ratios(rows: list[dict]) -> list[dict]:
+    """Add per-strike ratio to each row based on opposing side's OI change."""
+    for r in rows:
+        oi_change = r.get("oi_change") or 0
+        if r["type"] == "CE":
+            opposing = r.pop("put_oi_change", 0)
+        else:
+            opposing = r.pop("call_oi_change", 0)
+        total = oi_change + opposing
+        r["ratio"] = _safe_div_pct(oi_change, total)
     return rows
 
 
@@ -134,8 +162,8 @@ class MostActiveService:
         merged = _merge_live(strikes, live_map)
 
         # Extract call and put rows from merged strikes
-        call_rows = _extract_calls(merged)
-        put_rows = _extract_puts(merged)
+        call_rows = _add_ratios(_extract_calls(merged))
+        put_rows = _add_ratios(_extract_puts(merged))
 
         # Sort and pick top N
         most_active_by_volume = sorted(

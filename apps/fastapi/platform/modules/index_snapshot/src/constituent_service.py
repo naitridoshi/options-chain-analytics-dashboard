@@ -56,12 +56,18 @@ class ConstituentSnapshotService:
 
             snapshot_rows: list[dict] = []
             processed = 0
+            failed = 0
             for constituent in constituents:
-                ltp = await cls.fetch_ltp_with_retries(constituent)
+                try:
+                    ltp = await cls.fetch_ltp_with_retries(constituent)
+                except Exception as e:
+                    logger.warning(f"Failed to fetch LTP for {constituent.symbol}: {e}")
+                    ltp = None
+                    failed += 1
                 previous_close = previous_close_map.get(constituent.symbol)
                 change = None
                 change_pct = None
-                if previous_close is not None:
+                if ltp is not None and previous_close is not None:
                     previous_close_decimal = Decimal(str(previous_close))
                     change = ltp - previous_close_decimal
                     if previous_close_decimal != 0:
@@ -91,6 +97,7 @@ class ConstituentSnapshotService:
             return {
                 "processed_constituents": processed,
                 "snapshots_created": len(snapshot_rows),
+                "failed_constituents": failed,
             }
         except Exception as error:
             cls._status.last_error = str(error)
