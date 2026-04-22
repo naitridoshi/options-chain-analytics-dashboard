@@ -101,8 +101,6 @@ class RuntimeScriptSnapshotService:
                     "change": _as_number(change),
                     "change_pct": _as_number(row.get("change_pct")),
                     "trend": trend,
-                    "sector": row.get("sector"),
-                    "industry": row.get("industry"),
                 }
             )
 
@@ -169,6 +167,13 @@ class RuntimeScriptSnapshotService:
                 trade_date=trade_date
             )
             if latest_snapshot:
+                # Enrich sector/industry from CSV catalog
+                for script in latest_snapshot.get("scripts", []):
+                    const = IndexConstituentCatalogService.get_constituent_by_symbol(
+                        script.get("symbol", "")
+                    )
+                    script["sector"] = const.sector if const else None
+                    script["industry"] = const.industry if const else None
                 return latest_snapshot
         except Exception as e:
             logger.warning(f"Failed to get latest snapshot from Redis: {e}")
