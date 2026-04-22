@@ -379,7 +379,7 @@
             <div class="nav-title">Index Categories</div>
             <ul class="nav-list" id="categoryNav">
               <li class="nav-item active" data-category="BROAD_MARKET">
-                Broad Market <span class="nav-count" id="broadCount">19</span>
+                Indices <span class="nav-count" id="broadCount">19</span>
               </li>
               <li class="nav-item" data-category="SECTORAL">
                 Sectoral <span class="nav-count" id="sectoralCount">21</span>
@@ -393,7 +393,7 @@
           <!-- Heatmap Header -->
           <div class="heatmap-header">
             <div>
-              <div class="heatmap-title" id="heatmapTitle">Broad Market Indices (19)</div>
+              <div class="heatmap-title" id="heatmapTitle"> Indices (19)</div>
               <div class="heatmap-meta">
                 <span id="capturedTime">As on -</span>
                 <div class="streaming-toggle">
@@ -544,7 +544,7 @@
 
     function updateTitle(category, count) {
       const titles = {
-        "BROAD_MARKET": "Broad Market Indices",
+        "BROAD_MARKET": "Indices",
         "SECTORAL": "Sectoral Indices"
       };
       document.getElementById("heatmapTitle").textContent = `${titles[category] || category} (${count})`;

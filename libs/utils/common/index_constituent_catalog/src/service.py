@@ -16,6 +16,7 @@ class ConstituentDefinition:
     name: str
     fyers_symbol: str
     industry: str | None = None
+    sector: str | None = None
 
 
 class IndexConstituentCatalogService:
@@ -112,14 +113,35 @@ class IndexConstituentCatalogService:
                 sector_name = row.get("SECTOR", "").strip().upper().replace(" ", "")
                 if not sector_name:
                     continue
+                sector_value = row.get("SECTOR", "").strip()
                 if symbol not in all_symbols:
                     defn = ConstituentDefinition(
                         symbol=symbol,
                         name=row.get("Company Name", symbol),
                         fyers_symbol=f"NSE:{symbol}-EQ",
                         industry=row.get("INDUSTRY"),
+                        sector=sector_value,
                     )
                     all_symbols[symbol] = defn
+                else:
+                    # Update existing entry with sector if missing
+                    existing = all_symbols[symbol]
+                    if existing.sector is None:
+                        updated = ConstituentDefinition(
+                            symbol=existing.symbol,
+                            name=existing.name,
+                            fyers_symbol=existing.fyers_symbol,
+                            industry=existing.industry,
+                            sector=sector_value,
+                        )
+                        all_symbols[symbol] = updated
+                        # Also update any index_map entries pointing to old defn
+                        for idx_symbols in index_map.values():
+                            if (
+                                symbol in idx_symbols
+                                and idx_symbols[symbol] is existing
+                            ):
+                                idx_symbols[symbol] = updated
                 if sector_name not in index_map:
                     index_map[sector_name] = {}
                 index_map[sector_name][symbol] = all_symbols[symbol]

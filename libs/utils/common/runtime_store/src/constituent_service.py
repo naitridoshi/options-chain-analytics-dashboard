@@ -100,6 +100,8 @@ class RuntimeConstituentService:
                     "change": _as_number(change),
                     "change_pct": _as_number(row.get("change_pct")),
                     "trend": trend,
+                    "sector": row.get("sector"),
+                    "industry": row.get("industry"),
                 }
             )
 
@@ -189,6 +191,8 @@ class RuntimeConstituentService:
                     "change": None,
                     "change_pct": None,
                     "trend": "UNCHANGED",
+                    "sector": c.sector,
+                    "industry": c.industry,
                 }
                 for c in constituents
             ],
@@ -245,6 +249,11 @@ class RuntimeConstituentService:
             # Override name from catalog if not in snapshot
             if script_data.get("name") == script_data.get("symbol"):
                 script_data["name"] = c.name
+            # Inject sector/industry from catalog
+            if not script_data.get("sector"):
+                script_data["sector"] = c.sector
+            if not script_data.get("industry"):
+                script_data["industry"] = c.industry
             index_scripts.append(script_data)
 
             trend = script_data.get("trend", "UNCHANGED")
