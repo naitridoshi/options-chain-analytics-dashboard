@@ -46,70 +46,14 @@
     }
 
     /* Header */
-    .header {
+    .controls-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 12px 16px;
+      padding: 8px 16px;
       background: #000000;
       border-bottom: 1px solid var(--line);
-      border-radius: 6px 6px 0 0;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .back-btn {
-      background: #0a0a0a;
-      border: 1px solid var(--line);
-      color: var(--text);
-      border-radius: 4px;
-      height: 32px;
-      padding: 0 14px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-    }
-
-    .back-btn:hover {
-      background: #141414;
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .page-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--accent);
-      letter-spacing: 0.5px;
-    }
-
-    .header-badge {
-      font-size: 9px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.4);
-      color: #4ade80;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
     }
 
     .meta-info {
@@ -172,6 +116,40 @@
 
     .toggle-switch.active::after {
       transform: translateX(18px);
+    }
+
+    /* Navbar spot values */
+    .nav-spot-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .nav-spot-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .nav-label {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .nav-val {
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .nav-val.pos { color: var(--good); }
+    .nav-val.neg { color: var(--bad); }
+    .nav-sep {
+      width: 1px;
+      height: 16px;
+      background: var(--line);
     }
 
     /* Table Container */
@@ -524,40 +502,35 @@
 <body>
   <div class="page">
     <div class="card">
-      <div id="navbar" style="display:flex;align-items:center;gap:6px;padding:10px 16px;background:#0a0a0a;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;flex-wrap:wrap;"></div>
-      <!-- Header -->
-      <div class="header">
-        <div class="header-left">
-          <a href="/dashboard" class="back-btn">
-            <span>&#8592;</span>
-            <span>Back</span>
-          </a>
-          <h1 class="page-title">COI Live</h1>
-          <span class="header-badge" id="liveBadge">LIVE</span>
+      <div id="navbar" style="display:flex;align-items:center;gap:6px;padding:10px 16px;background:#0a0a0a;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;">
+        <div id="navLinks" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+        <div class="nav-spot-wrap">
+          <div class="nav-spot-item"><span class="nav-label">Spot</span><span id="navSpot" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg</span><span id="navChange" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg%</span><span id="navChangePct" class="nav-val">-</span></div>
         </div>
-        <div class="header-right">
-          <div class="meta-info">
-            <div class="meta-item">
-              <span class="meta-label">Symbol:</span>
-              <span class="meta-value" id="symbolValue">-</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Spot:</span>
-              <span class="meta-value" id="spotValue">-</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">ATM:</span>
-              <span class="meta-value" id="atmValue">-</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Date:</span>
-              <span class="meta-value" id="dateValue">-</span>
-            </div>
+      </div>
+      <!-- Controls Bar -->
+      <div class="controls-bar">
+        <div class="meta-info">
+          <div class="meta-item">
+            <span class="meta-label">Symbol:</span>
+            <span class="meta-value" id="symbolValue">-</span>
           </div>
-          <div class="streaming-toggle">
-            <span>Auto Refresh</span>
-            <div class="toggle-switch active" id="streamingToggle"></div>
+          <div class="meta-item">
+            <span class="meta-label">ATM:</span>
+            <span class="meta-value" id="atmValue">-</span>
           </div>
+          <div class="meta-item">
+            <span class="meta-label">Date:</span>
+            <span class="meta-value" id="dateValue">-</span>
+          </div>
+        </div>
+        <div class="streaming-toggle">
+          <span>Auto Refresh</span>
+          <div class="toggle-switch active" id="streamingToggle"></div>
         </div>
       </div>
 
@@ -571,7 +544,7 @@
   </div>
 
   <script>
-    (function(){var pages=[{href:"/dashboard",label:"Dashboard"},{href:"/heatmap",label:"Heatmap"},{href:"/market-breadth",label:"A2D"},{href:"/most-active",label:"Most Active"},{href:"/coi-live",label:"COI Live"},{href:"/coi-pcr-live",label:"Ratio"}];var nav=document.getElementById("navbar");if(!nav)return;var css="display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";var sep="<div style='width:1px;height:20px;background:var(--line);margin:0 4px;flex-shrink:0;'></div>";nav.innerHTML=pages.map(function(p){return"<a href='"+p.href+"' style='"+css+(window.location.pathname===p.href?"background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);":"")+"'>"+p.label+"</a>"}).join(sep)})();
+    (function(){var pages=[{href:"/dashboard",label:"Dashboard"},{href:"/heatmap",label:"Heatmap"},{href:"/market-breadth",label:"A2D"},{href:"/most-active",label:"Most Active"},{href:"/coi-live",label:"COI Live"},{href:"/coi-pcr-live",label:"Ratio"}];var nav=document.getElementById("navLinks");if(!nav)return;var css="display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";var sep="<div style='width:1px;height:20px;background:var(--line);margin:0 4px;flex-shrink:0;'></div>";nav.innerHTML=pages.map(function(p){return"<a href='"+p.href+"' style='"+css+(window.location.pathname===p.href?"background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);":"")+"'>"+p.label+"</a>"}).join(sep)})();
     let isStreaming = true;
     let refreshInterval = null;
     const REFRESH_INTERVAL_MS = 5000;
@@ -614,7 +587,6 @@
 
       // Update header meta
       document.getElementById("symbolValue").textContent = data.instrument?.symbol || "-";
-      document.getElementById("spotValue").textContent = data.spot_price ? fmt(data.spot_price) : "-";
       document.getElementById("atmValue").textContent = data.atm_strike ? fmt(data.atm_strike) : "-";
       document.getElementById("dateValue").textContent = data.market_date || "-";
 
@@ -749,6 +721,33 @@
     // Initial load
     loadData();
     startStreaming();
+
+    // Spot data fetcher
+    async function loadSpotData() {
+      try {
+        const res = await fetch("/api/v1/spot-data", { credentials: "include" });
+        const result = await res.json();
+        if (result.success && result.data) {
+          const d = result.data;
+          const navSpot = document.getElementById("navSpot");
+          const navChange = document.getElementById("navChange");
+          const navChangePct = document.getElementById("navChangePct");
+          if (d.spot_price !== null && d.spot_price !== undefined) navSpot.textContent = fmt(d.spot_price);
+          if (navChange && d.change_from_prev_close !== null && d.change_from_prev_close !== undefined) {
+            const v = Number(d.change_from_prev_close);
+            navChange.textContent = (v >= 0 ? "+" : "") + fmt(v);
+            navChange.className = "nav-val " + (v >= 0 ? "pos" : "neg");
+          }
+          if (navChangePct && d.change_pct_from_prev_close !== null && d.change_pct_from_prev_close !== undefined) {
+            const v = Number(d.change_pct_from_prev_close);
+            navChangePct.textContent = (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+            navChangePct.className = "nav-val " + (v >= 0 ? "pos" : "neg");
+          }
+        }
+      } catch (e) { console.error("Spot data fetch failed:", e); }
+    }
+    loadSpotData();
+    setInterval(loadSpotData, 30000);
   </script>
 </body>
 </html>

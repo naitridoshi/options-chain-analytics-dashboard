@@ -41,65 +41,38 @@
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
     }
 
-    /* Header */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 16px;
-      background: #000000;
-      border-bottom: 1px solid var(--line);
-      border-radius: 6px 6px 0 0;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .page-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--accent);
-      letter-spacing: 0.5px;
-    }
-
-    .header-badge {
-      font-size: 9px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.4);
-      color: #4ade80;
-    }
-
-    .back-btn {
-      background: #0a0a0a;
-      border: 1px solid var(--line);
-      color: var(--text);
-      border-radius: 4px;
-      height: 32px;
-      padding: 0 14px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
+    /* Navbar spot values */
+    .nav-spot-wrap {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s ease;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
     }
-
-    .back-btn:hover {
-      background: #141414;
-      border-color: var(--accent);
-      color: var(--accent);
+    .nav-spot-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .nav-label {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .nav-val {
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .nav-val.pos { color: var(--good); }
+    .nav-val.neg { color: var(--bad); }
+    .nav-sep {
+      width: 1px;
+      height: 16px;
+      background: var(--line);
     }
 
     /* Content Layout */
@@ -387,17 +360,14 @@
   <div class="page">
     <div class="card">
       <!-- Navbar -->
-      <div class="navbar" id="navbar" style="display:flex;align-items:center;gap:6px;padding:10px 16px;background:#0a0a0a;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;flex-wrap:wrap;"></div>
-
-      <!-- Header -->
-      <div class="header">
-        <div class="header-left">
-          <a href="/dashboard" class="back-btn">
-            <span>&#8592;</span>
-            <span>Back</span>
-          </a>
-          <h1 class="page-title">Market Heatmap</h1>
-          <span class="header-badge">LIVE</span>
+      <div class="navbar" id="navbar" style="display:flex;align-items:center;gap:6px;padding:10px 16px;background:#0a0a0a;border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;">
+        <div id="navLinks" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+        <div class="nav-spot-wrap">
+          <div class="nav-spot-item"><span class="nav-label">Spot</span><span id="navSpot" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg</span><span id="navChange" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg%</span><span id="navChangePct" class="nav-val">-</span></div>
         </div>
       </div>
 
@@ -464,7 +434,7 @@
         { href: "/coi-live", label: "COI Live" },
         { href: "/coi-pcr-live", label: "Ratio" },
       ];
-      const nav = document.getElementById("navbar");
+      const nav = document.getElementById("navLinks");
       const css = "display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";
       const activeCss = "background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);";
       const sep = "<div style='width:1px;height:20px;background:var(--line);margin:0 4px;flex-shrink:0;'></div>";
@@ -645,6 +615,33 @@
 
     // Initial load
     loadData();
+
+    // Spot data fetcher
+    async function loadSpotData() {
+      try {
+        const res = await fetch("/api/v1/spot-data", { credentials: "include" });
+        const result = await res.json();
+        if (result.success && result.data) {
+          const d = result.data;
+          const navSpot = document.getElementById("navSpot");
+          const navChange = document.getElementById("navChange");
+          const navChangePct = document.getElementById("navChangePct");
+          if (d.spot_price !== null && d.spot_price !== undefined) navSpot.textContent = fmt(d.spot_price);
+          if (navChange && d.change_from_prev_close !== null && d.change_from_prev_close !== undefined) {
+            const v = Number(d.change_from_prev_close);
+            navChange.textContent = (v >= 0 ? "+" : "") + fmtChange(v);
+            navChange.className = "nav-val " + (v >= 0 ? "pos" : "neg");
+          }
+          if (navChangePct && d.change_pct_from_prev_close !== null && d.change_pct_from_prev_close !== undefined) {
+            const v = Number(d.change_pct_from_prev_close);
+            navChangePct.textContent = (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+            navChangePct.className = "nav-val " + (v >= 0 ? "pos" : "neg");
+          }
+        }
+      } catch (e) { console.error("Spot data fetch failed:", e); }
+    }
+    loadSpotData();
+    setInterval(loadSpotData, 30000);
   </script>
 </body>
 </html>
