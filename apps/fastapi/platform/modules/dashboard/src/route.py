@@ -25,6 +25,10 @@ from libs.utils.common.constants.src.templates import (
     MARKET_BREADTH_TEMPLATE_HTML,
     MOST_ACTIVE_TEMPLATE_HTML,
 )
+from libs.utils.db.redis.src import (
+    RedisLiveMarketStore,
+    RedisOptionChainSnapshotStore,
+)
 
 dashboard_route = APIRouter(tags=["Dashboard"])
 
@@ -49,6 +53,103 @@ async def dashboard_data(
             timeline_limit=timeline_limit,
         )
         return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )
+
+
+@dashboard_route.get("/api/v1/spot-data")
+async def spot_data(
+    _: str = Depends(verify_basic_auth),
+):
+    """Lightweight endpoint returning only NIFTY spot/change values."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    IST = ZoneInfo("Asia/Kolkata")
+    symbol = "NIFTY"
+    trade_date = datetime.now(IST).date().isoformat()
+
+    try:
+        live_underlying = await RedisLiveMarketStore.get_live_underlying(symbol)
+
+        spot_price = None
+        change_from_prev_close = None
+        change_pct_from_prev_close = None
+
+        if live_underlying:
+            spot_price = live_underlying.get("spot_price")
+            change_from_prev_close = live_underlying.get("change_from_prev_close")
+            change_pct_from_prev_close = live_underlying.get(
+                "change_pct_from_prev_close"
+            )
+
+        # Fallback: compute change from snapshot + previous day if live data missing
+        if change_from_prev_close is None and spot_price is not None:
+            prev_close = (
+                live_underlying.get("prev_close_spot") if live_underlying else None
+            )
+            if prev_close is None:
+                prev_snapshot = (
+                    await RedisOptionChainSnapshotStore.get_previous_day_final_snapshot(
+                        symbol
+                    )
+                )
+                if prev_snapshot:
+                    prev_latest = prev_snapshot.get("latest") or {}
+                    prev_close = prev_latest.get("spot_price")
+            if prev_close is not None and float(prev_close) != 0:
+                change_from_prev_close = float(spot_price) - float(prev_close)
+                change_pct_from_prev_close = (
+                    change_from_prev_close / float(prev_close)
+                ) * 100
+        elif spot_price is None:
+            # No live data at all - try latest snapshot
+            latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
+                instrument_symbol=symbol, trade_date=trade_date
+            )
+            if latest_snapshot:
+                latest = latest_snapshot.get("latest") or {}
+                spot_price = latest.get("spot_price")
+                change_from_prev_close = latest.get("change_from_prev_close")
+                change_pct_from_prev_close = latest.get("change_pct_from_prev_close")
+
+                # If still missing change, compute from previous day
+                if change_from_prev_close is None and spot_price is not None:
+                    prev_snapshot = await RedisOptionChainSnapshotStore.get_previous_day_final_snapshot(
+                        symbol
+                    )
+                    if prev_snapshot:
+                        prev_latest = prev_snapshot.get("latest") or {}
+                        prev_close = prev_latest.get("spot_price")
+                        if prev_close is not None and float(prev_close) != 0:
+                            change_from_prev_close = float(spot_price) - float(
+                                prev_close
+                            )
+                            change_pct_from_prev_close = (
+                                change_from_prev_close / float(prev_close)
+                            ) * 100
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": {
+                    "spot_price": spot_price,
+                    "change_from_prev_close": change_from_prev_close,
+                    "change_pct_from_prev_close": change_pct_from_prev_close,
+                },
+            },
+        )
     except Exception as e:
         import traceback
 
