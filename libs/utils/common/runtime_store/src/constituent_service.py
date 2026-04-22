@@ -100,8 +100,6 @@ class RuntimeConstituentService:
                     "change": _as_number(change),
                     "change_pct": _as_number(row.get("change_pct")),
                     "trend": trend,
-                    "sector": row.get("sector"),
-                    "industry": row.get("industry"),
                 }
             )
 
