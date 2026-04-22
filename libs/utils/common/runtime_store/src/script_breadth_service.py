@@ -9,6 +9,9 @@ from libs.platform.modules.option_chain_snapshot.src import (
     normalize_interval_boundary,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
+from libs.utils.common.index_constituent_catalog.src import (
+    IndexConstituentCatalogService,
+)
 from libs.utils.common.script_catalog.src import ScriptCatalogService
 from libs.utils.config.src.fyers import (
     MARKET_CLOSE_HOUR,
@@ -98,6 +101,8 @@ class RuntimeScriptSnapshotService:
                     "change": _as_number(change),
                     "change_pct": _as_number(row.get("change_pct")),
                     "trend": trend,
+                    "sector": row.get("sector"),
+                    "industry": row.get("industry"),
                 }
             )
 
@@ -169,15 +174,12 @@ class RuntimeScriptSnapshotService:
             logger.warning(f"Failed to get latest snapshot from Redis: {e}")
 
         active_scripts = ScriptCatalogService.get_active_scripts()
-        return {
-            "market_date": trade_date,
-            "refresh_seconds": SCRIPTS_SNAPSHOT_INTERVAL_SECONDS,
-            "captured_at": None,
-            "advance_count": 0,
-            "decline_count": 0,
-            "unchanged_count": len(active_scripts),
-            "total_scripts": len(active_scripts),
-            "scripts": [
+        scripts_data = []
+        for item in active_scripts:
+            const = IndexConstituentCatalogService.get_constituent_by_symbol(
+                item.symbol
+            )
+            scripts_data.append(
                 {
                     "symbol": item.symbol,
                     "name": item.name or item.symbol,
@@ -187,9 +189,19 @@ class RuntimeScriptSnapshotService:
                     "change": None,
                     "change_pct": None,
                     "trend": "UNCHANGED",
+                    "sector": const.sector if const else None,
+                    "industry": const.industry if const else None,
                 }
-                for item in active_scripts
-            ],
+            )
+        return {
+            "market_date": trade_date,
+            "refresh_seconds": SCRIPTS_SNAPSHOT_INTERVAL_SECONDS,
+            "captured_at": None,
+            "advance_count": 0,
+            "decline_count": 0,
+            "unchanged_count": len(active_scripts),
+            "total_scripts": len(active_scripts),
+            "scripts": scripts_data,
         }
 
     @classmethod

@@ -258,23 +258,13 @@
       font-size: 14px;
     }
 
-    /* Dominance Highlighting - Only on shift rows */
-    .pcr-table tbody tr.shift-call td {
+    /* Dominance Highlighting - Only on Call/Put cells of shift rows */
+    .pcr-table tbody tr.shift-call td.value-col {
       background: rgba(239, 68, 68, 0.25);
-      color: #fff;
     }
 
-    .pcr-table tbody tr.shift-call td.value-col.call-col {
-      color: #fca5a5;
-    }
-
-    .pcr-table tbody tr.shift-put td {
+    .pcr-table tbody tr.shift-put td.value-col {
       background: rgba(34, 197, 94, 0.25);
-      color: #fff;
-    }
-
-    .pcr-table tbody tr.shift-put td.value-col.put-col {
-      color: #86efac;
     }
 
     /* Value Colors */

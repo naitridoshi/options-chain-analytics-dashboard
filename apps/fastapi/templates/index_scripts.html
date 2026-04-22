@@ -95,10 +95,6 @@
     .script-list-table tbody td { padding: 10px 12px; color: var(--text); }
     .pos { color: var(--good); font-weight: 700; }
     .neg { color: var(--bad); font-weight: 700; }
-    .trend-badge { font-size: 9px; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; }
-    .trend-badge.advance { background: rgba(34,197,94,0.15); color: var(--good); border: 1px solid rgba(34,197,94,0.3); }
-    .trend-badge.decline { background: rgba(239,68,68,0.15); color: var(--bad); border: 1px solid rgba(239,68,68,0.3); }
-    .trend-badge.unchanged { background: rgba(107,114,128,0.15); color: #9ca3af; border: 1px solid rgba(107,114,128,0.3); }
     .empty-state { padding: 60px 20px; text-align: center; color: var(--muted); }
     .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
     .empty-state-text { font-size: 14px; }
@@ -149,7 +145,7 @@
           </div>
         </div>
         <div class="actions-bar">
-          <div class="search-box"><span>&#128269;</span><input type="text" id="searchInput" placeholder="Search by symbol or name..." /></div>
+          <div class="search-box"><span>&#128269;</span><input type="text" id="searchInput" placeholder="Search by symbol, sector, or industry..." /></div>
           <div class="filter-group">
             <button class="filter-btn active" data-filter="all">All</button>
             <button class="filter-btn" data-filter="ADVANCE">Advance</button>
@@ -161,7 +157,7 @@
           <div class="script-list-header"><span class="list-count" id="listCount">0 scripts</span></div>
           <div class="script-list">
             <table class="script-list-table">
-              <thead><tr><th data-sort="symbol">Symbol</th><th data-sort="name">Name</th><th data-sort="ltp">LTP</th><th data-sort="previous_close">Prev Close</th><th data-sort="change">Change</th><th data-sort="change_pct">Change %</th><th data-sort="trend">Trend</th></tr></thead>
+              <thead><tr><th data-sort="symbol">Symbol</th><th data-sort="sector">Sector</th><th data-sort="industry">Industry</th><th data-sort="ltp">LTP</th><th data-sort="previous_close">Prev Close</th><th data-sort="change">Change</th><th data-sort="change_pct">Change %</th></tr></thead>
               <tbody id="scriptBody"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
             </table>
           </div>
@@ -228,16 +224,14 @@
       const tbody = document.getElementById("scriptBody");
       let filtered = allScripts;
       if (currentFilter !== "all") filtered = filtered.filter(s => (s.trend||"UNCHANGED")===currentFilter);
-      if (currentSearch) { const q=currentSearch.toLowerCase(); filtered = filtered.filter(s => (s.symbol||"").toLowerCase().includes(q)||(s.name||"").toLowerCase().includes(q)); }
+      if (currentSearch) { const q=currentSearch.toLowerCase(); filtered = filtered.filter(s => (s.symbol||"").toLowerCase().includes(q)||(s.sector||"").toLowerCase().includes(q)||(s.industry||"").toLowerCase().includes(q)); }
       filtered.sort((a,b) => { let av=a[currentSort.field], bv=b[currentSort.field]; if(typeof av==="number"&&typeof bv==="number") return currentSort.dir==="asc"?av-bv:bv-av; av=String(av||""); bv=String(bv||""); return currentSort.dir==="asc"?av.localeCompare(bv):bv.localeCompare(av); });
       document.getElementById("listCount").textContent = filtered.length+" script"+(filtered.length!==1?"s":"");
       if (!filtered.length) { tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">&#128269;</div><div class="empty-state-text">No scripts found</div></div></td></tr>'; return; }
       tbody.innerHTML = filtered.map(item => {
-        const trend = item.trend||"UNCHANGED";
-        const tc = trend.toLowerCase();
         const chgCls = Number(item.change)>0?"pos":Number(item.change)<0?"neg":"";
         const pctCls = Number(item.change_pct)>0?"pos":Number(item.change_pct)<0?"neg":"";
-        return `<tr><td>${escHtml(item.symbol||"-")}</td><td title="${escHtml(item.name||item.symbol||"-")}">${escHtml(item.name||item.symbol||"-")}</td><td>${fmt2(item.ltp)}</td><td>${fmt2(item.previous_close)}</td><td class="${chgCls}">${fmt2(item.change)}</td><td class="${pctCls}">${item.change_pct===null||item.change_pct===undefined?"-":fmt2(item.change_pct)+"%"}</td><td><span class="trend-badge ${tc}">${escHtml(trend)}</span></td></tr>`;
+        return `<tr><td>${escHtml(item.symbol||"-")}</td><td>${escHtml(item.sector||"-")}</td><td>${escHtml(item.industry||"-")}</td><td>${fmt2(item.ltp)}</td><td>${fmt2(item.previous_close)}</td><td class="${chgCls}">${fmt2(item.change)}</td><td class="${pctCls}">${item.change_pct===null||item.change_pct===undefined?"-":fmt2(item.change_pct)+"%"}</td></tr>`;
       }).join("");
     }
 
