@@ -577,7 +577,7 @@
       const avgChg = cntChg > 0 ? sumChg / cntChg : null;
       const avgChgPct = cntChg > 0 ? sumChgPct / cntChg : null;
       tbody.innerHTML = dataRows + `<tr class="avg-row">
-        <td colspan="3" style="text-align:left;font-weight:700;color:var(--accent);">AVG</td>
+        <td colspan="3" style="text-align:center;font-weight:700;color:var(--accent);">AVG</td>
         <td class="${valClass(avgChg)}">${fmt2(avgChg)}</td>
         <td class="${valClass(avgChgPct)}">${fmtPct(avgChgPct)}</td>
         <td colspan="7">-</td>
@@ -613,7 +613,7 @@
       const avgChg = cntChg > 0 ? sumChg / cntChg : null;
       const avgChgPct = cntChg > 0 ? sumChgPct / cntChg : null;
       tbody.innerHTML = dataRows + `<tr class="avg-row">
-        <td colspan="2" style="text-align:left;font-weight:700;color:var(--accent);">AVG</td>
+        <td colspan="2" style="text-align:center;font-weight:700;color:var(--accent);">AVG</td>
         <td class="${valClass(avgChg)}">${fmt2(avgChg)}</td>
         <td class="${valClass(avgChgPct)}">${fmtPct(avgChgPct)}</td>
         <td colspan="7">-</td>
