@@ -178,9 +178,9 @@
       padding: 9px 8px;
       font-weight: 700;
       color: var(--muted);
-      text-align: center;
+      text-align: left;
       white-space: nowrap;
-      font-size: 10px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
@@ -190,7 +190,7 @@
     }
 
     .data-table thead th:first-child {
-      text-align: center;
+      text-align: left;
       width: 30px;
     }
 
@@ -260,6 +260,13 @@
     .rank-2 { color: #94a3b8 !important; font-weight: 700; }
     .rank-3 { color: #d97706 !important; font-weight: 700; }
 
+    /* AVG summary row */
+    .data-table tbody tr.avg-row td {
+      background: #0a0f1a;
+      border-top: 1px solid #33568b;
+      font-weight: 700;
+    }
+
     /* Loading */
     .loading {
       display: flex;
@@ -327,6 +334,7 @@
                   <th>Strike</th>
                   <th>Type</th>
                   <th>Price Chg</th>
+                  <th>Price Chg%</th>
                   <th>LTP</th>
                   <th>VWAP</th>
                   <th>Volume</th>
@@ -337,7 +345,7 @@
                 </tr>
               </thead>
               <tbody id="table1Body">
-                <tr><td colspan="11"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="12"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -358,6 +366,7 @@
                   <th>#</th>
                   <th>Strike</th>
                   <th>Price Chg</th>
+                  <th>Price Chg%</th>
                   <th>LTP</th>
                   <th>VWAP</th>
                   <th>Volume</th>
@@ -368,7 +377,7 @@
                 </tr>
               </thead>
               <tbody id="table2Body">
-                <tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="11"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -389,6 +398,7 @@
                   <th>#</th>
                   <th>Strike</th>
                   <th>Price Chg</th>
+                  <th>Price Chg%</th>
                   <th>LTP</th>
                   <th>VWAP</th>
                   <th>Volume</th>
@@ -399,7 +409,7 @@
                 </tr>
               </thead>
               <tbody id="table3Body">
-                <tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="11"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -420,6 +430,7 @@
                   <th>#</th>
                   <th>Strike</th>
                   <th>Price Chg</th>
+                  <th>Price Chg%</th>
                   <th>LTP</th>
                   <th>VWAP</th>
                   <th>Volume</th>
@@ -430,7 +441,7 @@
                 </tr>
               </thead>
               <tbody id="table4Body">
-                <tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="11"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -451,6 +462,7 @@
                   <th>#</th>
                   <th>Strike</th>
                   <th>Price Chg</th>
+                  <th>Price Chg%</th>
                   <th>LTP</th>
                   <th>VWAP</th>
                   <th>Volume</th>
@@ -461,7 +473,7 @@
                 </tr>
               </thead>
               <tbody id="table5Body">
-                <tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr>
+                <tr><td colspan="11"><div class="loading"><div class="spinner"></div></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -503,6 +515,13 @@
       return l > w ? "pos" : "neg";
     }
 
+    function calcChangePct(ltp, ltpChange) {
+      if (ltpChange === null || ltpChange === undefined || ltp === null || ltp === undefined) return null;
+      const prev = Number(ltp) - Number(ltpChange);
+      if (prev === 0) return null;
+      return (Number(ltpChange) / prev) * 100;
+    }
+
     function escHtml(v) {
       return String(v)
         .replaceAll("&", "&amp;")
@@ -531,48 +550,74 @@
     function renderTable1(rows) {
       const tbody = document.getElementById("table1Body");
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state">No data available</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state">No data available</div></td></tr>';
         return;
       }
-      tbody.innerHTML = rows.map((r, i) => {
+      let sumChg = 0, sumChgPct = 0, cntChg = 0;
+      const dataRows = rows.map((r, i) => {
         const typeClass = (r.type || "").toUpperCase() === "PE" ? "pe" : "ce";
+        const changePct = calcChangePct(r.ltp, r.ltp_change);
+        if (r.ltp_change !== null && r.ltp_change !== undefined) { sumChg += Number(r.ltp_change); cntChg++; }
+        if (changePct !== null) sumChgPct += changePct;
         return `<tr>
           <td class="${rankClass(i)}">${i + 1}</td>
           <td>${fmt2(r.strike_price)}</td>
           <td><span class="type-badge ${typeClass}">${escHtml(r.type || "-")}</span></td>
           <td class="${valClass(r.ltp_change)}">${fmt2(r.ltp_change)}</td>
+          <td class="${valClass(changePct)}">${fmtPct(changePct)}</td>
           <td class="${ltpVwapClass(r.ltp, r.vwap)}">${fmt2(r.ltp)}</td>
           <td>${fmt2(r.vwap)}</td>
           <td style="font-weight:700">${fmt(r.volume)}</td>
           <td>${fmt(r.oi)}</td>
-          <td class="${valClass(r.oi_change)}">${fmt(r.oi_change)}</td>
-          <td class="${valClass(r.coi_pct)}">${fmtPct(r.coi_pct)}</td>
+          <td>${fmt(r.oi_change)}</td>
+          <td>${fmtPct(r.coi_pct)}</td>
           <td>${fmtPct(r.ratio)}</td>
         </tr>`;
       }).join("");
+      const avgChg = cntChg > 0 ? sumChg / cntChg : null;
+      const avgChgPct = cntChg > 0 ? sumChgPct / cntChg : null;
+      tbody.innerHTML = dataRows + `<tr class="avg-row">
+        <td colspan="3" style="text-align:left;font-weight:700;color:var(--accent);">AVG</td>
+        <td class="${valClass(avgChg)}">${fmt2(avgChg)}</td>
+        <td class="${valClass(avgChgPct)}">${fmtPct(avgChgPct)}</td>
+        <td colspan="7">-</td>
+      </tr>`;
     }
 
     /* Tables 2-5: type-specific - no Type column */
     function renderDetailTable(tbodyId, rows) {
       const tbody = document.getElementById(tbodyId);
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state">No data available</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state">No data available</div></td></tr>';
         return;
       }
-      tbody.innerHTML = rows.map((r, i) => {
+      let sumChg = 0, sumChgPct = 0, cntChg = 0;
+      const dataRows = rows.map((r, i) => {
+        const changePct = calcChangePct(r.ltp, r.ltp_change);
+        if (r.ltp_change !== null && r.ltp_change !== undefined) { sumChg += Number(r.ltp_change); cntChg++; }
+        if (changePct !== null) sumChgPct += changePct;
         return `<tr>
           <td class="${rankClass(i)}">${i + 1}</td>
           <td>${fmt2(r.strike_price)}</td>
           <td class="${valClass(r.ltp_change)}">${fmt2(r.ltp_change)}</td>
+          <td class="${valClass(changePct)}">${fmtPct(changePct)}</td>
           <td class="${ltpVwapClass(r.ltp, r.vwap)}">${fmt2(r.ltp)}</td>
           <td>${fmt2(r.vwap)}</td>
           <td style="font-weight:700">${fmt(r.volume)}</td>
           <td>${fmt(r.oi)}</td>
-          <td class="${valClass(r.oi_change)}">${fmt(r.oi_change)}</td>
-          <td class="${valClass(r.coi_pct)}">${fmtPct(r.coi_pct)}</td>
+          <td>${fmt(r.oi_change)}</td>
+          <td>${fmtPct(r.coi_pct)}</td>
           <td>${fmtPct(r.ratio)}</td>
         </tr>`;
       }).join("");
+      const avgChg = cntChg > 0 ? sumChg / cntChg : null;
+      const avgChgPct = cntChg > 0 ? sumChgPct / cntChg : null;
+      tbody.innerHTML = dataRows + `<tr class="avg-row">
+        <td colspan="2" style="text-align:left;font-weight:700;color:var(--accent);">AVG</td>
+        <td class="${valClass(avgChg)}">${fmt2(avgChg)}</td>
+        <td class="${valClass(avgChgPct)}">${fmtPct(avgChgPct)}</td>
+        <td colspan="7">-</td>
+      </tr>`;
     }
 
     async function loadData() {
@@ -593,8 +638,8 @@
         }
       } catch (error) {
         console.error("Failed to load most active data:", error);
-        const empty1 = '<tr><td colspan="11"><div class="empty-state">Failed to load data. Retrying...</div></td></tr>';
-        const emptyN = '<tr><td colspan="10"><div class="empty-state">Failed to load data. Retrying...</div></td></tr>';
+        const empty1 = '<tr><td colspan="12"><div class="empty-state">Failed to load data. Retrying...</div></td></tr>';
+        const emptyN = '<tr><td colspan="11"><div class="empty-state">Failed to load data. Retrying...</div></td></tr>';
         document.getElementById("table1Body").innerHTML = empty1;
         document.getElementById("table2Body").innerHTML = emptyN;
         document.getElementById("table3Body").innerHTML = emptyN;
