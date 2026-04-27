@@ -145,7 +145,7 @@
           </div>
         </div>
         <div class="actions-bar">
-          <div class="search-box"><span>&#128269;</span><input type="text" id="searchInput" placeholder="Search by symbol, sector, or industry..." /></div>
+          <div class="search-box"><span>&#128269;</span><input type="text" id="searchInput" placeholder="Search by symbol or industry..." /></div>
           <div class="filter-group">
             <button class="filter-btn active" data-filter="all">All</button>
             <button class="filter-btn" data-filter="ADVANCE">Advance</button>
@@ -157,8 +157,8 @@
           <div class="script-list-header"><span class="list-count" id="listCount">0 scripts</span></div>
           <div class="script-list">
             <table class="script-list-table">
-              <thead><tr><th data-sort="symbol">Symbol</th><th data-sort="sector">Sector</th><th data-sort="industry">Industry</th><th data-sort="ltp">LTP</th><th data-sort="previous_close">Prev Close</th><th data-sort="change">Change</th><th data-sort="change_pct">Change %</th></tr></thead>
-              <tbody id="scriptBody"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+              <thead><tr><th data-sort="symbol">Symbol</th><th data-sort="industry">Industry</th><th data-sort="ltp">LTP</th><th data-sort="previous_close">Prev Close</th><th data-sort="change">Change</th><th data-sort="change_pct">Change %</th></tr></thead>
+              <tbody id="scriptBody"><tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
             </table>
           </div>
         </div>
@@ -224,14 +224,14 @@
       const tbody = document.getElementById("scriptBody");
       let filtered = allScripts;
       if (currentFilter !== "all") filtered = filtered.filter(s => (s.trend||"UNCHANGED")===currentFilter);
-      if (currentSearch) { const q=currentSearch.toLowerCase(); filtered = filtered.filter(s => (s.symbol||"").toLowerCase().includes(q)||(s.sector||"").toLowerCase().includes(q)||(s.industry||"").toLowerCase().includes(q)); }
+      if (currentSearch) { const q=currentSearch.toLowerCase(); filtered = filtered.filter(s => (s.symbol||"").toLowerCase().includes(q)||(s.industry||"").toLowerCase().includes(q)); }
       filtered.sort((a,b) => { let av=a[currentSort.field], bv=b[currentSort.field]; if(typeof av==="number"&&typeof bv==="number") return currentSort.dir==="asc"?av-bv:bv-av; av=String(av||""); bv=String(bv||""); return currentSort.dir==="asc"?av.localeCompare(bv):bv.localeCompare(av); });
       document.getElementById("listCount").textContent = filtered.length+" script"+(filtered.length!==1?"s":"");
-      if (!filtered.length) { tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">&#128269;</div><div class="empty-state-text">No scripts found</div></div></td></tr>'; return; }
+      if (!filtered.length) { tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">&#128269;</div><div class="empty-state-text">No scripts found</div></div></td></tr>'; return; }
       tbody.innerHTML = filtered.map(item => {
         const chgCls = Number(item.change)>0?"pos":Number(item.change)<0?"neg":"";
         const pctCls = Number(item.change_pct)>0?"pos":Number(item.change_pct)<0?"neg":"";
-        return `<tr><td>${escHtml(item.symbol||"-")}</td><td>${escHtml(item.sector||"-")}</td><td>${escHtml(item.industry||"-")}</td><td>${fmt2(item.ltp)}</td><td>${fmt2(item.previous_close)}</td><td class="${chgCls}">${fmt2(item.change)}</td><td class="${pctCls}">${item.change_pct===null||item.change_pct===undefined?"-":fmt2(item.change_pct)+"%"}</td></tr>`;
+        return `<tr><td>${escHtml(item.symbol||"-")}</td><td>${escHtml(item.industry||"-")}</td><td>${fmt2(item.ltp)}</td><td>${fmt2(item.previous_close)}</td><td class="${chgCls}">${fmt2(item.change)}</td><td class="${pctCls}">${item.change_pct===null||item.change_pct===undefined?"-":fmt2(item.change_pct)+"%"}</td></tr>`;
       }).join("");
     }
 
@@ -249,7 +249,7 @@
         }
       } catch (e) {
         console.error("Failed to load:", e);
-        document.getElementById("scriptBody").innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">&#9888;</div><div class="empty-state-text">Failed to load data</div></div></td></tr>';
+        document.getElementById("scriptBody").innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">&#9888;</div><div class="empty-state-text">Failed to load data</div></div></td></tr>';
       }
     }
 
