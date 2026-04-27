@@ -591,7 +591,6 @@
               <thead>
                 <tr>
                   <th data-sort="symbol">Symbol</th>
-                  <th data-sort="sector">Sector</th>
                   <th data-sort="industry">Industry</th>
                   <th data-sort="ltp">LTP</th>
                   <th data-sort="previous_close">Prev Close</th>
@@ -601,7 +600,7 @@
               </thead>
               <tbody id="scriptListBody">
                 <tr>
-                  <td colspan="7">
+                  <td colspan="6">
                     <div class="loading">
                       <div class="spinner"></div>
                     </div>
@@ -712,7 +711,6 @@
         const search = currentSearch.toLowerCase();
         filtered = filtered.filter(s =>
           (s.symbol || "").toLowerCase().includes(search) ||
-          (s.sector || "").toLowerCase().includes(search) ||
           (s.industry || "").toLowerCase().includes(search)
         );
       }
@@ -736,7 +734,7 @@
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7">
+            <td colspan="6">
               <div class="empty-state">
                 <div class="empty-state-icon">&#128269;</div>
                 <div class="empty-state-text">No scripts match your search criteria</div>
@@ -754,7 +752,6 @@
         return `
           <tr>
             <td>${escHtml(item.symbol || "-")}</td>
-            <td>${escHtml(item.sector || "-")}</td>
             <td>${escHtml(item.industry || "-")}</td>
             <td>${fmt2(item.ltp)}</td>
             <td>${fmt2(item.previous_close)}</td>
@@ -774,15 +771,13 @@
         const search = currentSearch.toLowerCase();
         filtered = filtered.filter(s =>
           (s.symbol || "").toLowerCase().includes(search) ||
-          (s.sector || "").toLowerCase().includes(search) ||
           (s.industry || "").toLowerCase().includes(search)
         );
       }
 
-      const headers = ["Symbol", "Sector", "Industry", "LTP", "Previous Close", "Change", "Change %"];
+      const headers = ["Symbol", "Industry", "LTP", "Previous Close", "Change", "Change %"];
       const rows = filtered.map(s => [
         s.symbol || "",
-        s.sector || "",
         s.industry || "",
         s.ltp || "",
         s.previous_close || "",
@@ -820,7 +815,7 @@
         console.error("Failed to load market breadth data:", error);
         document.getElementById("scriptListBody").innerHTML = `
           <tr>
-            <td colspan="7">
+            <td colspan="6">
               <div class="empty-state">
                 <div class="empty-state-icon">&#9888;</div>
                 <div class="empty-state-text">Failed to load data. Please try again.</div>
