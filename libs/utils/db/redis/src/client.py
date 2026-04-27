@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from time import monotonic
 
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
@@ -27,6 +28,8 @@ class RedisClientManager:
         self._healthy: bool = True
         self._consecutive_failures: int = 0
         self._max_consecutive_failures: int = 3
+        self._circuit_open_at: float = 0.0
+        self._circuit_cooldown_seconds: int = 30
 
     @property
     def enabled(self) -> bool:
@@ -63,13 +66,21 @@ class RedisClientManager:
         """
         Execute a Redis operation with error handling and circuit breaker.
         Catches RecursionError from redis-py health check bug and recovers.
+        Auto-recovers after a cooldown period.
         """
+        # Circuit breaker with auto-recovery cooldown
         if (
             not self._healthy
             and self._consecutive_failures >= self._max_consecutive_failures
         ):
-            raise RedisError(
-                "Redis client is in circuit breaker state - too many failures"
+            elapsed = monotonic() - self._circuit_open_at
+            if elapsed < self._circuit_cooldown_seconds:
+                raise RedisError(
+                    f"Redis circuit breaker active - retrying in "
+                    f"{self._circuit_cooldown_seconds - elapsed:.0f}s"
+                )
+            logger.info(
+                "Redis circuit breaker cooldown elapsed - attempting recovery probe"
             )
 
         try:
@@ -93,11 +104,18 @@ class RedisClientManager:
         except RedisError as e:
             self._consecutive_failures += 1
             if self._consecutive_failures >= self._max_consecutive_failures:
-                self._healthy = False
-                logger.error(
-                    f"Redis client entering circuit breaker state after "
-                    f"{self._consecutive_failures} consecutive failures - {str(e)}"
-                )
+                if self._healthy:
+                    # First time entering circuit breaker state - reset client
+                    self._healthy = False
+                    self._circuit_open_at = monotonic()
+                    await self._reset_client()
+                    logger.error(
+                        f"Redis client entering circuit breaker state after "
+                        f"{self._consecutive_failures} consecutive failures - {str(e)}"
+                    )
+                else:
+                    # Already in circuit breaker, probe failed - reset cooldown
+                    self._circuit_open_at = monotonic()
             raise
 
     async def _reset_client(self, disable_health_check: bool = False) -> None:

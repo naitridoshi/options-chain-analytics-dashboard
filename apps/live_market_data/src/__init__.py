@@ -101,19 +101,44 @@ async def run_live_market_data_app() -> None:
             signal.signal(signal.SIGTERM, _signal_handler_windows)
             signal.signal(signal.SIGBREAK, _signal_handler_windows)
 
-    await service.start()
-    await housekeeping_service.start()
-    await streaming_service.start()
+    # Startup with retry for Redis-dependent operations
+    for attempt in range(1, 6):
+        try:
+            await service.start()
+            break
+        except Exception as e:
+            if attempt == 5:
+                logger.error(f"Runtime service startup failed after 5 attempts - {e}")
+                raise
+            logger.warning(
+                f"Runtime service startup failed (attempt {attempt}/5) - "
+                f"error: {e} - retrying in 10s..."
+            )
+            await asyncio.sleep(10)
+
+    try:
+        await housekeeping_service.start()
+    except Exception as e:
+        logger.error(f"Housekeeping service start failed - error: {e}")
+
+    try:
+        await streaming_service.start()
+    except Exception as e:
+        logger.error(f"Streaming service start failed - error: {e}")
+
     try:
         logger.info("Live market data app running, waiting for shutdown signal...")
         while not stop_event.is_set():
-            await service.heartbeat(
-                "running",
-                details={
-                    "streaming": await streaming_service.get_status(),
-                    "housekeeping_running": True,
-                },
-            )
+            try:
+                await service.heartbeat(
+                    "running",
+                    details={
+                        "streaming": await streaming_service.get_status(),
+                        "housekeeping_running": True,
+                    },
+                )
+            except Exception as e:
+                logger.error(f"Heartbeat write failed - error: {e}")
             await asyncio.sleep(15)
     except asyncio.CancelledError:
         logger.info("Main task cancelled, initiating shutdown...")
