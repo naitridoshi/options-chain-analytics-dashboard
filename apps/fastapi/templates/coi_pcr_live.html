@@ -160,7 +160,7 @@
     .pcr-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
+      font-size: 14px;
       border: 1px solid var(--line);
     }
 
@@ -192,7 +192,7 @@
 
     .pcr-table thead th {
       color: #000000;
-      font-weight: 700;
+      font-weight: 800;
       background: var(--header-yellow);
     }
 
@@ -206,7 +206,7 @@
     }
 
     .header-main {
-      font-size: 14px;
+      font-size: 16px;
       margin-bottom: 2px;
     }
 
@@ -255,29 +255,18 @@
     /* Value Columns */
     .pcr-table tbody td.value-col {
       font-weight: 600;
-      font-size: 14px;
+      font-size: 16px;
     }
 
     /* Dominance Highlighting - Only on Call/Put cells of shift rows */
-    .pcr-table tbody tr.shift-call td.value-col {
+    .pcr-table tbody tr.shift-call td.call-col,
+    .pcr-table tbody tr.shift-call td.put-col {
       background: rgba(239, 68, 68, 0.25);
     }
 
-    .pcr-table tbody tr.shift-put td.value-col {
+    .pcr-table tbody tr.shift-put td.call-col,
+    .pcr-table tbody tr.shift-put td.put-col {
       background: rgba(34, 197, 94, 0.25);
-    }
-
-    /* Value Colors */
-    .value-call {
-      color: var(--bad);
-    }
-
-    .value-put {
-      color: var(--good);
-    }
-
-    .value-neutral {
-      color: var(--muted);
     }
 
     /* Loading */
@@ -483,26 +472,10 @@
           }
         }
 
-        // Determine value colors
-        let callClass = 'value-neutral';
-        let putClass = 'value-neutral';
-
-        if (callPct !== null) {
-          if (callPct > 50) {
-            callClass = 'value-call';
-          }
-        }
-
-        if (putPct !== null) {
-          if (putPct > 50) {
-            putClass = 'value-put';
-          }
-        }
-
         html += `<tr class="${rowClass}">`;
         html += `<td class="time-col">${escHtml(time)}</td>`;
-        html += `<td class="value-col call-col ${callClass}">${fmtPct(callPct)}</td>`;
-        html += `<td class="value-col put-col ${putClass}">${fmtPct(putPct)}</td>`;
+        html += `<td class="value-col call-col">${fmtPct(callPct)}</td>`;
+        html += `<td class="value-col put-col">${fmtPct(putPct)}</td>`;
         html += `<td class="value-col">${fmtPcr(coiPcr)}</td>`;
         html += '</tr>';
       }
