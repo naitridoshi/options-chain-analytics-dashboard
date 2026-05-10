@@ -60,10 +60,14 @@ if [[ -n "$SERVICE_NAME" ]]; then
         info "Fix: sudo cp deploy/redis-systemd-override.conf /etc/systemd/system/$SERVICE_NAME.d/override.conf"
     fi
 
-    # Convert microseconds to seconds for display
+    # RestartUSec may be in microseconds (integer) or human-readable (e.g. "5s")
     if [[ -n "$RESTART_SEC" ]]; then
-        RESTART_SEC_S=$((RESTART_SEC / 1000000))
-        info "Restart delay: ${RESTART_SEC_S}s"
+        if [[ "$RESTART_SEC" =~ ^[0-9]+$ ]]; then
+            RESTART_SEC_S=$((RESTART_SEC / 1000000))
+            info "Restart delay: ${RESTART_SEC_S}s"
+        else
+            info "Restart delay: $RESTART_SEC"
+        fi
     fi
 
     # Check override file exists
