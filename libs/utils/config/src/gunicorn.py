@@ -19,6 +19,6 @@ loglevel = "info"
 accesslog = "-"  # stdout
 errorlog = "-"  # stderr
 
-max_requests = 1000  # recycle workers to dodge memory leaks
-max_requests_jitter = 50
+max_requests = 5000  # recycle workers to dodge memory leaks
+max_requests_jitter = 500
 preload_app = False  # lower RAM when many workers

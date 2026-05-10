@@ -16,6 +16,9 @@ module.exports = {
 
       max_memory_restart: "1G",
 
+      kill_timeout: 5000,
+      listen_timeout: 10000,
+
       env: {
         PYTHONUNBUFFERED: "1"
       }
@@ -36,6 +39,9 @@ module.exports = {
 
       max_memory_restart: "1G",
 
+      kill_timeout: 5000,
+      listen_timeout: 10000,
+
       env: {
         PYTHONUNBUFFERED: "1"
       }
@@ -55,6 +61,9 @@ module.exports = {
       watch: false,
 
       max_memory_restart: "1G",
+
+      kill_timeout: 5000,
+      listen_timeout: 10000,
 
       env: {
         PYTHONUNBUFFERED: "1"

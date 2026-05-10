@@ -11,6 +11,7 @@ from libs.utils.common.enums.src.custom_logger import LogType
 from libs.utils.db.postgres.operations.src import (
     InstrumentOperations,
 )
+from libs.utils.db.redis.src.client import redis_client_manager
 
 log = CustomLogger("FastAPI Lifespan")
 logger, listener = log.get_logger()
@@ -32,3 +33,4 @@ async def app_lifespan(app: FastAPI):
         extra={"logType": LogType.STARTUP.value},
     )
     yield
+    await redis_client_manager.close()
