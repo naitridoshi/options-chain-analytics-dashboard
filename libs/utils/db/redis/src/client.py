@@ -3,13 +3,14 @@ from __future__ import annotations
 import asyncio
 from time import monotonic
 
-from redis.asyncio import Redis
+from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import RedisError
 
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.config.src.redis import (
     REDIS_ENABLED,
     REDIS_HEALTH_CHECK_INTERVAL_SECONDS,
+    REDIS_MAX_CONNECTIONS_PER_CLIENT,
     REDIS_SOCKET_TIMEOUT_SECONDS,
     REDIS_URL,
 )
@@ -53,14 +54,16 @@ class RedisClientManager:
         health_check = (
             0 if disable_health_check else REDIS_HEALTH_CHECK_INTERVAL_SECONDS
         )
-        return Redis.from_url(
+        pool = ConnectionPool.from_url(
             REDIS_URL,
             decode_responses=True,
             socket_timeout=REDIS_SOCKET_TIMEOUT_SECONDS,
             socket_connect_timeout=REDIS_SOCKET_TIMEOUT_SECONDS,
             health_check_interval=health_check,
             retry_on_timeout=True,
+            max_connections=REDIS_MAX_CONNECTIONS_PER_CLIENT,
         )
+        return Redis(connection_pool=pool)
 
     async def safe_execute(self, operation, *args, **kwargs):
         """

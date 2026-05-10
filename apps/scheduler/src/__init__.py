@@ -15,6 +15,7 @@ from apps.scheduler.platform.modules.script_snapshot.src import (
     script_snapshot_scheduler,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
+from libs.utils.db.redis.src.client import redis_client_manager
 
 log = CustomLogger("SchedulerApp")
 logger, listener = log.get_logger()
@@ -61,3 +62,4 @@ async def run_scheduler() -> None:
         script_snapshot_scheduler.stop()
         index_snapshot_scheduler.stop()
         constituent_snapshot_scheduler.stop()
+        await redis_client_manager.close()
