@@ -18,6 +18,7 @@ module.exports = {
 
       kill_timeout: 5000,
       listen_timeout: 10000,
+      wait_ready: false,
 
       env: {
         PYTHONUNBUFFERED: "1"
@@ -41,6 +42,7 @@ module.exports = {
 
       kill_timeout: 5000,
       listen_timeout: 10000,
+      wait_ready: false,
 
       env: {
         PYTHONUNBUFFERED: "1"
@@ -64,11 +66,20 @@ module.exports = {
 
       kill_timeout: 5000,
       listen_timeout: 10000,
+      wait_ready: false,
 
       env: {
         PYTHONUNBUFFERED: "1"
       }
     },
 
-  ]
+  ],
+
+  // Run before any app starts to kill orphaned processes from previous PM2 runs
+  // These zombies hold Redis connections in CLOSE_WAIT indefinitely
+  deploy: {
+    production: {
+      "pre-setup": "bash scripts/kill_orphans.sh --force"
+    }
+  }
 };

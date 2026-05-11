@@ -124,9 +124,15 @@ class RedisClientManager:
     async def _reset_client(self, disable_health_check: bool = False) -> None:
         """Reset the Redis client, optionally with health check disabled."""
         async with self._lock:
-            if self._client is not None:
+            old = self._client
+            self._client = None
+            if old is not None:
                 try:
-                    await self._client.aclose()
+                    await old.connection_pool.disconnect()
+                except Exception as e:
+                    logger.warning(f"Error disconnecting pool during reset: {e}")
+                try:
+                    await old.aclose()
                 except Exception as e:
                     logger.warning(f"Error closing Redis client during reset: {e}")
             self._client = self._create_client(
@@ -149,10 +155,18 @@ class RedisClientManager:
     async def close(self) -> None:
         if self._client is None:
             return
-        await self._client.aclose()
+        old = self._client
         self._client = None
         self._healthy = True
         self._consecutive_failures = 0
+        try:
+            await old.connection_pool.disconnect()
+        except Exception as e:
+            logger.warning(f"Error disconnecting pool during close: {e}")
+        try:
+            await old.aclose()
+        except Exception as e:
+            logger.warning(f"Error closing Redis client during close: {e}")
         logger.info("Redis client closed")
 
 
