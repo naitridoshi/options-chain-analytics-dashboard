@@ -1,4 +1,6 @@
+import os
 import subprocess
+import sys
 
 import uvicorn
 from fastapi import FastAPI
@@ -92,7 +94,7 @@ def start_server(
         )
         subprocess.run(
             [
-                "gunicorn",
+                os.path.join(os.path.dirname(sys.executable), "gunicorn"),
                 "-c",
                 f"{BASE_DIR}/{GUNICORN_CONFIG_PATH}",
                 "apps.fastapi.src:app",
