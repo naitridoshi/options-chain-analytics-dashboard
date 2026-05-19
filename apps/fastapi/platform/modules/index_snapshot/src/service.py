@@ -36,6 +36,8 @@ class IndexSnapshotService:
     def status(cls) -> dict:
         return asdict(cls._status)
 
+    BATCH_SIZE = 20
+
     @classmethod
     async def capture_for_all_active_indices(cls) -> dict:
         cls._status.is_running = True
@@ -52,14 +54,32 @@ class IndexSnapshotService:
                 )
             )
 
+            # Batch-fetch LTPs in a single API call (all indices fit in one batch)
+            ltp_map: dict[str, Decimal | None] = {}
+            fyers_symbols = [idx.fyers_symbol for idx in indices]
+            batches = [
+                fyers_symbols[i : i + cls.BATCH_SIZE]
+                for i in range(0, len(fyers_symbols), cls.BATCH_SIZE)
+            ]
+            for batch in batches:
+                try:
+                    batch_ltps = await async_retry(
+                        FyersClientService.fetch_quotes_batch,
+                        symbols=batch,
+                        max_retries=SNAPSHOT_MAX_RETRIES,
+                        base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
+                    )
+                    ltp_map.update(batch_ltps)
+                except Exception as e:
+                    logger.warning(f"Failed to fetch index batch: {e}")
+
             snapshot_rows: list[dict] = []
-            processed = 0
             for index in indices:
-                ltp = await cls.fetch_ltp_with_retries(index)
+                ltp = ltp_map.get(index.fyers_symbol)
                 previous_close = previous_close_map.get(index.symbol)
                 change = None
                 change_pct = None
-                if previous_close is not None:
+                if ltp is not None and previous_close is not None:
                     previous_close_decimal = Decimal(str(previous_close))
                     change = ltp - previous_close_decimal
                     if previous_close_decimal != 0:
@@ -78,41 +98,22 @@ class IndexSnapshotService:
                         "change_pct": change_pct,
                     }
                 )
-                processed += 1
             await RuntimeIndexSnapshotService.save_intraday_snapshot(
                 captured_at=captured_at,
                 index_rows=snapshot_rows,
             )
-            snapshots_created = len(snapshot_rows)
 
             cls._status.last_success_at = datetime.now(timezone.utc).isoformat()
             cls._status.last_error = None
             return {
-                "processed_indices": processed,
-                "snapshots_created": snapshots_created,
+                "processed_indices": len(indices),
+                "snapshots_created": len(snapshot_rows),
             }
         except Exception as error:
             cls._status.last_error = str(error)
             raise
         finally:
             cls._status.is_running = False
-
-    @classmethod
-    async def fetch_ltp_with_retries(cls, index):
-        """
-        Fetch LTP with intelligent retry logic.
-
-        Uses the optimized retry mechanism that:
-        - Skips retry for client errors (400, 401, 403, 404, invalid symbols)
-        - Uses exponential backoff for rate limits (429)
-        - Uses exponential backoff for server errors and network issues
-        """
-        return await async_retry(
-            FyersClientService.fetch_quote,
-            symbol=index.fyers_symbol,
-            max_retries=SNAPSHOT_MAX_RETRIES,
-            base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
-        )
 
     @classmethod
     async def get_heatmap_data(cls, category: str | None = None) -> dict:
