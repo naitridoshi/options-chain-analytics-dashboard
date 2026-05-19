@@ -139,6 +139,65 @@ class FyersClientService:
         return cls._extract_quote_ltp(response)
 
     @classmethod
+    def _extract_batch_ltps(
+        cls, response: dict, requested_symbols: list[str]
+    ) -> dict[str, Decimal]:
+        """Parse a multi-symbol Fyers quotes response into {fyers_symbol: ltp}."""
+        data = response.get("d") or response.get("data") or response
+        rows: list[dict] = []
+        if isinstance(data, list):
+            rows = data
+        elif isinstance(data, dict):
+            rows = data.get("d") or data.get("data") or data.get("quotes") or [data]
+
+        result: dict[str, Decimal | None] = {}
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            # Skip individual symbol errors within batch (e.g. invalid symbol)
+            if row.get("s") == "error":
+                continue
+            # Symbol is in the "n" field at the top level of each Fyers quote item
+            symbol = row.get("n")
+            if not symbol:
+                continue
+            # Values are in the "v" sub-dict
+            values = row.get("v")
+            if not isinstance(values, dict):
+                values = row
+            ltp = values.get("lp") or values.get("ltp") or values.get("last_price")
+            result[symbol] = Decimal(str(ltp)) if ltp is not None else None
+
+        # Map requested symbols to results
+        mapped: dict[str, Decimal] = {}
+        for sym in requested_symbols:
+            ltp = result.get(sym)
+            if ltp is not None:
+                mapped[sym] = ltp
+        return mapped
+
+    @classmethod
+    async def fetch_quotes_batch(cls, *, symbols: list[str]) -> dict[str, Decimal]:
+        """Fetch LTP for multiple symbols in a single Fyers quotes API call."""
+        if not symbols:
+            return {}
+        access_token = await cls.get_valid_access_token()
+        os.makedirs(FYERS_LOG_PATH, exist_ok=True)
+        model = fyersModel.FyersModel(
+            client_id=FYERS_APP_ID,
+            token=access_token,
+            is_async=False,
+            log_path=FYERS_LOG_PATH,
+        )
+        payload = {"symbols": ",".join(symbols)}
+        response = await asyncio.to_thread(model.quotes, payload)
+        if not isinstance(response, dict):
+            raise ValueError("FYERS quotes response is not a dictionary")
+        if response.get("s") == "error":
+            raise ValueError(f"FYERS quotes failed: {response}")
+        return cls._extract_batch_ltps(response, symbols)
+
+    @classmethod
     async def _validate_auth_code(cls, auth_code: str) -> str:
         app_id_hash = sha256_hexdigest(f"{FYERS_APP_ID}:{FYERS_SECRET_KEY}")
         async with httpx.AsyncClient(timeout=30) as client:

@@ -36,6 +36,8 @@ class ScriptSnapshotService:
     def status(cls) -> dict:
         return asdict(cls._status)
 
+    BATCH_SIZE = 20
+
     @classmethod
     async def capture_for_all_active_scripts(cls) -> dict:
         cls._status.is_running = True
@@ -52,16 +54,32 @@ class ScriptSnapshotService:
                 )
             )
 
-            snapshot_rows: list[dict] = []
-            processed = 0
+            # Batch-fetch LTPs to reduce API calls
+            ltp_map: dict[str, Decimal | None] = {}
+            fyers_symbols = [s.fyers_symbol for s in scripts]
+            batches = [
+                fyers_symbols[i : i + cls.BATCH_SIZE]
+                for i in range(0, len(fyers_symbols), cls.BATCH_SIZE)
+            ]
             failed = 0
-            for script in scripts:
+            for batch in batches:
                 try:
-                    ltp = await cls.fetch_ltp_with_retries(script)
+                    batch_ltps = await async_retry(
+                        FyersClientService.fetch_quotes_batch,
+                        symbols=batch,
+                        max_retries=SNAPSHOT_MAX_RETRIES,
+                        base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
+                    )
+                    ltp_map.update(batch_ltps)
                 except Exception as e:
-                    logger.warning(f"Failed to fetch LTP for {script.symbol}: {e}")
-                    ltp = None
-                    failed += 1
+                    logger.warning(
+                        f"Failed to fetch batch of {len(batch)} symbols: {e}"
+                    )
+                    failed += len(batch)
+
+            snapshot_rows: list[dict] = []
+            for script in scripts:
+                ltp = ltp_map.get(script.fyers_symbol)
                 previous_close = previous_close_map.get(script.symbol)
                 change = None
                 change_pct = None
@@ -83,18 +101,16 @@ class ScriptSnapshotService:
                         "change_pct": change_pct,
                     }
                 )
-                processed += 1
             await RuntimeScriptSnapshotService.save_intraday_snapshot(
                 captured_at=captured_at,
                 script_rows=snapshot_rows,
             )
-            snapshots_created = len(snapshot_rows)
 
             cls._status.last_success_at = datetime.now(timezone.utc).isoformat()
             cls._status.last_error = None
             return {
-                "processed_scripts": processed,
-                "snapshots_created": snapshots_created,
+                "processed_scripts": len(scripts),
+                "snapshots_created": len(snapshot_rows),
                 "failed_scripts": failed,
             }
         except Exception as error:
@@ -102,23 +118,6 @@ class ScriptSnapshotService:
             raise
         finally:
             cls._status.is_running = False
-
-    @classmethod
-    async def fetch_ltp_with_retries(cls, script):
-        """
-        Fetch LTP with intelligent retry logic.
-
-        Uses the optimized retry mechanism that:
-        - Skips retry for client errors (400, 401, 403, 404, invalid symbols)
-        - Uses exponential backoff for rate limits (429)
-        - Uses exponential backoff for server errors and network issues
-        """
-        return await async_retry(
-            FyersClientService.fetch_quote,
-            symbol=script.fyers_symbol,
-            max_retries=SNAPSHOT_MAX_RETRIES,
-            base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
-        )
 
     @classmethod
     async def get_advance_decline(cls) -> dict:
