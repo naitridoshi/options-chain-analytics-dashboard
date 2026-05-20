@@ -2136,7 +2136,7 @@
     /* Table Header Colors - Green for Call, Yellow for Strike, Red for Put */
     thead th.call { background: #166534; color: #fff; text-align: center; }
     thead th.put { background: #991b1b; color: #fff; text-align: center; }
-    thead th.sp { text-align: center; background: #854d0e; color: #fef08a; font-weight: 700; border-left: 1px solid #475569 !important; border-right: 1px solid #475569 !important; }
+    thead th.sp { text-align: center; background: #854d0e; color: #fef08a; font-weight: 700; box-shadow: inset 1px 0 0 0 #475569, inset -1px 0 0 0 #475569; }
 
     .table-wrap {
       border: 1px solid #334155;
@@ -2180,8 +2180,7 @@
       color: #ffffff;
       font-weight: 800;
       background: #1a1a1a;
-      border-left: 1px solid #475569 !important;
-      border-right: 1px solid #475569 !important;
+      box-shadow: inset 1px 0 0 0 #475569, inset -1px 0 0 0 #475569;
     }
 
     .sp-cell.atm {
