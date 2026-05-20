@@ -395,7 +395,7 @@
       position: sticky;
       top: 0;
       z-index: 1;
-      background: #0a0a0a;
+      background: var(--line);
       border-bottom: 1px solid var(--line);
       padding: 10px 12px;
       font-weight: 700;
@@ -404,10 +404,11 @@
       cursor: pointer;
       transition: color 0.2s ease;
       white-space: nowrap;
+      font-size:13px;
     }
 
     .script-list-table thead th:hover {
-      color: var(--accent);
+      color: var(--panel);
     }
 
     .script-list-table tbody tr {

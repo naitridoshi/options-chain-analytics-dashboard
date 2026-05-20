@@ -36,6 +36,30 @@ def _round_to_interval(dt: datetime, interval_minutes: int) -> datetime:
     return dt.replace(hour=new_hour, minute=new_minute, second=0, microsecond=0)
 
 
+def _select_latest_per_slot(
+    interval_ids: list[str], interval_minutes: int
+) -> list[str]:
+    """Given interval IDs (newest first from zrevrange), pick one per time slot.
+
+    With a 3-second snapshot interval there are ~7800 entries per day but only
+    ~75 unique 5-minute slots.  Selecting the latest interval_id per slot
+    reduces the snapshot fetch from thousands to ~75.
+    """
+    seen: set[str] = set()
+    selected: list[str] = []
+    for iid in interval_ids:
+        try:
+            dt = datetime.fromisoformat(iid.replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            continue
+        ist = dt.astimezone(IST)
+        slot_key = _round_to_interval(ist, interval_minutes).strftime("%H:%M")
+        if slot_key not in seen:
+            seen.add(slot_key)
+            selected.append(iid)
+    return selected
+
+
 log = CustomLogger("COIPCRLiveService")
 logger, listener = log.get_logger()
 listener.start()
@@ -139,13 +163,25 @@ class COIPCRLiveService:
         trade_date = datetime.now(IST).date()
         time_slots = cls._get_time_slots(trade_date)
 
-        # Get all snapshots from timeline with error handling
-        # Use higher limit to ensure we get all snapshots for the day (75 slots from 9:15 to 15:30)
+        # Fetch timeline interval IDs (lightweight - just strings),
+        # then deduplicate: pick the latest interval_id per 5-minute slot,
+        # then fetch only those snapshots (~75 instead of ~7800).
         try:
-            timeline = await RedisOptionChainSnapshotStore.get_timeline(
-                instrument_symbol=instrument.symbol,
-                trade_date=trade_date.isoformat(),
-                limit=600,
+            interval_ids = (
+                await RedisOptionChainSnapshotStore.get_timeline_interval_ids(
+                    instrument_symbol=instrument.symbol,
+                    trade_date=trade_date.isoformat(),
+                )
+            )
+            selected_ids = _select_latest_per_slot(
+                interval_ids, COI_LIVE_INTERVAL_MINUTES
+            )
+            timeline = (
+                await RedisOptionChainSnapshotStore.get_snapshots_by_interval_ids(
+                    instrument_symbol=instrument.symbol,
+                    trade_date=trade_date.isoformat(),
+                    interval_ids=selected_ids,
+                )
             )
         except Exception as e:
             logger.warning(f"Failed to get timeline from Redis: {e}")

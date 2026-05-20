@@ -341,6 +341,39 @@ class RedisOptionChainSnapshotStore:
         return [json.loads(value) for value in values if value]
 
     @staticmethod
+    async def get_timeline_interval_ids(
+        *,
+        instrument_symbol: str,
+        trade_date: str,
+    ) -> list[str]:
+        """Return all interval IDs (sorted set members) from the timeline, newest first.
+
+        Lightweight alternative to get_timeline when you only need the IDs
+        (e.g. to deduplicate before fetching full snapshot data).
+        """
+        client = await redis_client_manager.get_client()
+        timeline_key = intraday_timeline_key(instrument_symbol, trade_date)
+        return await client.zrevrange(timeline_key, 0, -1)
+
+    @staticmethod
+    async def get_snapshots_by_interval_ids(
+        *,
+        instrument_symbol: str,
+        trade_date: str,
+        interval_ids: list[str],
+    ) -> list[dict[str, Any]]:
+        """Fetch full snapshot payloads for the given interval IDs."""
+        if not interval_ids:
+            return []
+        client = await redis_client_manager.get_client()
+        snapshot_keys = [
+            intraday_snapshot_key(instrument_symbol, trade_date, iid)
+            for iid in interval_ids
+        ]
+        values = await client.mget(snapshot_keys)
+        return [json.loads(v) for v in values if v]
+
+    @staticmethod
     async def save_previous_day_final_snapshot(
         *,
         instrument_symbol: str,
