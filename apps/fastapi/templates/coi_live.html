@@ -435,6 +435,11 @@
       color: var(--text);
     }
 
+    /* Strike Divider - thin black border after every strike pair */
+    .strike-divider {
+      border-right: 1px solid #000000 !important;
+    }
+
     /* Loading */
     .loading {
       display: flex;
@@ -590,7 +595,7 @@
       document.getElementById("atmValue").textContent = data.atm_strike ? fmt(data.atm_strike) : "-";
       document.getElementById("dateValue").textContent = data.market_date || "-";
 
-      const timeSlots = data.time_slots || [];
+      const timeSlots = (data.time_slots || []).slice(1); // Skip 9:15, start from 9:20
       const strikes = data.strikes || [];
       const atmStrike = data.atm_strike;
 
@@ -606,7 +611,7 @@
       for (const strike of strikes) {
         const isAtm = strike.strike_price === atmStrike;
         const headerClass = isAtm ? 'strike-header atm' : 'strike-header';
-        html += `<th class="${headerClass}" colspan="2">${fmt(strike.strike_price)}</th>`;
+        html += `<th class="${headerClass} strike-divider" colspan="2">${fmt(strike.strike_price)}</th>`;
       }
 
       html += '</tr>';
@@ -621,7 +626,7 @@
         const liveData = strike.live || { intraday: null, weekly: null };
 
         html += `<th class="value-cell live-intraday${atmClass}">${fmt(liveData.intraday)}</th>`;
-        html += `<th class="value-cell live-weekly${atmClass}">${fmt(liveData.weekly)}</th>`;
+        html += `<th class="value-cell live-weekly${atmClass} strike-divider">${fmt(liveData.weekly)}</th>`;
       }
 
       html += '</tr>';
@@ -634,7 +639,7 @@
         const isAtm = strike.strike_price === atmStrike;
         const atmClass = isAtm ? ' atm-strike' : '';
         html += `<th class="intraday-header${atmClass}">Intraday</th>`;
-        html += `<th class="weekly-header${atmClass}">Weekly</th>`;
+        html += `<th class="weekly-header${atmClass} strike-divider">Weekly</th>`;
       }
 
       html += '</tr>';
@@ -655,7 +660,7 @@
           const weeklyClass = getValueClass(timeData.weekly);
 
           html += `<td class="value-cell ${intradayClass}">${fmt(timeData.intraday)}</td>`;
-          html += `<td class="value-cell ${weeklyClass}">${fmt(timeData.weekly)}</td>`;
+          html += `<td class="value-cell ${weeklyClass} strike-divider">${fmt(timeData.weekly)}</td>`;
         }
 
         html += '</tr>';

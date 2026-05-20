@@ -2136,7 +2136,7 @@
     /* Table Header Colors - Green for Call, Yellow for Strike, Red for Put */
     thead th.call { background: #166534; color: #fff; text-align: center; }
     thead th.put { background: #991b1b; color: #fff; text-align: center; }
-    thead th.sp { text-align: center; background: #854d0e; color: #fef08a; font-weight: 700; }
+    thead th.sp { text-align: center; background: #854d0e; color: #fef08a; font-weight: 700; border-left: 1px solid #475569 !important; border-right: 1px solid #475569 !important; }
 
     .table-wrap {
       border: 1px solid #334155;
@@ -2180,7 +2180,8 @@
       color: #ffffff;
       font-weight: 800;
       background: #1a1a1a;
-      border-right: 1px solid #475569;
+      border-left: 1px solid #475569 !important;
+      border-right: 1px solid #475569 !important;
     }
 
     .sp-cell.atm {
@@ -2547,6 +2548,7 @@
               <td id="footCallOi" class="foot-total"></td>
               <td id="footCallVol" class="foot-total"></td>
               <td id="footCallCoi" class="foot-total"></td>
+              <td></td>
               <td></td>
               <td></td>
               <td class="sp-cell"></td>
