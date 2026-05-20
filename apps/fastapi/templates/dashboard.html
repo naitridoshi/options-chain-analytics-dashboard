@@ -504,6 +504,20 @@
       color: #f8fafc;
     }
 
+    .strategy-oi-card .strategy-note {
+      margin-top: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 8px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      background: rgba(250, 204, 21, 0.15);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      color: #fbbf24;
+    }
+
     /* Spot KPI Boxes (inline in row) - Legacy */
     .spot-kpi-group {
       display: flex;
@@ -2223,7 +2237,7 @@
       font-size: 11px;
       font-weight: 700;
       color: #f8fafc;
-      text-align: right;
+      text-align: <center></center>;
       border-right:1px solid #334155;
       border-left:1px solid #334155;
       background: #1a1a1a;
@@ -2382,6 +2396,7 @@
             <span class="trend-label">DATA TREND</span>
             <span id="strategyTrend" class="item-value bullish">BULLISH</span>
           </div>
+          <div id="strategyNote" class="strategy-note" style="display:none;"></div>
         </div>
 
         <!-- <div class="section-separator"></div> -->
@@ -3557,6 +3572,25 @@
 
       // Debug: Log the calculated values
       console.log('[OI Summary] strikes:', strikes.length, 'callOiSum:', callOiSum, 'putOiSum:', putOiSum, 'callCoiSum:', callCoiSum, 'putCoiSum:', putCoiSum, 'callVolSum:', callVolSum, 'putVolSum:', putVolSum);
+
+      // Update strategy reversal note
+      const strategyNoteEl = document.getElementById("strategyNote");
+      if (strategyNoteEl) {
+        const signalEl = document.getElementById("strategySignal");
+        const strategyText = (signalEl?.textContent || "").toUpperCase().trim();
+        let noteText = "";
+        if (strategyText === "BUY ON DIPS" && callOiSum > putOiSum) {
+          noteText = "May Reverse From Resistance";
+        } else if (strategyText === "SELL ON RISE" && putOiSum > callOiSum) {
+          noteText = "May Reverse From Support";
+        }
+        if (noteText) {
+          strategyNoteEl.textContent = noteText;
+          strategyNoteEl.style.display = "";
+        } else {
+          strategyNoteEl.style.display = "none";
+        }
+      }
 
       const footCallOiEl = document.getElementById("footCallOi");
       const footPutOiEl = document.getElementById("footPutOi");
