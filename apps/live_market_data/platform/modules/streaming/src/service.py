@@ -321,8 +321,16 @@ class LiveMarketStreamingService:
         access_token = await FyersClientService.get_valid_access_token()
         self._current_symbols = symbols
 
+        # Properly close the old WebSocket connection to prevent stale data
+        # from the old connection contaminating data through the FyersDataSocket
+        # singleton's shared state (self.resp, self.scrips_sym, self.symbol_token).
+        # Without this, the old WebSocket thread continues running and its data
+        # can overwrite fresh data from the new connection.
         if self._ws_client:
-            self._ws_client.keep_running = False
+            try:
+                self._ws_client.close_connection()
+            except Exception:
+                pass
             self._ws_client = None
 
         self._ws_client = data_ws.FyersDataSocket(

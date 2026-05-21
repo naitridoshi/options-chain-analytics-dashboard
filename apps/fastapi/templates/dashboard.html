@@ -3150,6 +3150,19 @@
       }
 
       const pendingState = pendingLiveByOptionSymbol[optionSymbol] || {};
+
+      // STALENESS GUARD: Track backend timestamp to prevent stale data
+      // from old WebSocket connections overwriting fresh data.
+      // The Fyers WebSocket library uses a singleton pattern - when restarted,
+      // old connection threads can still send stale data through shared state.
+      const newReceivedAt = data.source_received_at
+        ? new Date(data.source_received_at).getTime()
+        : Date.now();
+      if (pendingState._receivedAt && newReceivedAt <= pendingState._receivedAt) {
+        return; // Stale update - skip to prevent duplicate LTP/VWAP across rows
+      }
+      pendingState._receivedAt = newReceivedAt;
+
       if (data.ltp !== undefined && data.ltp !== null) {
         pendingState.ltp = fmt2(data.ltp);
       }
@@ -3212,6 +3225,17 @@
         }
 
         const liveState = lastLiveByOptionSymbol[optionSymbol] || {};
+
+        // STALENESS GUARD: Skip if this update is older than the last applied update.
+        // Prevents stale data from old WebSocket connections overwriting fresh data,
+        // which causes duplicate LTP/VWAP values across different strike rows.
+        if (pendingState._receivedAt && liveState._receivedAt) {
+          if (pendingState._receivedAt <= liveState._receivedAt) {
+            delete pendingLiveByOptionSymbol[optionSymbol];
+            return;
+          }
+        }
+
         const ltpCell = row.querySelector(`.${side}-ltp`);
         const avgCell = row.querySelector(`.${side}-avg`);
 
@@ -3222,6 +3246,11 @@
         if (avgCell && pendingState.avg !== undefined) {
           avgCell.textContent = pendingState.avg;
           liveState.avg = pendingState.avg;
+        }
+
+        // Track the applied timestamp for staleness comparison
+        if (pendingState._receivedAt) {
+          liveState._receivedAt = pendingState._receivedAt;
         }
 
         lastLiveByOptionSymbol[optionSymbol] = liveState;
@@ -3478,11 +3507,11 @@
             <td class="call-col">${fmt(callVol)}</td>
             <td class="call-col ${callCoiHighlight}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
-            <td class="call-col ${getLtpVwapClass(row.call_live_ltp, row.call_live_avg_price)}">${callLiveLtp}</td>
+            <td class="call-col call-ltp ${getLtpVwapClass(row.call_live_ltp, row.call_live_avg_price)}">${callLiveLtp}</td>
             <td class="call-col call-avg">${callLiveAvg}</td>
             <td class="sp-cell ${isAtm ? 'atm' : ''}">${fmt2(row.strike_price)}</td>
             <td class="put-col put-avg">${putLiveAvg}</td>
-            <td class="put-col ${getLtpVwapClass(row.put_live_ltp, row.put_live_avg_price)}">${putLiveLtp}</td>
+            <td class="put-col put-ltp ${getLtpVwapClass(row.put_live_ltp, row.put_live_avg_price)}">${putLiveLtp}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${putCoiHighlight}">${fmt(putCoi)}</td>
             <td class="put-col">${fmt(putVol)}</td>
