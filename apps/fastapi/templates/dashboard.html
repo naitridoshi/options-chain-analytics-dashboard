@@ -2564,13 +2564,13 @@
               <td id="footCallOi" class="foot-total"></td>
               <td id="footCallVol" class="foot-total"></td>
               <td id="footCallCoi" class="foot-total"></td>
-              <td></td>
-              <td></td>
-              <td></td>
+              <td id="footCallChg" class="foot-total"></td>
+              <td id="footCallLtp" class="foot-total"></td>
+              <td id="footCallVwap" class="foot-total"></td>
               <td class="sp-cell"></td>
-              <td></td>
-              <td></td>
-              <td></td>
+              <td id="footPutVwap" class="foot-total"></td>
+              <td id="footPutLtp" class="foot-total"></td>
+              <td id="footPutChg" class="foot-total"></td>
               <td id="footPutCoi" class="foot-total"></td>
               <td id="footPutVol" class="foot-total"></td>
               <td id="footPutOi" class="foot-total"></td>
@@ -3643,6 +3643,45 @@
       if (footPutCoiEl) footPutCoiEl.textContent = fmt(putCoiSum);
       if (footOiPcrEl) footOiPcrEl.textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
       if (footCoiPcrEl) footCoiPcrEl.textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
+
+      // Footer averages for LTP, VWAP, PRICE CHG
+      function avgOf(fields) {
+        const vals = fields.filter(v => v !== null && v !== undefined && !Number.isNaN(Number(v))).map(Number);
+        return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+      }
+      const callLtpAvg = avgOf(strikes.map(r => r.call_live_ltp));
+      const callVwapAvg = avgOf(strikes.map(r => r.call_live_avg_price));
+      const callChgAvg = avgOf(strikes.map(r => r.call_ltp_change));
+      const putLtpAvg = avgOf(strikes.map(r => r.put_live_ltp));
+      const putVwapAvg = avgOf(strikes.map(r => r.put_live_avg_price));
+      const putChgAvg = avgOf(strikes.map(r => r.put_ltp_change));
+
+      const footCallLtpEl = document.getElementById("footCallLtp");
+      const footCallVwapEl = document.getElementById("footCallVwap");
+      const footCallChgEl = document.getElementById("footCallChg");
+      const footPutLtpEl = document.getElementById("footPutLtp");
+      const footPutVwapEl = document.getElementById("footPutVwap");
+      const footPutChgEl = document.getElementById("footPutChg");
+
+      if (footCallChgEl) {
+        footCallChgEl.textContent = callChgAvg !== null ? fmt2(callChgAvg) : "-";
+        footCallChgEl.className = `foot-total ${signedClass(callChgAvg)}`;
+      }
+      if (footCallLtpEl) {
+        footCallLtpEl.textContent = callLtpAvg !== null ? fmt2(callLtpAvg) : "-";
+        footCallLtpEl.className = `foot-total ${getLtpVwapClass(callLtpAvg, callVwapAvg)}`;
+      }
+      if (footCallVwapEl) footCallVwapEl.textContent = callVwapAvg !== null ? fmt2(callVwapAvg) : "-";
+
+      if (footPutVwapEl) footPutVwapEl.textContent = putVwapAvg !== null ? fmt2(putVwapAvg) : "-";
+      if (footPutLtpEl) {
+        footPutLtpEl.textContent = putLtpAvg !== null ? fmt2(putLtpAvg) : "-";
+        footPutLtpEl.className = `foot-total ${getLtpVwapClass(putLtpAvg, putVwapAvg)}`;
+      }
+      if (footPutChgEl) {
+        footPutChgEl.textContent = putChgAvg !== null ? fmt2(putChgAvg) : "-";
+        footPutChgEl.className = `foot-total ${signedClass(putChgAvg)}`;
+      }
 
       // Update OI Summary table
       const totalCoi = (callCoiSum || 0) + (putCoiSum || 0);
