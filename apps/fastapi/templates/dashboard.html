@@ -3066,7 +3066,7 @@
     }
 
     async function connectWebSocket(symbol) {
-      if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+      if (ws && ws.readyState !== WebSocket.CLOSED) {
         return;
       }
       const ticket = await ensureWebSocketTicket(symbol);
@@ -3074,6 +3074,11 @@
         setLiveStatus("warn");
         return;
       }
+      // Ticket is one-time-use (server deletes it on connect).
+      // Clear the cache immediately so it can never be reused on a
+      // subsequent call — prevents "Invalid or expired websocket ticket"
+      // rejections when load() fires while a previous WS is in CLOSING state.
+      websocketTicket = null;
       setLiveStatus("pending");
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
       ws = new WebSocket(`${protocol}://${window.location.host}/ws/market-data?symbol=${encodeURIComponent(symbol)}&ticket=${encodeURIComponent(ticket)}`);
