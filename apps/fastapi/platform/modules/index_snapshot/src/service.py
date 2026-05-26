@@ -9,7 +9,10 @@ from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.fyers_client.src import FyersClientService
 from libs.utils.common.index_catalog.src import IndexCatalogService
 from libs.utils.common.retry_mechanism.src import async_retry
-from libs.utils.common.runtime_store.src import RuntimeIndexSnapshotService
+from libs.utils.common.runtime_store.src import (
+    RuntimeIndexSnapshotService,
+    RuntimeScriptSnapshotService,
+)
 from libs.utils.config.src.fyers import (
     SCRIPTS_SNAPSHOT_INTERVAL_SECONDS,
     SNAPSHOT_MAX_RETRIES,
@@ -118,3 +121,32 @@ class IndexSnapshotService:
     @classmethod
     async def get_heatmap_data(cls, category: str | None = None) -> dict:
         return await RuntimeIndexSnapshotService.get_heatmap_data(category=category)
+
+    @classmethod
+    async def get_breadth_summary(cls) -> dict:
+        index_snapshot = await RuntimeIndexSnapshotService.get_latest_snapshot()
+        index_breadth = await RuntimeIndexSnapshotService.get_breadth_by_category(
+            snapshot=index_snapshot
+        )
+        script_breadth = await RuntimeScriptSnapshotService.get_breadth_by_category()
+        return {
+            "captured_at": index_snapshot.get("captured_at"),
+            "broad_market": {
+                "indices": index_breadth.get(
+                    "BROAD_MARKET",
+                    {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
+                ),
+                "scripts": script_breadth.get(
+                    "BROAD_MARKET",
+                    {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
+                ),
+            },
+            "sectoral": {
+                "indices": index_breadth.get(
+                    "SECTORAL", {"advance": 0, "decline": 0, "unchanged": 0, "total": 0}
+                ),
+                "scripts": script_breadth.get(
+                    "SECTORAL", {"advance": 0, "decline": 0, "unchanged": 0, "total": 0}
+                ),
+            },
+        }

@@ -37,6 +37,12 @@ async def get_heatmap_data(
     return JSONResponse(status_code=200, content={"success": True, "data": result})
 
 
+@index_snapshot_route.get("/breadth-summary")
+async def get_breadth_summary(_: bool = Depends(verify_basic_auth)):
+    result = await IndexSnapshotService.get_breadth_summary()
+    return JSONResponse(status_code=200, content={"success": True, "data": result})
+
+
 @index_snapshot_route.get("/constituents")
 async def get_constituents(
     index: str = Query(default=None),

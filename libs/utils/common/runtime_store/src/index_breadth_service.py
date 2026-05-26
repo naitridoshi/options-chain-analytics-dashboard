@@ -206,6 +206,33 @@ class RuntimeIndexSnapshotService:
         return datetime.fromisoformat(captured_at)
 
     @classmethod
+    async def get_breadth_by_category(
+        cls, snapshot: dict | None = None
+    ) -> dict[str, dict]:
+        """Return index advance/decline/unchanged counts grouped by category."""
+        if snapshot is None:
+            snapshot = await cls.get_latest_snapshot()
+        indices = snapshot.get("indices", [])
+
+        result: dict[str, dict[str, int]] = {}
+        for idx in indices:
+            cat = idx.get("category", "").upper()
+            if cat not in ("BROAD_MARKET", "SECTORAL"):
+                continue
+            if cat not in result:
+                result[cat] = {"advance": 0, "decline": 0, "unchanged": 0, "total": 0}
+            result[cat]["total"] += 1
+            trend = idx.get("trend", "UNCHANGED")
+            if trend == "ADVANCE":
+                result[cat]["advance"] += 1
+            elif trend == "DECLINE":
+                result[cat]["decline"] += 1
+            else:
+                result[cat]["unchanged"] += 1
+
+        return result
+
+    @classmethod
     async def get_heatmap_data(cls, category: str | None = None) -> dict:
         snapshot = await cls.get_latest_snapshot()
         indices = snapshot.get("indices", [])

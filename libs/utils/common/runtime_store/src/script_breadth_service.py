@@ -9,6 +9,7 @@ from libs.platform.modules.option_chain_snapshot.src import (
     normalize_interval_boundary,
 )
 from libs.utils.common.custom_logger.src import CustomLogger
+from libs.utils.common.index_catalog.src import IndexCatalogService
 from libs.utils.common.index_constituent_catalog.src import (
     IndexConstituentCatalogService,
 )
@@ -208,6 +209,51 @@ class RuntimeScriptSnapshotService:
             "total_scripts": len(active_scripts),
             "scripts": scripts_data,
         }
+
+    @classmethod
+    def _build_category_symbols_map(cls) -> dict[str, set[str]]:
+        """Map index category to the set of constituent script symbols."""
+        category_symbols: dict[str, set[str]] = {
+            "BROAD_MARKET": set(),
+            "SECTORAL": set(),
+        }
+        for idx_def in IndexCatalogService.get_active_indices():
+            cat = idx_def.category.upper()
+            if cat not in category_symbols:
+                continue
+            constituents = IndexConstituentCatalogService.get_constituents(
+                idx_def.symbol
+            )
+            for const in constituents:
+                category_symbols[cat].add(const.symbol)
+        return category_symbols
+
+    @classmethod
+    async def get_breadth_by_category(cls) -> dict[str, dict]:
+        """Return script advance/decline/unchanged counts grouped by index category."""
+        category_symbols = cls._build_category_symbols_map()
+        snapshot = await cls.get_latest_advance_decline()
+        scripts = snapshot.get("scripts", [])
+
+        result: dict[str, dict[str, int]] = {}
+        for cat in category_symbols:
+            result[cat] = {"advance": 0, "decline": 0, "unchanged": 0, "total": 0}
+
+        for script in scripts:
+            symbol = script.get("symbol", "")
+            trend = script.get("trend", "UNCHANGED")
+            for cat, symbols in category_symbols.items():
+                if symbol not in symbols:
+                    continue
+                result[cat]["total"] += 1
+                if trend == "ADVANCE":
+                    result[cat]["advance"] += 1
+                elif trend == "DECLINE":
+                    result[cat]["decline"] += 1
+                else:
+                    result[cat]["unchanged"] += 1
+
+        return result
 
     @classmethod
     async def get_latest_captured_at_for_today_ist(cls) -> datetime | None:

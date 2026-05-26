@@ -320,6 +320,72 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Breadth Bars */
+    .breadth-section {
+      margin-bottom: 12px;
+    }
+    .breadth-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .breadth-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .breadth-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      width: 90px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .breadth-bar {
+      display: flex;
+      height: 20px;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #0a0a0a;
+      border: 1px solid var(--line);
+      flex: 1;
+    }
+    .breadth-bar-segment {
+      transition: width 0.4s ease;
+      min-width: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+    }
+    .breadth-bar-segment.advance {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    }
+    .breadth-bar-segment.decline {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+    .breadth-bar-segment.unchanged {
+      background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+    }
+    .breadth-legend {
+      display: flex;
+      gap: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      padding-left: 98px;
+    }
+    .legend-advance { color: var(--good); }
+    .legend-decline { color: var(--bad); }
+    .legend-unchanged { color: #6b7280; }
+
     /* Responsive */
     @media (max-width: 900px) {
       .content-wrapper {
@@ -410,6 +476,67 @@
               <span class="legend-item red-1">-1%</span>
               <span class="legend-item red-3">-3%</span>
               <span class="legend-item red-5">-5%</span>
+            </div>
+          </div>
+
+          <!-- Market Breadth Bars -->
+          <div class="breadth-section">
+            <div class="breadth-section-title">Index Distribution</div>
+            <div class="breadth-legend">
+              <span class="legend-advance" id="broadIdxAdv">Advance: -</span>
+              <span class="legend-unchanged" id="broadIdxUnc">Unchanged: -</span>
+              <span class="legend-decline" id="broadIdxDec">Decline: -</span>
+            </div>
+            <div class="breadth-row">
+              <span class="breadth-label">Broad Market</span>
+              <div class="breadth-bar">
+                <div id="broadIdxBarAdv" class="breadth-bar-segment advance" style="width:0%"></div>
+                <div id="broadIdxBarUnc" class="breadth-bar-segment unchanged" style="width:0%"></div>
+                <div id="broadIdxBarDec" class="breadth-bar-segment decline" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="breadth-legend">
+              <span class="legend-advance" id="sectIdxAdv">Advance: -</span>
+              <span class="legend-unchanged" id="sectIdxUnc">Unchanged: -</span>
+              <span class="legend-decline" id="sectIdxDec">Decline: -</span>
+            </div>
+            <div class="breadth-row">
+              <span class="breadth-label">Sectoral</span>
+              <div class="breadth-bar">
+                <div id="sectIdxBarAdv" class="breadth-bar-segment advance" style="width:0%"></div>
+                <div id="sectIdxBarUnc" class="breadth-bar-segment unchanged" style="width:0%"></div>
+                <div id="sectIdxBarDec" class="breadth-bar-segment decline" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="breadth-section">
+            <div class="breadth-section-title">Script Distribution</div>
+            <div class="breadth-legend">
+              <span class="legend-advance" id="broadScrAdv">Advance: -</span>
+              <span class="legend-unchanged" id="broadScrUnc">Unchanged: -</span>
+              <span class="legend-decline" id="broadScrDec">Decline: -</span>
+            </div>
+            <div class="breadth-row">
+              <span class="breadth-label">Broad Market</span>
+              <div class="breadth-bar">
+                <div id="broadScrBarAdv" class="breadth-bar-segment advance" style="width:0%"></div>
+                <div id="broadScrBarUnc" class="breadth-bar-segment unchanged" style="width:0%"></div>
+                <div id="broadScrBarDec" class="breadth-bar-segment decline" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="breadth-legend">
+              <span class="legend-advance" id="sectScrAdv">Advance: -</span>
+              <span class="legend-unchanged" id="sectScrUnc">Unchanged: -</span>
+              <span class="legend-decline" id="sectScrDec">Decline: -</span>
+            </div>
+            <div class="breadth-row">
+              <span class="breadth-label">Sectoral</span>
+              <div class="breadth-bar">
+                <div id="sectScrBarAdv" class="breadth-bar-segment advance" style="width:0%"></div>
+                <div id="sectScrBarUnc" class="breadth-bar-segment unchanged" style="width:0%"></div>
+                <div id="sectScrBarDec" class="breadth-bar-segment decline" style="width:0%"></div>
+              </div>
             </div>
           </div>
 
@@ -583,7 +710,7 @@
 
     function startStreaming() {
       if (refreshInterval) return;
-      refreshInterval = setInterval(loadData, 10000); // Refresh every 10 seconds
+      refreshInterval = setInterval(() => { loadData(); loadBreadthSummary(); }, 10000);
     }
 
     function stopStreaming() {
@@ -615,6 +742,43 @@
 
     // Initial load
     loadData();
+    loadBreadthSummary();
+
+    function renderBreadthBar(prefix, data) {
+      const total = data.total || 0;
+      const adv = data.advance || 0;
+      const unc = data.unchanged || 0;
+      const dec = data.decline || 0;
+      const advP = total > 0 ? (adv / total * 100) : 0;
+      const uncP = total > 0 ? (unc / total * 100) : 0;
+      const decP = total > 0 ? (dec / total * 100) : 0;
+      const barAdv = document.getElementById(prefix + "BarAdv");
+      const barUnc = document.getElementById(prefix + "BarUnc");
+      const barDec = document.getElementById(prefix + "BarDec");
+      if (barAdv) { barAdv.style.width = advP + "%"; barAdv.textContent = advP >= 8 ? adv : ""; }
+      if (barUnc) { barUnc.style.width = uncP + "%"; barUnc.textContent = uncP >= 8 ? unc : ""; }
+      if (barDec) { barDec.style.width = decP + "%"; barDec.textContent = decP >= 8 ? dec : ""; }
+      const lblAdv = document.getElementById(prefix + "Adv");
+      const lblUnc = document.getElementById(prefix + "Unc");
+      const lblDec = document.getElementById(prefix + "Dec");
+      if (lblAdv) lblAdv.textContent = "Advance: " + adv;
+      if (lblUnc) lblUnc.textContent = "Unchanged: " + unc;
+      if (lblDec) lblDec.textContent = "Decline: " + dec;
+    }
+
+    async function loadBreadthSummary() {
+      try {
+        const res = await fetch("/api/v1/index-snapshot/breadth-summary", { credentials: "include" });
+        const result = await res.json();
+        if (result.success && result.data) {
+          const d = result.data;
+          renderBreadthBar("broadIdx", d.broad_market.indices);
+          renderBreadthBar("sectIdx", d.sectoral.indices);
+          renderBreadthBar("broadScr", d.broad_market.scripts);
+          renderBreadthBar("sectScr", d.sectoral.scripts);
+        }
+      } catch (e) { console.error("Breadth summary fetch failed:", e); }
+    }
 
     // Spot data fetcher
     async function loadSpotData() {
