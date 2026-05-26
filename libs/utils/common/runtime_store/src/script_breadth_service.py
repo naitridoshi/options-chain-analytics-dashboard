@@ -13,6 +13,9 @@ from libs.utils.common.index_catalog.src import IndexCatalogService
 from libs.utils.common.index_constituent_catalog.src import (
     IndexConstituentCatalogService,
 )
+from libs.utils.common.runtime_store.src.constituent_service import (
+    RuntimeConstituentService,
+)
 from libs.utils.common.script_catalog.src import ScriptCatalogService
 from libs.utils.config.src.fyers import (
     MARKET_CLOSE_HOUR,
@@ -230,9 +233,13 @@ class RuntimeScriptSnapshotService:
 
     @classmethod
     async def get_breadth_by_category(cls) -> dict[str, dict]:
-        """Return script advance/decline/unchanged counts grouped by index category."""
+        """Return script advance/decline/unchanged counts grouped by index category.
+
+        Uses the constituent snapshot (all index constituents) instead of the
+        script snapshot (FNO only) so that every index constituent is counted.
+        """
         category_symbols = cls._build_category_symbols_map()
-        snapshot = await cls.get_latest_advance_decline()
+        snapshot = await RuntimeConstituentService.get_latest_snapshot()
         scripts = snapshot.get("scripts", [])
 
         result: dict[str, dict[str, int]] = {}
