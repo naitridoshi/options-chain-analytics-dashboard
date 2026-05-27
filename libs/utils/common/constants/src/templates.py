@@ -30,3 +30,6 @@ MOST_ACTIVE_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "most_active.html").read_te
 INDEX_SCRIPTS_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "index_scripts.html").read_text(
     encoding="utf-8"
 )
+SCORING_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "scoring.html").read_text(
+    encoding="utf-8"
+)

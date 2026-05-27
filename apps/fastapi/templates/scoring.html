@@ -1,0 +1,616 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Market Scoring - Options Chain Analytics</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #000000;
+      --panel-2: #0a0a0a;
+      --line: #1e3a5f;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --warn: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { min-height: 100%; background: #000000; }
+
+    body {
+      font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
+      background: #000000;
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    .page { max-width: 1400px; margin: 8px auto; padding: 0 8px; }
+
+    .card {
+      background: #000000;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex; align-items: center; gap: 6px; padding: 10px 16px;
+      background: #0a0a0a; border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0;
+    }
+    .nav-spot-wrap { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+    .nav-spot-item { display: inline-flex; align-items: center; gap: 3px; }
+    .nav-label { font-size: 9px; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }
+    .nav-val { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+    .nav-val.pos { color: var(--good); }
+    .nav-val.neg { color: var(--bad); }
+    .nav-sep { width: 1px; height: 16px; background: var(--line); }
+
+    /* Streaming toggle */
+    .streaming-toggle { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; }
+    .streaming-toggle span { font-size: 10px; font-weight: 600; color: var(--muted); }
+    .toggle-switch {
+      width: 34px; height: 18px; border-radius: 9px; background: #1e293b; cursor: pointer;
+      position: relative; transition: background 0.2s;
+    }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+      border-radius: 50%; background: #475569; transition: all 0.2s;
+    }
+    .toggle-switch.active { background: rgba(56,189,248,0.3); }
+    .toggle-switch.active::after { left: 18px; background: var(--accent); }
+
+    /* Main Content */
+    .main-content { padding: 16px; }
+
+    /* Overall Score Card */
+    .score-hero {
+      display: flex; align-items: center; gap: 32px; padding: 24px;
+      background: linear-gradient(135deg, #0a0f1a 0%, #000 100%);
+      border: 1px solid var(--line); border-radius: 8px; margin-bottom: 16px;
+    }
+    .score-gauge {
+      width: 140px; height: 140px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      border: 3px solid var(--line); position: relative;
+    }
+    .score-gauge-value {
+      font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+    }
+    .score-gauge-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .score-gauge.bullish { border-color: rgba(34,197,94,0.4); box-shadow: 0 0 30px rgba(34,197,94,0.1); }
+    .score-gauge.bullish .score-gauge-value { color: var(--good); }
+    .score-gauge.bearish { border-color: rgba(239,68,68,0.4); box-shadow: 0 0 30px rgba(239,68,68,0.1); }
+    .score-gauge.bearish .score-gauge-value { color: var(--bad); }
+    .score-gauge.neutral { border-color: rgba(251,191,36,0.4); box-shadow: 0 0 30px rgba(251,191,36,0.1); }
+    .score-gauge.neutral .score-gauge-value { color: var(--warn); }
+
+    .score-info { flex: 1; }
+    .score-trend {
+      font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;
+    }
+    .score-trend.bullish { color: var(--good); }
+    .score-trend.bearish { color: var(--bad); }
+    .score-trend.neutral { color: var(--warn); }
+    .score-weights { display: flex; gap: 24px; }
+    .weight-item { display: flex; align-items: center; gap: 6px; }
+    .weight-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .weight-dot.bull { background: var(--good); }
+    .weight-dot.bear { background: var(--bad); }
+    .weight-text { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .weight-val { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .score-captured { font-size: 10px; color: var(--muted); margin-top: 10px; }
+
+    /* Breakdown Table */
+    .breakdown-section { margin-bottom: 16px; }
+    .section-title {
+      font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 8px; padding-left: 2px;
+    }
+    .breakdown-table {
+      width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+    }
+    .breakdown-table th {
+      background: #0a0f1a; font-size: 9px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+    .breakdown-table td {
+      padding: 10px 12px; font-size: 12px; font-weight: 600;
+      border-bottom: 1px solid rgba(30,58,95,0.3); font-variant-numeric: tabular-nums;
+    }
+    .breakdown-table tr:last-child td { border-bottom: none; }
+    .breakdown-table tr:hover td { background: rgba(56,189,248,0.03); }
+    .comp-name { color: var(--text); font-weight: 700; }
+    .trend-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .trend-badge.bullish { background: rgba(34,197,94,0.15); color: var(--good); }
+    .trend-badge.bearish { background: rgba(239,68,68,0.15); color: var(--bad); }
+    .score-val { color: var(--text); }
+    .weight-val-cell { color: var(--muted); }
+    .net-val { font-weight: 800; }
+    .net-val.bullish { color: var(--good); }
+    .net-val.bearish { color: var(--bad); }
+    .detail-arrow { cursor: pointer; color: var(--muted); font-size: 10px; transition: transform 0.2s; display: inline-block; }
+    .detail-arrow.open { transform: rotate(90deg); }
+
+    /* Detail rows */
+    .detail-row td { padding: 0 !important; }
+    .detail-content {
+      display: none; padding: 8px 12px 12px 36px; font-size: 11px; color: var(--muted);
+      background: rgba(10,15,26,0.5);
+    }
+    .detail-content.open { display: table-cell; }
+    .detail-item { display: inline-block; margin-right: 16px; margin-bottom: 4px; }
+    .detail-label { color: var(--muted); font-weight: 600; }
+    .detail-value { color: var(--text); font-weight: 700; margin-left: 4px; }
+
+    /* Score bar mini */
+    .score-bar-mini {
+      display: inline-block; width: 60px; height: 6px; background: #1e293b;
+      border-radius: 3px; overflow: hidden; vertical-align: middle; margin-left: 6px;
+    }
+    .score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+    .score-bar-fill.bullish { background: var(--good); }
+    .score-bar-fill.bearish { background: var(--bad); }
+
+    /* Loading */
+    .loading { display: flex; justify-content: center; padding: 40px; }
+    .spinner {
+      width: 24px; height: 24px; border: 2px solid var(--line); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 700px) {
+      .score-hero { flex-direction: column; gap: 16px; text-align: center; }
+      .score-weights { justify-content: center; }
+      .score-gauge { width: 120px; height: 120px; }
+      .score-gauge-value { font-size: 26px; }
+      .breakdown-table th, .breakdown-table td { padding: 8px 6px; font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <!-- Navbar -->
+      <div class="navbar">
+        <div id="navLinks" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+        <div class="nav-spot-wrap">
+          <div class="nav-spot-item"><span class="nav-label">Spot</span><span id="navSpot" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg</span><span id="navChange" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg%</span><span id="navChangePct" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="streaming-toggle">
+            <span>Streaming</span>
+            <div class="toggle-switch" id="streamingToggle"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Overall Score Card -->
+        <div class="score-hero">
+          <div class="score-gauge neutral" id="scoreGauge">
+            <div class="score-gauge-value" id="overallScoreVal">--</div>
+            <div class="score-gauge-label">Score</div>
+          </div>
+          <div class="score-info">
+            <div class="score-trend neutral" id="overallTrend">Loading...</div>
+            <div class="score-weights">
+              <div class="weight-item">
+                <div class="weight-dot bull"></div>
+                <span class="weight-text">Bullish Weight:</span>
+                <span class="weight-val" id="bullWeight">--</span>
+              </div>
+              <div class="weight-item">
+                <div class="weight-dot bear"></div>
+                <span class="weight-text">Bearish Weight:</span>
+                <span class="weight-val" id="bearWeight">--</span>
+              </div>
+              <div class="weight-item">
+                <span class="weight-text">Bullish:</span>
+                <span class="weight-val" id="bullCount" style="color:var(--good)">-</span>
+                <span class="weight-text">/</span>
+                <span class="weight-text">Bearish:</span>
+                <span class="weight-val" id="bearCount" style="color:var(--bad)">-</span>
+              </div>
+            </div>
+            <div class="score-captured" id="capturedTime">As on -</div>
+          </div>
+        </div>
+
+        <!-- Component Breakdown -->
+        <div class="breakdown-section">
+          <div class="section-title">Component Breakdown</div>
+          <table class="breakdown-table">
+            <thead>
+              <tr>
+                <th style="width:30px"></th>
+                <th>Component</th>
+                <th style="width:90px">Trend</th>
+                <th style="width:120px">Score</th>
+                <th style="width:70px">Weight</th>
+                <th style="width:100px">Net</th>
+              </tr>
+            </thead>
+            <tbody id="breakdownBody">
+              <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Navbar
+  (function renderNavbar() {
+    const pages = [
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/heatmap", label: "Heatmap" },
+      { href: "/market-breadth", label: "A2D" },
+      { href: "/most-active", label: "Most Active" },
+      { href: "/coi-live", label: "COI Live" },
+      { href: "/coi-pcr-live", label: "Ratio" },
+      { href: "/scoring", label: "Scoring" },
+    ];
+    const nav = document.getElementById("navLinks");
+    const css = "display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";
+    const activeCss = "background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);";
+    const sep = "<div style='width:1px;height:20px;background:var(--line);margin:0 4px;flex-shrink:0;'></div>";
+    nav.innerHTML = pages.map(p => {
+      const isActive = window.location.pathname === p.href;
+      return `<a href="${p.href}" style="${css}${isActive ? activeCss : ''}">${p.label}</a>`;
+    }).join(sep);
+  })();
+
+  let isStreaming = false;
+  let refreshInterval = null;
+
+  function startStreaming() {
+    if (refreshInterval) return;
+    refreshInterval = setInterval(loadAllData, 10000);
+  }
+
+  function stopStreaming() {
+    if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+  }
+
+  document.getElementById("streamingToggle").addEventListener("click", function() {
+    isStreaming = !isStreaming;
+    this.classList.toggle("active", isStreaming);
+    if (isStreaming) startStreaming(); else stopStreaming();
+  });
+
+  // --- SCORING LOGIC ---
+
+  function fmt2(v) { return v !== null && v !== undefined && !isNaN(v) ? (v * 100).toFixed(1) + "%" : "-"; }
+  function fmtPct(v) { return v !== null && v !== undefined && !isNaN(v) ? (v).toFixed(1) + "%" : "-"; }
+
+  // PCR scoring
+  function computePCR(latest) {
+    const types = [
+      { name: "COI PCR", key: "coi_pcr_window", weight: 0.50 },
+      { name: "Strength PCR", key: "strength_pcr", weight: 0.30 },
+      { name: "ATM PCR", key: "atm_pcr", weight: 0.20 },
+    ];
+    const details = [];
+    let weightedSum = 0;
+    let mainTrend = "NEUTRAL";
+
+    const coiPcr = latest ? latest.coi_pcr_window : null;
+    if (coiPcr !== null && coiPcr > 1.0) mainTrend = "BULLISH";
+    else if (coiPcr !== null && coiPcr < 1.0) mainTrend = "BEARISH";
+
+    for (const t of types) {
+      const pcr = latest ? latest[t.key] : null;
+      let strength = 0;
+      if (pcr !== null) {
+        if (pcr >= 1.0) {
+          strength = Math.min(100, 10 + ((pcr - 1.0) / 1.25) * 40);
+        } else {
+          strength = Math.min(100, 10 + ((1.0 - pcr) / 0.75) * 40);
+        }
+      }
+      weightedSum += strength * t.weight;
+      details.push({ name: t.name, pcr: pcr, strength: strength, weight: t.weight });
+    }
+    return { trend: mainTrend, score: weightedSum / 100, details };
+  }
+
+  // A2D scoring
+  function computeA2D(advance, decline) {
+    const total = advance + decline;
+    if (total === 0) return { trend: "NEUTRAL", score: 0, details: [] };
+    if (advance >= decline) {
+      return { trend: "BULLISH", score: advance / total, details: [{ name: "Advance", value: advance }, { name: "Decline", value: decline }, { name: "Total", value: total }] };
+    }
+    return { trend: "BEARISH", score: decline / total, details: [{ name: "Advance", value: advance }, { name: "Decline", value: decline }, { name: "Total", value: total }] };
+  }
+
+  // Indices scoring
+  function computeIndices(indices) {
+    const pos = indices.advance || 0;
+    const neg = indices.decline || 0;
+    const unc = indices.unchanged || 0;
+    const total = indices.total || 0;
+    if (total === 0) return { trend: "NEUTRAL", score: 0, details: [] };
+    if (pos >= neg) {
+      return { trend: "BULLISH", score: pos / total, details: [{ name: "Positive", value: pos }, { name: "Negative", value: neg }, { name: "Unchanged", value: unc }] };
+    }
+    return { trend: "BEARISH", score: neg / total, details: [{ name: "Positive", value: pos }, { name: "Negative", value: neg }, { name: "Unchanged", value: unc }] };
+  }
+
+  // Price vs VWAP scoring
+  function pvwapScore(pct) {
+    const abs = Math.abs(pct);
+    if (abs < 0.05) return 0;
+    if (abs < 0.10) return 0.25;
+    if (abs < 0.15) return 0.50;
+    if (abs < 0.20) return 0.75;
+    return 1.0;
+  }
+
+  function computePriceVWAP(strikes) {
+    if (!strikes || strikes.length === 0) return { trend: "NEUTRAL", score: 0, details: [] };
+
+    let callSum = 0, callN = 0, putSum = 0, putN = 0;
+    for (const s of strikes) {
+      if (s.call_ltp && s.call_avg_price) {
+        const p = (s.call_ltp - s.call_avg_price) / s.call_avg_price;
+        if (isFinite(p)) { callSum += p; callN++; }
+      }
+      if (s.put_ltp && s.put_avg_price) {
+        const p = (s.put_ltp - s.put_avg_price) / s.put_avg_price;
+        if (isFinite(p)) { putSum += p; putN++; }
+      }
+    }
+    const callAvg = callN > 0 ? callSum / callN : 0;
+    const putAvg = putN > 0 ? putSum / putN : 0;
+
+    const isBullish = callAvg > putAvg;
+    const trend = isBullish ? "BULLISH" : "BEARISH";
+    const bullW = isBullish ? 0.70 : 0.30;
+    const bearW = isBullish ? 0.30 : 0.70;
+
+    const callScore = pvwapScore(callAvg);
+    const putScore = pvwapScore(putAvg);
+
+    const sideScore = isBullish
+      ? callScore * bullW + putScore * bearW
+      : putScore * bearW + callScore * bullW;
+
+    return {
+      trend, score: sideScore,
+      details: [
+        { name: "Call LTP vs VWAP", value: fmtPct(callAvg * 100), score: callScore },
+        { name: "Put LTP vs VWAP", value: fmtPct(putAvg * 100), score: putScore },
+        { name: "Bullish Weight", value: (bullW * 100).toFixed(0) + "%" },
+        { name: "Bearish Weight", value: (bearW * 100).toFixed(0) + "%" },
+      ],
+    };
+  }
+
+  // COI Ratio scoring
+  function coiGapScore(gap) {
+    const abs = Math.abs(gap);
+    if (abs <= 0.10) return 0.50;
+    if (abs <= 0.20) return 0.60;
+    if (abs <= 0.35) return 0.70;
+    if (abs <= 0.50) return 0.85;
+    return 0.95;
+  }
+
+  function computeCOIRatio(strikes) {
+    if (!strikes || strikes.length === 0) return { trend: "NEUTRAL", score: 0, details: [] };
+
+    let callCoi = 0, putCoi = 0, callOi = 0, putOi = 0;
+    for (const s of strikes) {
+      callCoi += (s.call_oi_change || 0);
+      putCoi += (s.put_oi_change || 0);
+      callOi += (s.call_oi || 0);
+      putOi += (s.put_oi || 0);
+    }
+    const totalCoi = callCoi + putCoi;
+    const totalOi = callOi + putOi;
+    const coiPutPct = totalCoi > 0 ? putCoi / totalCoi : 0.5;
+    const coiCallPct = totalCoi > 0 ? callCoi / totalCoi : 0.5;
+    const oiPutPct = totalOi > 0 ? putOi / totalOi : 0.5;
+    const oiCallPct = totalOi > 0 ? callOi / totalOi : 0.5;
+
+    const coiGap = coiPutPct - coiCallPct;
+    const oiGap = oiPutPct - oiCallPct;
+
+    const coiScoreVal = coiGapScore(coiGap);
+    const oiScoreVal = coiGapScore(oiGap);
+    let finalScore = coiScoreVal * 0.70 + oiScoreVal * 0.30;
+
+    const coiBullish = putCoi > callCoi;
+    const oiBullish = putOi > callOi;
+    const conflict = coiBullish !== oiBullish;
+    if (conflict) finalScore *= 0.85;
+
+    const trend = coiBullish ? "BULLISH" : "BEARISH";
+
+    return {
+      trend, score: finalScore,
+      details: [
+        { name: "COI Put%", value: fmtPct(coiPutPct * 100) },
+        { name: "COI Call%", value: fmtPct(coiCallPct * 100) },
+        { name: "COI Gap", value: fmtPct(coiGap * 100), score: coiScoreVal },
+        { name: "OI Put%", value: fmtPct(oiPutPct * 100) },
+        { name: "OI Call%", value: fmtPct(oiCallPct * 100) },
+        { name: "OI Gap", value: fmtPct(oiGap * 100), score: oiScoreVal },
+        { name: "Conflict", value: conflict ? "Yes (-15%)" : "No" },
+      ],
+    };
+  }
+
+  // Overall score
+  function computeOverall(components) {
+    const bullComps = components.filter(c => c.trend === "BULLISH");
+    const bearComps = components.filter(c => c.trend === "BEARISH");
+    const bullCount = bullComps.length;
+    const bearCount = bearComps.length;
+    const total = components.length;
+
+    const bullWeight = total > 0 ? bullCount / total : 0;
+    const bearWeight = total > 0 ? bearCount / total : 0;
+
+    const avgBull = bullCount > 0 ? bullComps.reduce((s, c) => s + c.score, 0) / bullCount : 0;
+    const avgBear = bearCount > 0 ? bearComps.reduce((s, c) => s + c.score, 0) / bearCount : 0;
+
+    const overall = avgBull * bullWeight + avgBear * bearWeight;
+    const trend = bullCount > bearCount ? "BULLISH" : bearCount > bullCount ? "BEARISH" : "NEUTRAL";
+
+    return { overall, trend, bullWeight, bearWeight, bullCount, bearCount, avgBull, avgBear };
+  }
+
+  // --- RENDERING ---
+
+  function renderScore(data) {
+    const dash = data.dashboard;
+    const a2d = data.a2d;
+    const breadth = data.breadth;
+
+    const latest = dash ? dash.latest : null;
+    const strikes = dash ? dash.strikes : [];
+
+    // Compute all 7
+    const pcr = computePCR(latest);
+    const a2dFO = computeA2D(a2d ? a2d.advance_count : 0, a2d ? a2d.decline_count : 0);
+    const bmScr = breadth ? breadth.broad_market.scripts : {};
+    const slScr = breadth ? breadth.sectoral.scripts : {};
+    const totalScrAdv = (bmScr.advance || 0) + (slScr.advance || 0);
+    const totalScrDec = (bmScr.decline || 0) + (slScr.decline || 0);
+    const a2dBroader = computeA2D(totalScrAdv, totalScrDec);
+    const bmIdx = breadth ? breadth.broad_market.indices : {};
+    const slIdx = breadth ? breadth.sectoral.indices : {};
+    const totalIdxAdv = (bmIdx.advance || 0) + (slIdx.advance || 0);
+    const totalIdxDec = (bmIdx.decline || 0) + (slIdx.decline || 0);
+    const totalIdxTotal = (bmIdx.total || 0) + (slIdx.total || 0);
+    const indices = computeIndices({ advance: totalIdxAdv, decline: totalIdxDec, total: totalIdxTotal });
+    const sectors = computeIndices(slIdx);
+    const pvwap = computePriceVWAP(strikes);
+    const coiRatio = computeCOIRatio(strikes);
+
+    const components = [
+      { name: "PCR", ...pcr },
+      { name: "A2D F&O", ...a2dFO },
+      { name: "A2D Broader", ...a2dBroader },
+      { name: "Indices", ...indices },
+      { name: "Sectors", ...sectors },
+      { name: "Price vs VWAP", ...pvwap },
+      { name: "COI Ratio", ...coiRatio },
+    ];
+
+    const overall = computeOverall(components);
+
+    // Render overall card
+    const gauge = document.getElementById("scoreGauge");
+    const trendEl = document.getElementById("overallTrend");
+    gauge.className = "score-gauge " + overall.trend.toLowerCase();
+    trendEl.className = "score-trend " + overall.trend.toLowerCase();
+    document.getElementById("overallScoreVal").textContent = fmt2(overall.overall);
+    trendEl.textContent = overall.trend;
+    document.getElementById("bullWeight").textContent = fmt2(overall.bullWeight);
+    document.getElementById("bearWeight").textContent = fmt2(overall.bearWeight);
+    document.getElementById("bullCount").textContent = overall.bullCount;
+    document.getElementById("bearCount").textContent = overall.bearCount;
+    document.getElementById("capturedTime").textContent = dash && dash.captured_at
+      ? "As on " + new Date(dash.captured_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: false, day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " IST"
+      : "As on -";
+
+    // Render breakdown table
+    const tbody = document.getElementById("breakdownBody");
+    tbody.innerHTML = components.map((c, i) => {
+      const trendCls = c.trend.toLowerCase();
+      const net = c.score * (c.trend === "BULLISH" ? overall.bullWeight : overall.bearWeight);
+      const detailHtml = c.details.map(d => {
+        let v = `<span class="detail-label">${d.name}:</span>`;
+        v += `<span class="detail-value">${typeof d.value === 'number' ? d.value : d.value}</span>`;
+        if (d.score !== undefined) v += ` <span class="detail-value" style="color:var(--accent)">(${fmt2(d.score)})</span>`;
+        return v;
+      }).join("&nbsp;&nbsp;|&nbsp;&nbsp;");
+
+      return `
+        <tr>
+          <td style="text-align:center"><span class="detail-arrow" onclick="toggleDetail(${i})" id="arrow${i}">&#9654;</span></td>
+          <td class="comp-name">${c.name}</td>
+          <td><span class="trend-badge ${trendCls}">${c.trend}</span></td>
+          <td class="score-val">${fmt2(c.score)}<div class="score-bar-mini"><div class="score-bar-fill ${trendCls}" style="width:${Math.round(c.score * 100)}%"></div></div></td>
+          <td class="weight-val-cell">${c.trend === "BULLISH" ? fmt2(overall.bullWeight) : fmt2(overall.bearWeight)}</td>
+          <td class="net-val ${trendCls}">${fmt2(net)}</td>
+        </tr>
+        <tr class="detail-row"><td colspan="6"><div class="detail-content" id="detail${i}">${detailHtml}</div></td></tr>
+      `;
+    }).join("");
+  }
+
+  function toggleDetail(i) {
+    const el = document.getElementById("detail" + i);
+    const arrow = document.getElementById("arrow" + i);
+    el.classList.toggle("open");
+    arrow.classList.toggle("open");
+  }
+
+  // --- DATA LOADING ---
+
+  async function loadAllData() {
+    try {
+      const [dashRes, a2dRes, breadthRes] = await Promise.all([
+        fetch("/api/v1/dashboard/data?symbol=NIFTY", { credentials: "include" }),
+        fetch("/api/v1/script-snapshot/advance-decline", { credentials: "include" }),
+        fetch("/api/v1/index-snapshot/breadth-summary", { credentials: "include" }),
+      ]);
+      const [dashJson, a2dJson, breadthJson] = await Promise.all([dashRes.json(), a2dRes.json(), breadthRes.json()]);
+      renderScore({
+        dashboard: dashJson.success ? dashJson.data : null,
+        a2d: a2dJson.success ? a2dJson.data : null,
+        breadth: breadthJson.success ? breadthJson.data : null,
+      });
+    } catch (e) { console.error("Scoring data load failed:", e); }
+  }
+
+  async function loadSpotData() {
+    try {
+      const res = await fetch("/api/v1/spot-data", { credentials: "include" });
+      const result = await res.json();
+      if (result.success && result.data) {
+        const d = result.data;
+        const spot = d.spot_price;
+        const chg = d.change_from_prev_close;
+        const chgPct = d.change_pct_from_prev_close;
+        document.getElementById("navSpot").textContent = spot != null ? Number(spot).toLocaleString("en-IN", { maximumFractionDigits: 2 }) : "-";
+        if (chg != null) {
+          const el = document.getElementById("navChange");
+          el.textContent = (chg >= 0 ? "+" : "") + Number(chg).toFixed(2);
+          el.className = "nav-val " + (chg >= 0 ? "pos" : "neg");
+        }
+        if (chgPct != null) {
+          const el = document.getElementById("navChangePct");
+          el.textContent = (chgPct >= 0 ? "+" : "") + Number(chgPct).toFixed(2) + "%";
+          el.className = "nav-val " + (chgPct >= 0 ? "pos" : "neg");
+        }
+      }
+    } catch (e) { console.error("Spot data fetch failed:", e); }
+  }
+
+  loadAllData();
+  loadSpotData();
+  setInterval(loadSpotData, 30000);
+</script>
+</body>
+</html>

@@ -24,6 +24,7 @@ from libs.utils.common.constants.src.templates import (
     LOGIN_TEMPLATE_HTML,
     MARKET_BREADTH_TEMPLATE_HTML,
     MOST_ACTIVE_TEMPLATE_HTML,
+    SCORING_TEMPLATE_HTML,
 )
 from libs.utils.db.redis.src import (
     RedisLiveMarketStore,
@@ -264,6 +265,13 @@ async def most_active_page(request: Request):
     if not get_current_user(request):
         return RedirectResponse(url="/login", status_code=303)
     return HTMLResponse(MOST_ACTIVE_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/scoring", response_class=HTMLResponse)
+async def scoring_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(SCORING_TEMPLATE_HTML)
 
 
 @dashboard_route.get("/api/v1/most-active/data")
