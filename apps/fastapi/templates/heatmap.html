@@ -513,29 +513,16 @@
           <div class="breadth-section">
             <div class="breadth-section-title">Script Distribution</div>
             <div class="breadth-legend">
-              <span class="legend-advance" id="broadScrAdv">Advance: -</span>
-              <span class="legend-unchanged" id="broadScrUnc">Unchanged: -</span>
-              <span class="legend-decline" id="broadScrDec">Decline: -</span>
+              <span class="legend-advance" id="allScrAdv">Advance: -</span>
+              <span class="legend-unchanged" id="allScrUnc">Unchanged: -</span>
+              <span class="legend-decline" id="allScrDec">Decline: -</span>
             </div>
             <div class="breadth-row">
-              <span class="breadth-label">Broad Market</span>
+              <span class="breadth-label">All Scripts</span>
               <div class="breadth-bar">
-                <div id="broadScrBarAdv" class="breadth-bar-segment advance" style="width:0%"></div>
-                <div id="broadScrBarUnc" class="breadth-bar-segment unchanged" style="width:0%"></div>
-                <div id="broadScrBarDec" class="breadth-bar-segment decline" style="width:0%"></div>
-              </div>
-            </div>
-            <div class="breadth-legend">
-              <span class="legend-advance" id="sectScrAdv">Advance: -</span>
-              <span class="legend-unchanged" id="sectScrUnc">Unchanged: -</span>
-              <span class="legend-decline" id="sectScrDec">Decline: -</span>
-            </div>
-            <div class="breadth-row">
-              <span class="breadth-label">Sectoral</span>
-              <div class="breadth-bar">
-                <div id="sectScrBarAdv" class="breadth-bar-segment advance" style="width:0%"></div>
-                <div id="sectScrBarUnc" class="breadth-bar-segment unchanged" style="width:0%"></div>
-                <div id="sectScrBarDec" class="breadth-bar-segment decline" style="width:0%"></div>
+                <div id="allScrBarAdv" class="breadth-bar-segment advance" style="width:0%"></div>
+                <div id="allScrBarUnc" class="breadth-bar-segment unchanged" style="width:0%"></div>
+                <div id="allScrBarDec" class="breadth-bar-segment decline" style="width:0%"></div>
               </div>
             </div>
           </div>
@@ -662,12 +649,6 @@
       }).join("");
     }
 
-    function updateCounts(data) {
-      const broadCount = allIndices.filter(i => i.category === "BROAD_MARKET").length;
-      const sectoralCount = allIndices.filter(i => i.category === "SECTORAL").length;
-      document.getElementById("broadCount").textContent = broadCount;
-      document.getElementById("sectoralCount").textContent = sectoralCount;
-    }
 
     function updateTitle(category, count) {
       const titles = {
@@ -687,11 +668,6 @@
         if (result.success && result.data) {
           const data = result.data;
           allIndices = Array.isArray(data.indices) ? data.indices : [];
-
-          // Update counts on first load
-          if (currentCategory === "BROAD_MARKET") {
-            updateCounts(data);
-          }
 
           renderHeatmap(allIndices);
           updateTitle(currentCategory, allIndices.length);
@@ -772,10 +748,23 @@
         const result = await res.json();
         if (result.success && result.data) {
           const d = result.data;
+
+          // Index distribution bars
           renderBreadthBar("broadIdx", d.broad_market.indices);
           renderBreadthBar("sectIdx", d.sectoral.indices);
-          renderBreadthBar("broadScr", d.broad_market.scripts);
-          renderBreadthBar("sectScr", d.sectoral.scripts);
+
+          // Combined script distribution bar
+          const bm = d.broad_market.scripts, sl = d.sectoral.scripts;
+          renderBreadthBar("allScr", {
+            advance: (bm.advance || 0) + (sl.advance || 0),
+            decline: (bm.decline || 0) + (sl.decline || 0),
+            unchanged: (bm.unchanged || 0) + (sl.unchanged || 0),
+            total: (bm.total || 0) + (sl.total || 0),
+          });
+
+          // Sidebar category counts (from breadth summary, not filtered API)
+          document.getElementById("broadCount").textContent = d.broad_market.indices.total || 0;
+          document.getElementById("sectoralCount").textContent = d.sectoral.indices.total || 0;
         }
       } catch (e) { console.error("Breadth summary fetch failed:", e); }
     }
