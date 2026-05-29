@@ -1,0 +1,387 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chart - Options Chain Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #000000;
+      --panel-2: #0a0a0a;
+      --line: #1e3a5f;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { min-height: 100%; background: #000000; }
+    body { font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif; background: #000000; min-height: 100vh; color: var(--text); }
+    .page { max-width: 1400px; margin: 8px auto; padding: 0 8px; }
+    .card { background: #000000; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+
+    .navbar { display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: #0a0a0a; border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0; flex-wrap: wrap; }
+    .nav-spot-wrap { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+    .nav-spot-item { display: inline-flex; align-items: center; gap: 3px; }
+    .nav-label { font-size: 9px; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }
+    .nav-val { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+    .nav-val.pos { color: var(--good); }
+    .nav-val.neg { color: var(--bad); }
+    .nav-sep { width: 1px; height: 16px; background: var(--line); }
+
+    .streaming-toggle { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; }
+    .streaming-toggle span { font-size: 10px; font-weight: 600; color: var(--muted); }
+    .toggle-switch { width: 34px; height: 18px; border-radius: 9px; background: #1e293b; cursor: pointer; position: relative; transition: background 0.2s; }
+    .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #475569; transition: all 0.2s; }
+    .toggle-switch.active { background: rgba(56,189,248,0.3); }
+    .toggle-switch.active::after { left: 18px; background: var(--accent); }
+
+    .content { padding: 16px; }
+
+    /* Controls */
+    .controls-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .control-group { display: flex; align-items: center; gap: 6px; }
+    .control-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .control-select {
+      background: #0a0f1a; border: 1px solid var(--line); color: var(--text); border-radius: 4px;
+      padding: 6px 10px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; min-width: 100px;
+    }
+    .control-select:focus { outline: none; border-color: var(--accent); }
+    .control-sep { width: 1px; height: 24px; background: var(--line); }
+    .chart-meta { font-size: 10px; color: var(--muted); margin-left: auto; }
+
+    /* Chart container */
+    .chart-wrapper {
+      position: relative; background: #0a0f1a; border: 1px solid var(--line); border-radius: 6px;
+      padding: 16px; height: calc(100vh - 200px); min-height: 400px;
+    }
+    .chart-wrapper canvas { width: 100% !important; height: 100% !important; }
+
+    /* Loading */
+    .loading { display: flex; justify-content: center; align-items: center; height: 300px; }
+    .spinner { width: 30px; height: 30px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .controls-bar { gap: 8px; }
+      .chart-wrapper { height: calc(100vh - 260px); min-height: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="navbar">
+        <div id="navLinks" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+        <div class="nav-spot-wrap">
+          <div class="nav-spot-item"><span class="nav-label">Spot</span><span id="navSpot" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg</span><span id="navChange" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg%</span><span id="navChangePct" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="streaming-toggle">
+            <span>Streaming</span>
+            <div class="toggle-switch" id="streamingToggle"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="controls-bar">
+          <div class="control-group">
+            <span class="control-label">Call Strike</span>
+            <select class="control-select" id="callStrikeSelect"><option value="">Loading...</option></select>
+          </div>
+          <div class="control-sep"></div>
+          <div class="control-group">
+            <span class="control-label">Put Strike</span>
+            <select class="control-select" id="putStrikeSelect"><option value="">Loading...</option></select>
+          </div>
+          <div class="control-sep"></div>
+          <span class="chart-meta" id="chartMeta">-</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="mainChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Navbar
+  (function renderNavbar() {
+    const pages = [{href:"/scoring",label:"Scoring"},{href:"/dashboard",label:"Dashboard"},{href:"/coi-live",label:"COI Live"},{href:"/heatmap",label:"Heatmap"},{href:"/coi-pcr-live",label:"Ratio"},{href:"/market-breadth",label:"A2D"},{href:"/most-active",label:"Most Active"},{href:"/chart",label:"Chart"}];
+    const nav = document.getElementById("navLinks");
+    const css = "display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";
+    const activeCss = "background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);";
+    const sep = "<div style='width:1px;height:20px;background:var(--line);margin:0 4px;flex-shrink:0;'></div>";
+    nav.innerHTML = pages.map(p => {
+      const isActive = window.location.pathname === p.href;
+      return `<a href="${p.href}" style="${css}${isActive ? activeCss : ''}">${p.label}</a>`;
+    }).join(sep);
+  })();
+
+  let chart = null;
+  let isStreaming = false;
+  let refreshInterval = null;
+
+  // Streaming toggle
+  document.getElementById("streamingToggle").addEventListener("click", function() {
+    isStreaming = !isStreaming;
+    this.classList.toggle("active", isStreaming);
+    if (isStreaming) startStreaming(); else stopStreaming();
+  });
+
+  function startStreaming() { if (!refreshInterval) refreshInterval = setInterval(loadChartData, 15000); }
+  function stopStreaming() { if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; } }
+
+  // Load strike prices from dashboard data
+  async function loadStrikes() {
+    try {
+      const res = await fetch("/api/v1/dashboard/data?symbol=NIFTY", { credentials: "include" });
+      const result = await res.json();
+      if (result.success && result.data && result.data.strikes) {
+        const strikes = result.data.strikes;
+        const prices = [...new Set(strikes.map(s => s.strike_price))].sort((a, b) => a - b);
+        populateStrikeDropdown("callStrikeSelect", prices);
+        populateStrikeDropdown("putStrikeSelect", prices);
+        // Default to ATM (middle)
+        const atmIdx = Math.floor(prices.length / 2);
+        document.getElementById("callStrikeSelect").value = prices[atmIdx];
+        document.getElementById("putStrikeSelect").value = prices[atmIdx];
+        return prices;
+      }
+    } catch (e) { console.error("Failed to load strikes:", e); }
+    return [];
+  }
+
+  function populateStrikeDropdown(id, prices) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = prices.map(p => `<option value="${p}">${p}</option>`).join("");
+  }
+
+  // Load chart data
+  async function loadChartData() {
+    const callStrike = document.getElementById("callStrikeSelect").value;
+    const putStrike = document.getElementById("putStrikeSelect").value;
+    if (!callStrike && !putStrike) return;
+
+    try {
+      const params = new URLSearchParams();
+      if (callStrike) params.set("call_strike", callStrike);
+      if (putStrike) params.set("put_strike", putStrike);
+      const res = await fetch(`/api/v1/dashboard/chart-data?${params}`, { credentials: "include" });
+      const result = await res.json();
+      if (result.success && result.data) {
+        renderChart(result.data);
+        const meta = document.getElementById("chartMeta");
+        const pts = result.data.timestamps.length;
+        meta.textContent = `${pts} data points | Updated: ${new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour12: false })} IST`;
+      }
+    } catch (e) { console.error("Chart data fetch failed:", e); }
+  }
+
+  function renderChart(data) {
+    const ctx = document.getElementById("mainChart").getContext("2d");
+    const labels = data.timestamps || [];
+    const spotData = data.spot || [];
+    const callData = data.call_ltp || [];
+    const putData = data.put_ltp || [];
+
+    const datasets = [
+      {
+        label: `Spot`,
+        data: spotData,
+        borderColor: "#38bdf8",
+        backgroundColor: "rgba(56,189,248,0.1)",
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 6,
+        tension: 0.2,
+        yAxisID: "y",
+        fill: false,
+      },
+      {
+        label: `Call LTP (${data.call_strike})`,
+        data: callData,
+        borderColor: "#22c55e",
+        backgroundColor: "rgba(34,197,94,0.1)",
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 6,
+        tension: 0.2,
+        yAxisID: "y1",
+        fill: false,
+      },
+      {
+        label: `Put LTP (${data.put_strike})`,
+        data: putData,
+        borderColor: "#ef4444",
+        backgroundColor: "rgba(239,68,68,0.1)",
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 6,
+        tension: 0.2,
+        yAxisID: "y1",
+        fill: false,
+      },
+    ];
+
+    // VWAP annotation lines
+    const annotations = {};
+    if (data.call_vwap != null) {
+      annotations.callVwap = {
+        type: "line",
+        yScaleID: "y1",
+        yMin: data.call_vwap,
+        yMax: data.call_vwap,
+        borderColor: "rgba(34,197,94,0.5)",
+        borderWidth: 1.5,
+        borderDash: [6, 4],
+        label: {
+          display: true,
+          content: `Call VWAP: ${Number(data.call_vwap).toFixed(2)}`,
+          position: "start",
+          backgroundColor: "rgba(34,197,94,0.8)",
+          color: "#fff",
+          font: { size: 10, weight: "bold" },
+          padding: 3,
+        },
+      };
+    }
+    if (data.put_vwap != null) {
+      annotations.putVwap = {
+        type: "line",
+        yScaleID: "y1",
+        yMin: data.put_vwap,
+        yMax: data.put_vwap,
+        borderColor: "rgba(239,68,68,0.5)",
+        borderWidth: 1.5,
+        borderDash: [6, 4],
+        label: {
+          display: true,
+          content: `Put VWAP: ${Number(data.put_vwap).toFixed(2)}`,
+          position: "end",
+          backgroundColor: "rgba(239,68,68,0.8)",
+          color: "#fff",
+          font: { size: 10, weight: "bold" },
+          padding: 3,
+        },
+      };
+    }
+
+    const config = {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            position: "top",
+            labels: {
+              color: "#94a3b8",
+              font: { size: 11, weight: 600 },
+              usePointStyle: true,
+              pointStyle: "line",
+              padding: 16,
+            },
+          },
+          tooltip: {
+            backgroundColor: "rgba(0,0,0,0.9)",
+            titleColor: "#f8fafc",
+            bodyColor: "#94a3b8",
+            borderColor: "#1e3a5f",
+            borderWidth: 1,
+            padding: 10,
+            titleFont: { size: 11, weight: 700 },
+            bodyFont: { size: 11 },
+            callbacks: {
+              label: function(ctx) {
+                const v = ctx.parsed.y;
+                return `${ctx.dataset.label}: ${v != null ? Number(v).toFixed(2) : "-"}`;
+              },
+            },
+          },
+          annotation: { annotations },
+        },
+        scales: {
+          x: {
+            grid: { color: "rgba(30,58,95,0.3)" },
+            ticks: {
+              color: "#94a3b8",
+              font: { size: 10 },
+              maxTicksLimit: 20,
+              maxRotation: 0,
+            },
+          },
+          y: {
+            type: "linear",
+            position: "left",
+            title: { display: true, text: "Spot Price", color: "#38bdf8", font: { size: 10, weight: 700 } },
+            grid: { color: "rgba(30,58,95,0.3)" },
+            ticks: { color: "#38bdf8", font: { size: 10 } },
+          },
+          y1: {
+            type: "linear",
+            position: "right",
+            title: { display: true, text: "LTP / VWAP", color: "#94a3b8", font: { size: 10, weight: 700 } },
+            grid: { drawOnChartArea: false },
+            ticks: { color: "#94a3b8", font: { size: 10 } },
+          },
+        },
+      },
+    };
+
+    if (chart) {
+      chart.data = config.data;
+      chart.options = config.options;
+      chart.update("none");
+    } else {
+      chart = new Chart(ctx, config);
+    }
+  }
+
+  // Strike change handlers
+  document.getElementById("callStrikeSelect").addEventListener("change", loadChartData);
+  document.getElementById("putStrikeSelect").addEventListener("change", loadChartData);
+
+  // Spot data fetcher
+  async function loadSpotData() {
+    try {
+      const res = await fetch("/api/v1/spot-data", { credentials: "include" });
+      const result = await res.json();
+      if (result.success && result.data) {
+        const d = result.data;
+        const spot = d.spot_price;
+        if (spot != null) document.getElementById("navSpot").textContent = Number(spot).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        if (d.change_from_prev_close != null) {
+          const v = Number(d.change_from_prev_close);
+          const el = document.getElementById("navChange");
+          el.textContent = (v >= 0 ? "+" : "") + v.toFixed(2);
+          el.className = "nav-val " + (v >= 0 ? "pos" : "neg");
+        }
+        if (d.change_pct_from_prev_close != null) {
+          const v = Number(d.change_pct_from_prev_close);
+          const el = document.getElementById("navChangePct");
+          el.textContent = (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+          el.className = "nav-val " + (v >= 0 ? "pos" : "neg");
+        }
+      }
+    } catch (e) { console.error("Spot data fetch failed:", e); }
+  }
+
+  // Initial load
+  loadStrikes().then(() => loadChartData());
+  loadSpotData();
+  setInterval(loadSpotData, 30000);
+</script>
+</body>
+</html>

@@ -33,3 +33,4 @@ INDEX_SCRIPTS_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "index_scripts.html").rea
 SCORING_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "scoring.html").read_text(
     encoding="utf-8"
 )
+CHART_TEMPLATE_HTML = (FASTAPI_TEMPLATES_DIR / "chart.html").read_text(encoding="utf-8")
