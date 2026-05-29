@@ -368,12 +368,16 @@
 
     let callSum = 0, callN = 0, putSum = 0, putN = 0;
     for (const s of strikes) {
-      if (s.call_ltp && s.call_avg_price) {
-        const p = (s.call_ltp - s.call_avg_price) / s.call_avg_price;
+      const callLtp = s.call_live_ltp || s.call_ltp;
+      const putLtp = s.put_live_ltp || s.put_ltp;
+      const callVwap = s.call_live_avg_price;
+      const putVwap = s.put_live_avg_price;
+      if (callLtp && callVwap) {
+        const p = (callLtp - callVwap) / callVwap;
         if (isFinite(p)) { callSum += p; callN++; }
       }
-      if (s.put_ltp && s.put_avg_price) {
-        const p = (s.put_ltp - s.put_avg_price) / s.put_avg_price;
+      if (putLtp && putVwap) {
+        const p = (putLtp - putVwap) / putVwap;
         if (isFinite(p)) { putSum += p; putN++; }
       }
     }
@@ -498,10 +502,7 @@
     const a2dBroader = computeA2D(totalScrAdv, totalScrDec);
     const bmIdx = breadth ? breadth.broad_market.indices : {};
     const slIdx = breadth ? breadth.sectoral.indices : {};
-    const totalIdxAdv = (bmIdx.advance || 0) + (slIdx.advance || 0);
-    const totalIdxDec = (bmIdx.decline || 0) + (slIdx.decline || 0);
-    const totalIdxTotal = (bmIdx.total || 0) + (slIdx.total || 0);
-    const indices = computeIndices({ advance: totalIdxAdv, decline: totalIdxDec, total: totalIdxTotal });
+    const indices = computeIndices(bmIdx);
     const sectors = computeIndices(slIdx);
     const pvwap = computePriceVWAP(strikes);
     const coiRatio = computeCOIRatio(strikes);
