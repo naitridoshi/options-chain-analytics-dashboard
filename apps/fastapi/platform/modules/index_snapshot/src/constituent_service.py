@@ -50,14 +50,9 @@ class ConstituentSnapshotService:
                 datetime.now(timezone.utc),
                 interval_seconds=SCRIPTS_SNAPSHOT_INTERVAL_SECONDS,
             )
-            previous_close_map = (
-                await RuntimeConstituentService.get_previous_close_reference_map(
-                    captured_at_utc=captured_at,
-                )
-            )
 
-            # Batch-fetch LTPs: 759 symbols → ~38 API calls instead of 759
-            ltp_map: dict[str, Decimal | None] = {}
+            # Batch-fetch LTP + prev_close from Fyers API (primary source)
+            quotes_map: dict[str, dict[str, Decimal | None]] = {}
             fyers_symbols = [c.fyers_symbol for c in constituents]
             batches = [
                 fyers_symbols[i : i + cls.BATCH_SIZE]
@@ -66,39 +61,54 @@ class ConstituentSnapshotService:
             failed = 0
             for batch in batches:
                 try:
-                    batch_ltps = await async_retry(
-                        FyersClientService.fetch_quotes_batch,
+                    batch_quotes = await async_retry(
+                        FyersClientService.fetch_quotes_batch_with_prev_close,
                         symbols=batch,
                         max_retries=SNAPSHOT_MAX_RETRIES,
                         base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
                     )
-                    ltp_map.update(batch_ltps)
+                    quotes_map.update(batch_quotes)
                 except Exception as e:
                     logger.warning(
                         f"Failed to fetch batch of {len(batch)} symbols: {e}"
                     )
                     failed += len(batch)
 
+            # Fallback: Redis snapshots for any symbols missing API prev_close
+            needs_fallback = any(
+                q.get("prev_close") is None for q in quotes_map.values()
+            )
+            previous_close_map: dict[str, float | None] = {}
+            if needs_fallback:
+                previous_close_map = (
+                    await RuntimeConstituentService.get_previous_close_reference_map(
+                        captured_at_utc=captured_at,
+                    )
+                )
+
             snapshot_rows: list[dict] = []
             for constituent in constituents:
-                ltp = ltp_map.get(constituent.fyers_symbol)
-                previous_close = previous_close_map.get(constituent.symbol)
+                quote = quotes_map.get(constituent.fyers_symbol, {})
+                ltp = quote.get("ltp")
+                # Primary: API prev_close_price; Fallback: Redis snapshot
+                prev_close = quote.get("prev_close")
+                if prev_close is None:
+                    prev_close_raw = previous_close_map.get(constituent.symbol)
+                    if prev_close_raw is not None:
+                        prev_close = Decimal(str(prev_close_raw))
                 change = None
                 change_pct = None
-                if ltp is not None and previous_close is not None:
-                    previous_close_decimal = Decimal(str(previous_close))
-                    change = ltp - previous_close_decimal
-                    if previous_close_decimal != 0:
-                        change_pct = (change / previous_close_decimal) * Decimal("100")
+                if ltp is not None and prev_close is not None:
+                    change = ltp - prev_close
+                    if prev_close != 0:
+                        change_pct = (change / prev_close) * Decimal("100")
                 snapshot_rows.append(
                     {
                         "symbol": constituent.symbol,
                         "name": constituent.name,
                         "fyers_symbol": constituent.fyers_symbol,
                         "ltp": ltp,
-                        "previous_close": Decimal(str(previous_close))
-                        if previous_close is not None
-                        else None,
+                        "previous_close": prev_close,
                         "change": change,
                         "change_pct": change_pct,
                     }
