@@ -6,6 +6,8 @@
   <title>Chart - Options Chain Analytics</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2"></script>
   <style>
     :root {
       --bg: #000000;
@@ -53,6 +55,13 @@
     }
     .control-select:focus { outline: none; border-color: var(--accent); }
     .control-sep { width: 1px; height: 24px; background: var(--line); }
+    .ltp-badge { display: inline-flex; align-items: center; gap: 4px; background: #0a0f1a; border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .ltp-badge .ltp-label { font-size: 9px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+    .ltp-badge .ltp-val { font-size: 12px; }
+    .ltp-badge.call .ltp-val { color: var(--good); }
+    .ltp-badge.put .ltp-val { color: var(--bad); }
+    .reset-zoom-btn { background: #1e293b; border: 1px solid var(--line); color: var(--muted); border-radius: 4px; padding: 4px 10px; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; display: none; }
+    .reset-zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
     .chart-meta { font-size: 10px; color: var(--muted); margin-left: auto; }
 
     /* Chart container */
@@ -104,6 +113,10 @@
             <select class="control-select" id="putStrikeSelect"><option value="">Loading...</option></select>
           </div>
           <div class="control-sep"></div>
+          <div class="ltp-badge call"><span class="ltp-label">Call LTP</span><span class="ltp-val" id="callLtpVal">-</span></div>
+          <div class="ltp-badge put"><span class="ltp-label">Put LTP</span><span class="ltp-val" id="putLtpVal">-</span></div>
+          <div class="control-sep"></div>
+          <button class="reset-zoom-btn" id="resetZoomBtn" onclick="resetZoom()">Reset Zoom</button>
           <span class="chart-meta" id="chartMeta">-</span>
         </div>
         <div class="chart-wrapper">
@@ -193,6 +206,12 @@
     const spotData = data.spot || [];
     const callData = data.call_ltp || [];
     const putData = data.put_ltp || [];
+
+    // Update LTP indicators with latest non-null values
+    const lastCall = [...callData].reverse().find(v => v != null);
+    const lastPut = [...putData].reverse().find(v => v != null);
+    document.getElementById("callLtpVal").textContent = lastCall != null ? Number(lastCall).toFixed(2) : "-";
+    document.getElementById("putLtpVal").textContent = lastPut != null ? Number(lastPut).toFixed(2) : "-";
 
     const datasets = [
       {
@@ -311,6 +330,18 @@
             },
           },
           annotation: { annotations },
+          zoom: {
+            zoom: {
+              wheel: { enabled: true },
+              pinch: { enabled: true },
+              mode: "x",
+              onZoom: function() { document.getElementById("resetZoomBtn").style.display = "inline-block"; },
+            },
+            pan: {
+              enabled: true,
+              mode: "x",
+            },
+          },
         },
         scales: {
           x: {
@@ -341,8 +372,8 @@
     };
 
     if (chart) {
-      chart.data = config.data;
-      chart.options = config.options;
+      chart.data.labels = config.data.labels;
+      chart.data.datasets.forEach((ds, i) => { ds.data = config.data.datasets[i].data; });
       chart.update("none");
     } else {
       chart = new Chart(ctx, config);
@@ -352,6 +383,12 @@
   // Strike change handlers
   document.getElementById("callStrikeSelect").addEventListener("change", loadChartData);
   document.getElementById("putStrikeSelect").addEventListener("change", loadChartData);
+
+  // Zoom
+  function resetZoom() {
+    if (chart) chart.resetZoom();
+    document.getElementById("resetZoomBtn").style.display = "none";
+  }
 
   // Spot data fetcher
   async function loadSpotData() {
