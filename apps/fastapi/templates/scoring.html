@@ -257,15 +257,7 @@
 <script>
   // Navbar
   (function renderNavbar() {
-    const pages = [
-      { href: "/dashboard", label: "Option Chains" },
-      { href: "/scoring", label: "Dashboard" },
-      { href: "/heatmap", label: "Heatmap" },
-      { href: "/market-breadth", label: "A2D" },
-      { href: "/most-active", label: "Most Active" },
-      { href: "/coi-live", label: "COI Live" },
-      { href: "/coi-pcr-live", label: "Ratio" },
-    ];
+    const pages = [{href:"/scoring",label:"Scoring"},{href:"/dashboard",label:"Dashboard"},{href:"/coi-live",label:"COI Live"},{href:"/heatmap",label:"Heatmap"},{href:"/coi-pcr-live",label:"Ratio"},{href:"/market-breadth",label:"A2D"},{href:"/most-active",label:"Most Active"},{href:"/chart",label:"Chart"}];
     const nav = document.getElementById("navLinks");
     const css = "display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";
     const activeCss = "background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);";
@@ -299,7 +291,31 @@
   function fmt2(v) { return v !== null && v !== undefined && !isNaN(v) ? (v * 100).toFixed(1) + "%" : "-"; }
   function fmtPct(v) { return v !== null && v !== undefined && !isNaN(v) ? (v).toFixed(1) + "%" : "-"; }
 
-  // PCR scoring
+  // PCR scoring - lookup table from SCORING.xlsx
+  const PCR_TABLE = [
+    { min: 1.00, max: 1.25, label: "NEUTRAL TO BULLISH", trend: "BULLISH", add: 10, less: 1.00, divide: 0.25, into: 40 },
+    { min: 1.25, max: 1.75, label: "MODERATE BULLISH", trend: "BULLISH", add: 51, less: 1.25, divide: 0.50, into: 25 },
+    { min: 1.75, max: 2.25, label: "STRONG BULLISH", trend: "BULLISH", add: 76, less: 1.75, divide: 0.50, into: 15 },
+    { min: 2.25, max: Infinity, label: "EXTREME BULLISH", trend: "BULLISH", add: 91, less: 2.25, divide: 0.75, into: 10 },
+    { min: 0.75, max: 1.00, label: "NEUTRAL TO BEARISH", trend: "BEARISH", add: 10, less: 1.00, divide: 0.25, into: 40 },
+    { min: 0.50, max: 0.75, label: "MODERATE BEARISH", trend: "BEARISH", add: 51, less: 0.75, divide: 0.25, into: 30 },
+    { min: 0.25, max: 0.50, label: "STRONG BEARISH", trend: "BEARISH", add: 81, less: 0.50, divide: 0.25, into: 10 },
+    { min: 0, max: 0.25, label: "EXTREME BEARISH", trend: "BEARISH", add: 91, less: 0.25, divide: 0.25, into: 10 },
+  ];
+
+  function lookupPCRSpecore(pcr) {
+    if (pcr === null || pcr === undefined || isNaN(Number(pcr))) return { score: 0, trend: "NEUTRAL", label: "-" };
+    const v = Number(pcr);
+    for (const row of PCR_TABLE) {
+      if (v >= row.min && v < row.max) {
+        const distance = row.trend === "BULLISH" ? v - row.less : row.less - v;
+        const score = Math.min(100, Math.max(0, row.add + (distance / row.divide) * row.into));
+        return { score, trend: row.trend, label: row.label };
+      }
+    }
+    return { score: 0, trend: "NEUTRAL", label: "-" };
+  }
+
   function computePCR(latest) {
     const types = [
       { name: "COI PCR", key: "coi_pcr_window", weight: 0.50 },
@@ -307,27 +323,26 @@
       { name: "ATM PCR", key: "atm_pcr", weight: 0.20 },
     ];
     const details = [];
-    let weightedSum = 0;
-    let mainTrend = "NEUTRAL";
+    let weightedScore = 0;
 
+    // Trend determined by COI PCR alone
     const coiPcr = latest ? latest.coi_pcr_window : null;
+    let mainTrend = "NEUTRAL";
     if (coiPcr !== null && coiPcr > 1.0) mainTrend = "BULLISH";
     else if (coiPcr !== null && coiPcr < 1.0) mainTrend = "BEARISH";
 
     for (const t of types) {
       const pcr = latest ? latest[t.key] : null;
-      let strength = 0;
-      if (pcr !== null) {
-        if (pcr >= 1.0) {
-          strength = Math.min(100, 10 + ((pcr - 1.0) / 1.25) * 40);
-        } else {
-          strength = Math.min(100, 10 + ((1.0 - pcr) / 0.75) * 40);
-        }
-      }
-      weightedSum += strength * t.weight;
-      details.push({ name: t.name, pcr: pcr, strength: strength, weight: t.weight });
+      const lookup = lookupPCRSpecore(pcr);
+      weightedScore += lookup.score * t.weight;
+      details.push({
+        name: t.name,
+        value: pcr !== null ? Number(pcr).toFixed(2) + " (" + lookup.label + ")" : "-",
+        score: lookup.score / 100,
+      });
     }
-    return { trend: mainTrend, score: weightedSum / 100, details };
+
+    return { trend: mainTrend, score: weightedScore / 100, details };
   }
 
   // A2D scoring

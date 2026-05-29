@@ -505,3 +505,153 @@ class RuntimeDashboardService:
                 }
 
         return movements
+
+    @classmethod
+    async def get_chart_data(
+        cls,
+        *,
+        symbol: str | None = None,
+        call_strike: float | None = None,
+        put_strike: float | None = None,
+    ) -> dict:
+        instrument = await cls._resolve_instrument(symbol)
+        if not instrument:
+            return {"timestamps": [], "spot": [], "strike_prices": []}
+
+        trade_date = datetime.now(IST).date().isoformat()
+
+        # Fetch latest snapshot for strike prices list + trading symbols
+        latest_snapshot = await RedisOptionChainSnapshotStore.get_latest_snapshot(
+            instrument_symbol=instrument.symbol,
+            trade_date=trade_date,
+        )
+        if not latest_snapshot:
+            return {
+                "instrument": cls._serialize_instrument(instrument),
+                "market_date": trade_date,
+                "timestamps": [],
+                "spot": [],
+                "strike_prices": [],
+            }
+
+        strikes = latest_snapshot.get("strikes", [])
+        strike_prices = sorted(
+            {
+                s.get("strike_price")
+                for s in strikes
+                if s.get("strike_price") is not None
+            }
+        )
+
+        # Default strikes: middle (ATM) if not specified
+        if call_strike is None and strike_prices:
+            call_strike = strike_prices[len(strike_prices) // 2]
+        if put_strike is None and strike_prices:
+            put_strike = strike_prices[len(strike_prices) // 2]
+
+        # Build a map: strike_price → { call_trading_symbol, put_trading_symbol }
+        strike_map = {}
+        for s in strikes:
+            sp = s.get("strike_price")
+            if sp is not None:
+                strike_map[sp] = {
+                    "call_trading_symbol": s.get("call_trading_symbol"),
+                    "put_trading_symbol": s.get("put_trading_symbol"),
+                }
+
+        # Get current VWAP from live market for selected strikes
+        call_vwap = None
+        put_vwap = None
+        live_symbols = []
+        call_info = strike_map.get(call_strike, {})
+        put_info = strike_map.get(put_strike, {})
+        if call_info.get("call_trading_symbol"):
+            live_symbols.append(call_info["call_trading_symbol"])
+        if call_info.get("put_trading_symbol"):
+            live_symbols.append(call_info["put_trading_symbol"])
+        if put_info.get("call_trading_symbol") and put_info.get(
+            "call_trading_symbol"
+        ) != call_info.get("call_trading_symbol"):
+            live_symbols.append(put_info["call_trading_symbol"])
+        if put_info.get("put_trading_symbol") and put_info.get(
+            "put_trading_symbol"
+        ) != call_info.get("put_trading_symbol"):
+            live_symbols.append(put_info["put_trading_symbol"])
+
+        if live_symbols:
+            live_payloads = await RedisLiveMarketStore.get_live_symbols(live_symbols)
+            call_sym = call_info.get("call_trading_symbol", "")
+            put_sym = put_info.get("put_trading_symbol", "")
+            if call_sym and call_sym in live_payloads:
+                call_vwap = live_payloads[call_sym].get("avg_price")
+            if put_sym and put_sym in live_payloads:
+                put_vwap = live_payloads[put_sym].get("avg_price")
+
+        # Fetch all timeline interval IDs for today
+        interval_ids = await RedisOptionChainSnapshotStore.get_timeline_interval_ids(
+            instrument_symbol=instrument.symbol,
+            trade_date=trade_date,
+        )
+
+        # Downsample if too many points (keep max ~500)
+        max_points = 500
+        if len(interval_ids) > max_points:
+            step = len(interval_ids) / max_points
+            interval_ids = [interval_ids[int(i * step)] for i in range(max_points)]
+
+        # Fetch full snapshots
+        snapshots = await RedisOptionChainSnapshotStore.get_snapshots_by_interval_ids(
+            instrument_symbol=instrument.symbol,
+            trade_date=trade_date,
+            interval_ids=interval_ids,
+        )
+
+        # Extract time-series data
+        timestamps = []
+        spot_series = []
+        call_ltp_series = []
+        put_ltp_series = []
+
+        for snapshot in reversed(
+            snapshots
+        ):  # Timeline is newest-first, reverse for chronological
+            latest = snapshot.get("latest", {})
+            captured_at = latest.get("captured_at")
+            if not captured_at:
+                continue
+
+            # Format timestamp as HH:MM:SS IST
+            try:
+                dt = datetime.fromisoformat(captured_at).astimezone(IST)
+                timestamps.append(dt.strftime("%H:%M:%S"))
+            except (ValueError, TypeError):
+                continue
+
+            spot_series.append(latest.get("spot_price"))
+
+            # Find LTP for selected strikes
+            call_ltp = None
+            put_ltp = None
+            for s in snapshot.get("strikes", []):
+                sp = s.get("strike_price")
+                if sp == call_strike:
+                    call_ltp = s.get("call_ltp")
+                if sp == put_strike:
+                    put_ltp = s.get("put_ltp")
+
+            call_ltp_series.append(call_ltp)
+            put_ltp_series.append(put_ltp)
+
+        return {
+            "instrument": cls._serialize_instrument(instrument),
+            "market_date": trade_date,
+            "strike_prices": strike_prices,
+            "timestamps": timestamps,
+            "spot": spot_series,
+            "call_ltp": call_ltp_series,
+            "put_ltp": put_ltp_series,
+            "call_vwap": call_vwap,
+            "put_vwap": put_vwap,
+            "call_strike": call_strike,
+            "put_strike": put_strike,
+        }

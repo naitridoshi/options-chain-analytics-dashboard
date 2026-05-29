@@ -16,6 +16,7 @@ from apps.fastapi.platform.modules.dashboard.src.service import (
     OptionChainDashboardService,
 )
 from libs.utils.common.constants.src.templates import (
+    CHART_TEMPLATE_HTML,
     COI_LIVE_TEMPLATE_HTML,
     COI_PCR_LIVE_TEMPLATE_HTML,
     DASHBOARD_TEMPLATE_HTML,
@@ -300,3 +301,38 @@ async def index_scripts_page(request: Request):
     if not get_current_user(request):
         return RedirectResponse(url="/login", status_code=303)
     return HTMLResponse(INDEX_SCRIPTS_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/chart", response_class=HTMLResponse)
+async def chart_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(CHART_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/api/v1/dashboard/chart-data")
+async def chart_data(
+    symbol: str | None = Query(default=None),
+    call_strike: float | None = Query(default=None),
+    put_strike: float | None = Query(default=None),
+    _: str = Depends(verify_basic_auth),
+):
+    from libs.utils.common.runtime_store.src.dashboard_service import (
+        RuntimeDashboardService,
+    )
+
+    try:
+        data = await RuntimeDashboardService.get_chart_data(
+            symbol=symbol,
+            call_strike=call_strike,
+            put_strike=put_strike,
+        )
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)},
+        )
