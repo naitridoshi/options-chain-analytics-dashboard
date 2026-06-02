@@ -70,10 +70,13 @@
 
     /* Overall Score Card */
     .score-hero {
-      display: flex; align-items: center; gap: 32px; padding: 24px;
+      display: flex; align-items: flex-start; gap: 24px; padding: 24px;
       background: linear-gradient(135deg, #0a0f1a 0%, #000 100%);
       border: 1px solid var(--line); border-radius: 8px; margin-bottom: 16px;
+      flex-wrap: wrap;
     }
+
+    .score-info { flex: 1; }
     .score-gauge {
       width: 140px; height: 140px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center; flex-direction: column;
@@ -89,6 +92,148 @@
     .score-gauge.bearish .score-gauge-value { color: var(--bad); }
     .score-gauge.neutral { border-color: rgba(251,191,36,0.4); box-shadow: 0 0 30px rgba(251,191,36,0.1); }
     .score-gauge.neutral .score-gauge-value { color: var(--warn); }
+
+    /* OI Summary Card for Scoring Page */
+    .oi-summary-card-scoring {
+      flex: 0 0 auto;
+      padding: 12px 16px;
+      background: #000000;
+      border: 2px solid #06b6d4;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+      min-height: 202px;
+    }
+
+    .oi-summary-card-scoring .card-title {
+      font-size: 16px;
+      color: #22d3ee;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 14px;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: underline;
+    }
+
+    .oi-summary-card-scoring .oi-summary-headings {
+      display: grid;
+      grid-template-columns: 50px 1.2fr 1.2fr 1.2fr;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 0 4px;
+    }
+
+    .oi-summary-card-scoring .oi-heading {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .oi-summary-card-scoring .oi-summary-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .oi-summary-card-scoring .oi-row {
+      display: grid;
+      grid-template-columns: 50px 1.2fr 1.2fr 1.2fr;
+      gap: 8px;
+      padding: 4px;
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 4px;
+    }
+
+    .oi-summary-card-scoring .oi-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    .oi-summary-card-scoring .oi-net {
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .oi-summary-card-scoring .oi-net.positive {
+      color: #22c55e;
+    }
+
+    .oi-summary-card-scoring .oi-net.negative {
+      color: #ef4444;
+    }
+
+    .oi-summary-card-scoring .oi-call {
+      font-size: 13px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .oi-summary-card-scoring .oi-put {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f87171;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .oi-summary-card-scoring .oi-pct-neutral {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f8fafc;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .oi-summary-card-scoring .oi-divider {
+      background: linear-gradient(90deg, transparent, #22d3ee 20%, #22d3ee 80%, transparent);
+      margin: 8px 0;
+      height: 1px;
+    }
+
+    .oi-summary-card-scoring .oi-levels-row {
+      display: flex;
+      justify-content: space-around;
+      gap: 16px;
+    }
+
+    .oi-summary-card-scoring .level-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .oi-summary-card-scoring .level-label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      text-decoration: underline;
+    }
+
+    .oi-summary-card-scoring .level-value {
+      font-size: 14px;
+      color: #f8fafc;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-hero {
+      display: flex; align-items: flex-start; gap: 24px; padding: 24px;
+      background: linear-gradient(135deg, #0a0f1a 0%, #000 100%);
+      border: 1px solid var(--line); border-radius: 8px; margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
 
     .score-info { flex: 1; }
     .score-trend {
@@ -174,6 +319,7 @@
       .score-weights { justify-content: center; }
       .score-gauge { width: 120px; height: 120px; }
       .score-gauge-value { font-size: 26px; }
+      .oi-summary-card-scoring { width: 100%; }
       .breakdown-table th, .breakdown-table td { padding: 8px 6px; font-size: 10px; }
     }
   </style>
@@ -228,6 +374,41 @@
               </div>
             </div>
             <div class="score-captured" id="capturedTime">As on -</div>
+          </div>
+          <!-- OI Summary Card -->
+          <div class="oi-summary-card-scoring">
+            <div class="card-title">OI SUMMARY</div>
+            <div class="oi-summary-headings">
+              <span class="oi-heading"></span>
+              <span class="oi-heading">Net</span>
+              <span class="oi-heading">Call%</span>
+              <span class="oi-heading">Put%</span>
+            </div>
+            <div class="oi-summary-content">
+              <div class="oi-row">
+                <span class="oi-label">COI:</span>
+                <span id="scoringOiSummaryCoiNet" class="oi-net">-</span>
+                <span id="scoringOiSummaryCoiCallPct" class="oi-call">-</span>
+                <span id="scoringOiSummaryCoiPutPct" class="oi-put">-</span>
+              </div>
+              <div class="oi-row">
+                <span class="oi-label">OI:</span>
+                <span id="scoringOiSummaryOiNet" class="oi-net">-</span>
+                <span id="scoringOiSummaryOiCallPct" class="oi-call">-</span>
+                <span id="scoringOiSummaryOiPutPct" class="oi-put">-</span>
+              </div>
+            </div>
+            <div class="oi-divider"></div>
+            <div class="oi-levels-row">
+              <div class="level-item">
+                <span class="level-label">Support</span>
+                <span id="scoringOiSupportStrike" class="level-value">-</span>
+              </div>
+              <div class="level-item">
+                <span class="level-label">Resistance</span>
+                <span id="scoringOiResistanceStrike" class="level-value">-</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -290,6 +471,115 @@
 
   function fmt2(v) { return v !== null && v !== undefined && !isNaN(v) ? (v * 100).toFixed(1) + "%" : "-"; }
   function fmtPct(v) { return v !== null && v !== undefined && !isNaN(v) ? (v).toFixed(1) + "%" : "-"; }
+
+  // Format numbers in Indian numbering system: 1,00,00,000
+  function formatIndian(num) {
+    if (num === null || num === undefined || Number.isNaN(Number(num))) return "-";
+    const numStr = Math.floor(Number(num)).toString();
+    if (numStr.length <= 2) return numStr;
+
+    const lastThree = numStr.slice(-3);
+    const remaining = numStr.slice(0, -3);
+    const withCommas = remaining.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + lastThree;
+    return withCommas;
+  }
+
+  function fmtIndian(v) {
+    if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+    return formatIndian(v);
+  }
+
+  // Update OI Summary Card from Dashboard Data
+  function updateOiSummary(dashData) {
+    if (!dashData) return;
+
+    const latest = dashData.latest;
+    const strikes = dashData.strikes || [];
+
+    // Calculate OI and COI totals
+    let callOiSum = 0, putOiSum = 0, callCoiSum = 0, putCoiSum = 0;
+    let maxCallOi = 0, maxPutOi = 0;
+    let oiResistanceStrike = null, oiSupportStrike = null;
+
+    strikes.forEach((row) => {
+      const callOi = Number(row.call_oi ?? 0);
+      const putOi = Number(row.put_oi ?? 0);
+      const strike = Number(row.strike_price);
+
+      callOiSum += callOi;
+      putOiSum += putOi;
+      callCoiSum += Number(row.call_oi_change ?? 0);
+      putCoiSum += Number(row.put_oi_change ?? 0);
+
+      if (callOi > maxCallOi) {
+        maxCallOi = callOi;
+        oiResistanceStrike = strike;
+      }
+      if (putOi > maxPutOi) {
+        maxPutOi = putOi;
+        oiSupportStrike = strike;
+      }
+    });
+
+    // Update COI Row
+    const totalCoi = (callCoiSum || 0) + (putCoiSum || 0);
+    const coiNet = (putCoiSum || 0) - (callCoiSum || 0);
+    const coiCallPct = totalCoi > 0 ? Math.round((callCoiSum / totalCoi) * 100) : "-";
+    const coiPutPct = totalCoi > 0 ? Math.round((putCoiSum / totalCoi) * 100) : "-";
+
+    const coiNetEl = document.getElementById("scoringOiSummaryCoiNet");
+    if (coiNetEl) {
+      coiNetEl.textContent = coiNet >= 0 ? `+${fmtIndian(coiNet)}` : fmtIndian(coiNet);
+      coiNetEl.className = `oi-net ${coiNet >= 0 ? 'positive' : 'negative'}`;
+    }
+
+    const coiCallPctEl = document.getElementById("scoringOiSummaryCoiCallPct");
+    if (coiCallPctEl) {
+      coiCallPctEl.textContent = coiCallPct !== "-" ? `${coiCallPct}%` : "-";
+      coiCallPctEl.className = "oi-pct-neutral";
+    }
+
+    const coiPutPctEl = document.getElementById("scoringOiSummaryCoiPutPct");
+    if (coiPutPctEl) {
+      coiPutPctEl.textContent = coiPutPct !== "-" ? `${coiPutPct}%` : "-";
+      coiPutPctEl.className = "oi-pct-neutral";
+    }
+
+    // Update OI Row
+    const totalOi = (callOiSum || 0) + (putOiSum || 0);
+    const oiNet = (putOiSum || 0) - (callOiSum || 0);
+    const oiCallPct = totalOi > 0 ? Math.round((callOiSum / totalOi) * 100) : "-";
+    const oiPutPct = totalOi > 0 ? Math.round((putOiSum / totalOi) * 100) : "-";
+
+    const oiNetEl = document.getElementById("scoringOiSummaryOiNet");
+    if (oiNetEl) {
+      oiNetEl.textContent = oiNet >= 0 ? `+${fmtIndian(oiNet)}` : fmtIndian(oiNet);
+      oiNetEl.className = `oi-net ${oiNet >= 0 ? 'positive' : 'negative'}`;
+    }
+
+    const oiCallPctEl = document.getElementById("scoringOiSummaryOiCallPct");
+    if (oiCallPctEl) {
+      oiCallPctEl.textContent = oiCallPct !== "-" ? `${oiCallPct}%` : "-";
+      oiCallPctEl.className = "oi-pct-neutral";
+    }
+
+    const oiPutPctEl = document.getElementById("scoringOiSummaryOiPutPct");
+    if (oiPutPctEl) {
+      oiPutPctEl.textContent = oiPutPct !== "-" ? `${oiPutPct}%` : "-";
+      oiPutPctEl.className = "oi-pct-neutral";
+    }
+
+    // Update Support/Resistance
+    const oiSupportEl = document.getElementById("scoringOiSupportStrike");
+    if (oiSupportEl) {
+      oiSupportEl.textContent = oiSupportStrike !== null ? formatIndian(Math.floor(oiSupportStrike)) : "-";
+    }
+
+    const oiResistanceEl = document.getElementById("scoringOiResistanceStrike");
+    if (oiResistanceEl) {
+      oiResistanceEl.textContent = oiResistanceStrike !== null ? formatIndian(Math.floor(oiResistanceStrike)) : "-";
+    }
+  }
 
   // PCR scoring - lookup table from SCORING.xlsx
   const PCR_TABLE = [
@@ -506,6 +796,11 @@
 
     const latest = dash ? dash.latest : null;
     const strikes = dash ? dash.strikes : [];
+
+    // Update OI Summary if dashboard data available
+    if (dash) {
+      updateOiSummary(dash);
+    }
 
     // Compute all 7
     const pcr = computePCR(latest);
