@@ -21,6 +21,7 @@
       --put-head: #991b1b;
       --oi-bar: #3b82f6;
       --coi-highlight: #facc15;
+      --vol-highlight: #06b6d4;
     }
 
     * { box-sizing: border-box; }
@@ -2213,6 +2214,15 @@
       border-right: 1px solid #475569;
     }
 
+    /* Volume Highlighting Styles */
+    .vol-highlight-call,
+    .vol-highlight-put {
+      background: rgba(6, 182, 212, 0.2) !important;
+      color: var(--vol-highlight) !important;
+      font-weight: 700;
+      border-radius: 3px;
+    }
+
     /* Table Footer Styles */
     tfoot .foot-label {
       font-size: 10px;
@@ -2610,9 +2620,21 @@
       timerId = setTimeout(load, delayMs);
     }
 
+    // Format numbers in Indian numbering system: 1,00,00,000
+    function formatIndian(num) {
+      if (num === null || num === undefined || Number.isNaN(Number(num))) return "-";
+      const numStr = Math.floor(Number(num)).toString();
+      if (numStr.length <= 2) return numStr;
+
+      const lastThree = numStr.slice(-3);
+      const remaining = numStr.slice(0, -3);
+      const withCommas = remaining.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + lastThree;
+      return withCommas;
+    }
+
     function fmt(v) {
       if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
-      return Number(v).toLocaleString();
+      return formatIndian(v);
     }
 
     function fmt2(v) {
@@ -3453,8 +3475,8 @@
       // Update OI Support/Resistance display (no decimals)
       const oiSupportEl = document.getElementById("oiSupportStrike");
       const oiResistanceEl = document.getElementById("oiResistanceStrike");
-      if (oiSupportEl) oiSupportEl.textContent = oiSupportStrike !== null ? Math.floor(oiSupportStrike).toLocaleString() : "-";
-      if (oiResistanceEl) oiResistanceEl.textContent = oiResistanceStrike !== null ? Math.floor(oiResistanceStrike).toLocaleString() : "-";
+      if (oiSupportEl) oiSupportEl.textContent = oiSupportStrike !== null ? formatIndian(Math.floor(oiSupportStrike)) : "-";
+      if (oiResistanceEl) oiResistanceEl.textContent = oiResistanceStrike !== null ? formatIndian(Math.floor(oiResistanceStrike)) : "-";
 
       tbody.innerHTML = strikes.map((row) => {
         const callCoi = row.call_oi_change ?? 0;
@@ -3503,6 +3525,20 @@
         const callCoiHighlight = isAboveAtm && Number(callCoi) > Number(putOi) ? 'coi-highlight-call' : '';
         const putCoiHighlight = isBelowAtm && Number(putCoi) > Number(callOi) ? 'coi-highlight-put' : '';
 
+        // Volume highlighting logic based on trading strategy:
+        // SELL ON RISE: Highlight PUT VOL cell if PUT VOL > CALL VOL
+        // BUY ON DIPS: Highlight CALL VOL cell if CALL VOL > PUT VOL
+        let callVolHighlight = '';
+        let putVolHighlight = '';
+        const callVolNum = Number(callVol);
+        const putVolNum = Number(putVol);
+
+        if (tradingStrategy.value === "SELL ON RISE" && putVolNum > callVolNum) {
+          putVolHighlight = 'vol-highlight-put';
+        } else if (tradingStrategy.value === "BUY ON DIPS" && callVolNum > putVolNum) {
+          callVolHighlight = 'vol-highlight-call';
+        }
+
         return `
           <tr
             class="${isAtm ? 'atm-row' : ''}"
@@ -3513,7 +3549,7 @@
             <td class="call-col">${fmt2(callRatio)}%</td>
             <td class="call-col">${fmt2(callCoiPctChng)}%</td>
             <td class="call-col oi-cell"><div class="oi-bar-bg" style="width:${callOiBarWidth}%"></div><span class="oi-value">${fmt(callOi)}</span></td>
-            <td class="call-col">${fmt(callVol)}</td>
+            <td class="call-col ${callVolHighlight}">${fmt(callVol)}</td>
             <td class="call-col ${callCoiHighlight}">${fmt(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
             <td class="call-col call-ltp ${getLtpVwapClass(row.call_live_ltp, row.call_live_avg_price)}">${callLiveLtp}</td>
@@ -3523,7 +3559,7 @@
             <td class="put-col put-ltp ${getLtpVwapClass(row.put_live_ltp, row.put_live_avg_price)}">${putLiveLtp}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${putCoiHighlight}">${fmt(putCoi)}</td>
-            <td class="put-col">${fmt(putVol)}</td>
+            <td class="put-col ${putVolHighlight}">${fmt(putVol)}</td>
             <td class="put-col oi-cell"><div class="oi-bar-bg" style="width:${putOiBarWidth}%"></div><span class="oi-value">${fmt(putOi)}</span></td>
             <td class="put-col">${fmt2(putCoiPctChng)}%</td>
             <td class="put-col">${fmt2(putRatio)}%</td>
