@@ -21,7 +21,8 @@
       --put-head: #991b1b;
       --oi-bar: #3b82f6;
       --coi-highlight: #facc15;
-      --vol-highlight: #06b6d4;
+      --vol-highlight: #000000;
+
     }
 
     * { box-sizing: border-box; }
@@ -2217,7 +2218,7 @@
     /* Volume Highlighting Styles */
     .vol-highlight-call,
     .vol-highlight-put {
-      background: rgba(6, 182, 212, 0.2) !important;
+      background: rgba(156, 175, 217, 1) !important;
       color: var(--vol-highlight) !important;
       font-weight: 700;
       border-radius: 3px;
@@ -3532,10 +3533,12 @@
         let putVolHighlight = '';
         const callVolNum = Number(callVol);
         const putVolNum = Number(putVol);
+        const callCoiNum = Number(callCoi);
+        const putCoiNum = Number(putCoi);
 
-        if (tradingStrategy.value === "SELL ON RISE" && putVolNum > callVolNum) {
+        if (tradingStrategy.value === "SELL ON RISE" && putVolNum > callVolNum && callCoiNum > putCoiNum) {
           putVolHighlight = 'vol-highlight-put';
-        } else if (tradingStrategy.value === "BUY ON DIPS" && callVolNum > putVolNum) {
+        } else if (tradingStrategy.value === "BUY ON DIPS" && callVolNum > putVolNum && putCoiNum > callCoiNum) {
           callVolHighlight = 'vol-highlight-call';
         }
 
