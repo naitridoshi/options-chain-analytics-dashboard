@@ -261,6 +261,11 @@
       text-transform: uppercase;
       border: 1.5px solid;
       display: none;
+      width: 100%;
+      max-width: 100%;
+      word-break: break-word;
+      box-sizing: border-box;
+      line-height: 1.4;
       animation: notePulse 2.4s ease-in-out infinite;
     }
     @keyframes notePulse {
@@ -340,11 +345,16 @@
 
     @media (max-width: 700px) {
       .score-hero { flex-direction: column; gap: 16px; text-align: center; }
-      .score-weights { justify-content: center; }
+      .score-weights { justify-content: center; flex-wrap: wrap; gap: 12px; }
       .score-gauge { width: 120px; height: 120px; }
       .score-gauge-value { font-size: 26px; }
       .oi-summary-card-scoring { width: 100%; }
       .breakdown-table th, .breakdown-table td { padding: 8px 6px; font-size: 10px; }
+      .market-signal-note {
+        font-size: 10px;
+        letter-spacing: 0.3px;
+        padding: 7px 10px;
+      }
     }
   </style>
 </head>
@@ -378,25 +388,25 @@
           </div>
           <div class="score-info">
             <div class="score-trend neutral" id="overallTrend">Loading...</div>
-            <div class="score-weights">
-              <div class="weight-item">
-                <div class="weight-dot bull"></div>
-                <span class="weight-text">Bullish Weight:</span>
-                <span class="weight-val" id="bullWeight">--</span>
-              </div>
-              <div class="weight-item">
-                <div class="weight-dot bear"></div>
-                <span class="weight-text">Bearish Weight:</span>
-                <span class="weight-val" id="bearWeight">--</span>
-              </div>
-              <div class="weight-item">
-                <span class="weight-text">Bullish:</span>
-                <span class="weight-val" id="bullCount" style="color:var(--good)">-</span>
-                <span class="weight-text">/</span>
-                <span class="weight-text">Bearish:</span>
-                <span class="weight-val" id="bearCount" style="color:var(--bad)">-</span>
-              </div>
-            </div>
+<!--            <div class="score-weights">-->
+<!--              <div class="weight-item">-->
+<!--                <div class="weight-dot bull"></div>-->
+<!--                <span class="weight-text">Bullish Weight:</span>-->
+<!--                <span class="weight-val" id="bullWeight">&#45;&#45;</span>-->
+<!--              </div>-->
+<!--              <div class="weight-item">-->
+<!--                <div class="weight-dot bear"></div>-->
+<!--                <span class="weight-text">Bearish Weight:</span>-->
+<!--                <span class="weight-val" id="bearWeight">&#45;&#45;</span>-->
+<!--              </div>-->
+<!--              <div class="weight-item">-->
+<!--                <span class="weight-text">Bullish:</span>-->
+<!--                <span class="weight-val" id="bullCount" style="color:var(&#45;&#45;good)">-</span>-->
+<!--                <span class="weight-text">/</span>-->
+<!--                <span class="weight-text">Bearish:</span>-->
+<!--                <span class="weight-val" id="bearCount" style="color:var(&#45;&#45;bad)">-</span>-->
+<!--              </div>-->
+<!--            </div>-->
             <div class="market-signal-note" id="marketSignalNote"></div>
           </div>
           <!-- OI Summary Card -->
