@@ -249,7 +249,31 @@
     .weight-dot.bear { background: var(--bad); }
     .weight-text { font-size: 14px; color: var(--muted); font-weight: 600; }
     .weight-val { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .score-captured { font-size: 10px; color: var(--muted); margin-top: 10px; }
+    /* Market Signal Note */
+    .market-signal-note {
+      margin-top: 14px;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      border: 1.5px solid;
+      display: none;
+      animation: notePulse 2.4s ease-in-out infinite;
+    }
+    @keyframes notePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.70; }
+    }
+    .market-signal-note.bullish-strong   { color: #22c55e; border-color: rgba(34,197,94,0.5);   background: rgba(34,197,94,0.08); }
+    .market-signal-note.bearish-strong   { color: #ef4444; border-color: rgba(239,68,68,0.5);   background: rgba(239,68,68,0.08); }
+    .market-signal-note.bull-trap        { color: #ef4444; border-color: rgba(239,68,68,0.5);   background: rgba(239,68,68,0.08); }
+    .market-signal-note.bear-trap        { color: #22c55e; border-color: rgba(34,197,94,0.5);   background: rgba(34,197,94,0.08); }
+    .market-signal-note.biased-up        { color: #fbbf24; border-color: rgba(251,191,36,0.5);  background: rgba(251,191,36,0.06); }
+    .market-signal-note.biased-down      { color: #fbbf24; border-color: rgba(251,191,36,0.5);  background: rgba(251,191,36,0.06); }
+    .market-signal-note.wait             { color: #94a3b8; border-color: rgba(148,163,184,0.4); background: rgba(148,163,184,0.06); }
 
     /* Breakdown Table */
     .breakdown-section { margin-bottom: 16px; }
@@ -373,7 +397,7 @@
                 <span class="weight-val" id="bearCount" style="color:var(--bad)">-</span>
               </div>
             </div>
-            <div class="score-captured" id="capturedTime">As on -</div>
+            <div class="market-signal-note" id="marketSignalNote"></div>
           </div>
           <!-- OI Summary Card -->
           <div class="oi-summary-card-scoring">
@@ -840,9 +864,38 @@
     document.getElementById("bearWeight").textContent = fmt2(overall.bearWeight);
     document.getElementById("bullCount").textContent = overall.bullCount;
     document.getElementById("bearCount").textContent = overall.bearCount;
-    document.getElementById("capturedTime").textContent = dash && dash.captured_at
-      ? "As on " + new Date(dash.captured_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: false, day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " IST"
-      : "As on -";
+    // --- Compute Trading Strategy from PCR values (same logic as dashboard) ---
+    const _coiPcr = latest && latest.coi_pcr_window !== null ? Number(latest.coi_pcr_window) : null;
+    const _atmPcr = latest && latest.atm_pcr !== null ? Number(latest.atm_pcr) : null;
+    const _strPcr = latest && latest.strength_pcr !== null ? Number(latest.strength_pcr) : null;
+    let tradingStrategyBias = "NEUTRAL";
+    if (_coiPcr !== null && _atmPcr !== null && _strPcr !== null) {
+      if (_coiPcr > 1.25 && _atmPcr > 1.25 && _strPcr > 1.25) tradingStrategyBias = "BULLISH";
+      else if (_coiPcr < 0.70 && _atmPcr < 0.70 && _strPcr < 0.70) tradingStrategyBias = "BEARISH";
+    }
+
+    // --- Derive and render the contextual market signal note ---
+    const _noteMap = {
+      "BULLISH-BEARISH": { text: "BULLS MAY GET TRAP",                                    cls: "bull-trap" },
+      "BULLISH-BULLISH": { text: "STRONG BULLISH",                                         cls: "bullish-strong" },
+      "BEARISH-BULLISH": { text: "BEARS MAY GET TRAP",                                    cls: "bear-trap" },
+      "BEARISH-BEARISH": { text: "STRONG BEARISH",                                         cls: "bearish-strong" },
+      "NEUTRAL-BULLISH": { text: "UPSIDE BIASED - WAIT FOR OPTION CHAIN CONFIRMATION",    cls: "biased-up" },
+      "NEUTRAL-BEARISH": { text: "DOWNSIDE BIASED - WAIT FOR OPTION CHAIN CONFIRMATION",  cls: "biased-down" },
+      "NEUTRAL-NEUTRAL": { text: "WAIT FOR CONFIRMATION",                                 cls: "wait" },
+    };
+    const _noteKey = tradingStrategyBias + "-" + overall.trend;
+    const _noteEntry = _noteMap[_noteKey] || null;
+    const _noteEl = document.getElementById("marketSignalNote");
+    if (_noteEl) {
+      if (_noteEntry) {
+        _noteEl.textContent = _noteEntry.text;
+        _noteEl.className = "market-signal-note " + _noteEntry.cls;
+        _noteEl.style.display = "block";
+      } else {
+        _noteEl.style.display = "none";
+      }
+    }
 
     // Render breakdown table
     const tbody = document.getElementById("breakdownBody");
