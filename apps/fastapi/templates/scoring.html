@@ -866,14 +866,19 @@
     // Render overall card
     const gauge = document.getElementById("scoreGauge");
     const trendEl = document.getElementById("overallTrend");
-    gauge.className = "score-gauge " + overall.trend.toLowerCase();
-    trendEl.className = "score-trend " + overall.trend.toLowerCase();
-    document.getElementById("overallScoreVal").textContent = fmt2(overall.overall);
-    trendEl.textContent = overall.trend;
-    document.getElementById("bullWeight").textContent = fmt2(overall.bullWeight);
-    document.getElementById("bearWeight").textContent = fmt2(overall.bearWeight);
-    document.getElementById("bullCount").textContent = overall.bullCount;
-    document.getElementById("bearCount").textContent = overall.bearCount;
+    if (gauge) gauge.className = "score-gauge " + overall.trend.toLowerCase();
+    if (trendEl) trendEl.className = "score-trend " + overall.trend.toLowerCase();
+    const _scoreValEl = document.getElementById("overallScoreVal");
+    if (_scoreValEl) _scoreValEl.textContent = fmt2(overall.overall);
+    if (trendEl) trendEl.textContent = overall.trend;
+    const _bullWEl = document.getElementById("bullWeight");
+    if (_bullWEl) _bullWEl.textContent = fmt2(overall.bullWeight);
+    const _bearWEl = document.getElementById("bearWeight");
+    if (_bearWEl) _bearWEl.textContent = fmt2(overall.bearWeight);
+    const _bullCEl = document.getElementById("bullCount");
+    if (_bullCEl) _bullCEl.textContent = overall.bullCount;
+    const _bearCEl = document.getElementById("bearCount");
+    if (_bearCEl) _bearCEl.textContent = overall.bearCount;
     // --- Compute Trading Strategy from PCR values (same logic as dashboard) ---
     const _coiPcr = latest && latest.coi_pcr_window !== null ? Number(latest.coi_pcr_window) : null;
     const _atmPcr = latest && latest.atm_pcr !== null ? Number(latest.atm_pcr) : null;
