@@ -80,6 +80,78 @@
       .controls-bar { gap: 8px; }
       .chart-wrapper { height: calc(100vh - 260px); min-height: 300px; }
     }
+
+    /* Divergence Tables */
+    .divergence-section {
+      margin-top: 18px;
+    }
+    .divergence-section-title {
+      font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.6px; margin-bottom: 10px; padding-left: 2px;
+    }
+    .divergence-tables-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 700px) {
+      .divergence-tables-row { grid-template-columns: 1fr; }
+    }
+    .div-table-wrap {
+      background: #0a0f1a;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .div-table-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px;
+      background: #0d1521;
+      border-bottom: 1px solid var(--line);
+    }
+    .div-table-title {
+      font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .div-table-subtitle {
+      font-size: 9px; color: var(--muted); font-weight: 600;
+    }
+    .div-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .div-table th {
+      background: #0a1628;
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.4px;
+      padding: 7px 10px; text-align: center;
+      border-bottom: 1px solid var(--line);
+    }
+    .div-table td {
+      padding: 6px 10px; font-size: 11px; font-weight: 600;
+      text-align: center; border-bottom: 1px solid rgba(30,58,95,0.25);
+      font-variant-numeric: tabular-nums; color: var(--text);
+    }
+    .div-table tr:last-child td { border-bottom: none; }
+    .div-table tr:hover td { background: rgba(56,189,248,0.03); }
+    .div-table td.time-col { color: var(--muted); font-size: 10px; }
+    .div-table td.spot-col { color: #38bdf8; }
+    .div-table td.call-col { color: #22c55e; }
+    .div-table td.put-col  { color: #ef4444; }
+    /* Alert cells */
+    .div-alert-call {
+      background: rgba(34,197,94,0.12) !important;
+      color: #22c55e !important;
+      font-weight: 800;
+      border-radius: 3px;
+    }
+    .div-alert-put {
+      background: rgba(239,68,68,0.12) !important;
+      color: #ef4444 !important;
+      font-weight: 800;
+      border-radius: 3px;
+    }
+    .div-action-call { color: #22c55e; font-weight: 800; }
+    .div-action-put  { color: #ef4444; font-weight: 800; }
+    .div-no-data { text-align:center; padding: 20px; color: var(--muted); font-size: 11px; }
   </style>
 </head>
 <body>
@@ -121,6 +193,39 @@
         </div>
         <div class="chart-wrapper">
           <canvas id="mainChart"></canvas>
+        </div>
+
+        <!-- Divergence Tables -->
+        <div class="divergence-section">
+          <div class="divergence-section-title">LTP Divergence Monitor &mdash; Last 10 Minutes</div>
+          <div class="divergence-tables-row">
+            <!-- 1-min table -->
+            <div class="div-table-wrap">
+              <div class="div-table-header">
+                <span class="div-table-title">1-Min Interval</span>
+                <span class="div-table-subtitle" id="divMeta1">--</span>
+              </div>
+              <table class="div-table">
+                <thead><tr>
+                  <th>TIME</th><th>SPOT</th><th>CALL LTP</th><th>PUT LTP</th><th>ALERT</th><th>ACTION</th>
+                </tr></thead>
+                <tbody id="divBody1"><tr><td colspan="6" class="div-no-data">Loading&hellip;</td></tr></tbody>
+              </table>
+            </div>
+            <!-- 2-min table -->
+            <div class="div-table-wrap">
+              <div class="div-table-header">
+                <span class="div-table-title">2-Min Interval</span>
+                <span class="div-table-subtitle" id="divMeta2">--</span>
+              </div>
+              <table class="div-table">
+                <thead><tr>
+                  <th>TIME</th><th>SPOT</th><th>CALL LTP</th><th>PUT LTP</th><th>ALERT</th><th>ACTION</th>
+                </tr></thead>
+                <tbody id="divBody2"><tr><td colspan="6" class="div-no-data">Loading&hellip;</td></tr></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -355,7 +460,7 @@
           },
           y: {
             type: "linear",
-            position: "left",
+            position: "right",
             title: { display: true, text: "Spot Price", color: "#38bdf8", font: { size: 10, weight: 700 } },
             grid: { color: "rgba(30,58,95,0.3)" },
             ticks: { color: "#38bdf8", font: { size: 10 } },
@@ -419,6 +524,132 @@
   loadStrikes().then(() => loadChartData());
   loadSpotData();
   setInterval(loadSpotData, 30000);
+
+  // ── Divergence Tables ──────────────────────────────────────────
+
+  // Holds the last fetched raw data for table rendering
+  let _divRawData = null;
+
+  // Sample raw series into evenly-spaced rows covering last 10 minutes.
+  // intervalSec: seconds per row (60 = 1-min, 120 = 2-min)
+  // captureSec : how often data is captured (3 s from env)
+  function _sampleSeries(data, intervalSec, captureSec) {
+    const ts   = data.timestamps  || [];
+    const spot = data.spot        || [];
+    const call = data.call_ltp    || [];
+    const put  = data.put_ltp     || [];
+    if (!ts.length) return [];
+
+    const step     = Math.max(1, Math.round(intervalSec / captureSec)); // points per interval
+    const rowCount = Math.round(600 / intervalSec);                     // 10 min ÷ interval
+    const total    = ts.length;
+
+    const rows = [];
+    // Walk backwards from the newest point, one step at a time
+    for (let i = 0; i < rowCount; i++) {
+      const idx = total - 1 - i * step;
+      if (idx < 0) break;
+      rows.unshift({ time: ts[idx], spot: spot[idx], call: call[idx], put: put[idx] });
+    }
+    return rows;
+  }
+
+  function _buildDivRows(rows) {
+    if (!rows.length) return '<tr><td colspan="6" class="div-no-data">No data</td></tr>';
+    return rows.map((row, i) => {
+      const prev = i > 0 ? rows[i - 1] : null;
+
+      const spotVal = row.spot != null ? Number(row.spot) : null;
+      const callVal = row.call != null ? Number(row.call) : null;
+      const putVal  = row.put  != null ? Number(row.put)  : null;
+
+      let alertCls = '', alertTxt = '', actionCls = '', actionTxt = '';
+
+      if (prev && spotVal != null && callVal != null && putVal != null) {
+        const prevSpot = prev.spot != null ? Number(prev.spot) : null;
+        const prevCall = prev.call != null ? Number(prev.call) : null;
+        const prevPut  = prev.put  != null ? Number(prev.put)  : null;
+
+        if (prevSpot != null && prevCall != null && prevPut != null) {
+          const spotUp   = spotVal > prevSpot;
+          const spotDown = spotVal < prevSpot;
+          const callUp   = callVal > prevCall;
+          const putUp    = putVal  > prevPut;
+
+          // SPOT DOWN → ideally CALL LTP should go down; if it goes UP → CALL DIVERGENCE
+          if (spotDown && callUp) {
+            alertCls  = 'div-alert-call'; alertTxt  = 'CALL DIVERGENCE';
+            actionCls = 'div-action-call'; actionTxt = 'BUY CALL';
+          }
+          // SPOT UP → ideally PUT LTP should go down; if it goes UP → PUT DIVERGENCE
+          else if (spotUp && putUp) {
+            alertCls  = 'div-alert-put'; alertTxt  = 'PUT DIVERGENCE';
+            actionCls = 'div-action-put'; actionTxt = 'BUY PUT';
+          }
+        }
+      }
+
+      const fmtSpot = spotVal != null ? spotVal.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '-';
+      const fmtCall = callVal != null ? callVal.toFixed(2) : '-';
+      const fmtPut  = putVal  != null ? putVal.toFixed(2)  : '-';
+
+      return `<tr>
+        <td class="time-col">${row.time || '-'}</td>
+        <td class="spot-col">${fmtSpot}</td>
+        <td class="call-col">${fmtCall}</td>
+        <td class="put-col">${fmtPut}</td>
+        <td class="${alertCls}">${alertTxt}</td>
+        <td class="${actionCls}">${actionTxt}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderDivergenceTables(data) {
+    _divRawData = data;
+    const CAPTURE_SEC = 3; // INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS
+
+    const rows1 = _sampleSeries(data, 60,  CAPTURE_SEC);
+    const rows2 = _sampleSeries(data, 120, CAPTURE_SEC);
+
+    const tbody1 = document.getElementById('divBody1');
+    const tbody2 = document.getElementById('divBody2');
+    const meta1  = document.getElementById('divMeta1');
+    const meta2  = document.getElementById('divMeta2');
+
+    if (tbody1) tbody1.innerHTML = _buildDivRows(rows1);
+    if (tbody2) tbody2.innerHTML = _buildDivRows(rows2);
+
+    const updated = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
+    if (meta1) meta1.textContent = `${rows1.length} rows | Updated ${updated} IST`;
+    if (meta2) meta2.textContent = `${rows2.length} rows | Updated ${updated} IST`;
+  }
+
+  // Hook into loadChartData so tables refresh whenever chart refreshes
+  const _origLoadChartData = loadChartData;
+  // Patch renderChart to also call divergence renderer
+  const _origRenderChart = renderChart;
+  function renderChart(data) {
+    _origRenderChart(data);
+    renderDivergenceTables(data);
+  }
+
+  // Standalone divergence refresh (every 10 minutes)
+  async function loadDivergenceData() {
+    const callStrike = document.getElementById('callStrikeSelect').value;
+    const putStrike  = document.getElementById('putStrikeSelect').value;
+    if (!callStrike && !putStrike) return;
+    try {
+      const params = new URLSearchParams();
+      if (callStrike) params.set('call_strike', callStrike);
+      if (putStrike)  params.set('put_strike', putStrike);
+      const res    = await fetch(`/api/v1/dashboard/chart-data?${params}`, { credentials: 'include' });
+      const result = await res.json();
+      if (result.success && result.data) renderDivergenceTables(result.data);
+    } catch (e) { console.error('Divergence data fetch failed:', e); }
+  }
+
+  // Refresh divergence tables every 10 minutes independently
+  setInterval(loadDivergenceData, 600000);
 </script>
 </body>
 </html>
