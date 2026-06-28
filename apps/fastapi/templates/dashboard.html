@@ -2224,6 +2224,13 @@
       border-radius: 3px;
     }
 
+    /* Override: ATM row vol-highlight must beat .atm-row td (specificity 0-3-1 > 0-2-1) */
+    .atm-row td.vol-highlight-call,
+    .atm-row td.vol-highlight-put {
+      background: rgba(156, 175, 217, 1) !important;
+      color: var(--vol-highlight) !important;
+    }
+
     /* Table Footer Styles */
     tfoot .foot-label {
       font-size: 10px;
