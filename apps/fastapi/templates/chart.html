@@ -531,28 +531,37 @@
   // Holds the last fetched raw data for table rendering
   let _divRawData = null;
 
-  // Sample raw series into evenly-spaced rows covering last 10 minutes.
-  // intervalSec: seconds per row (60 = 1-min, 120 = 2-min)
-  // captureSec : how often data is captured (3 s from env)
-  function _sampleSeries(data, intervalSec, captureSec) {
-    const ts   = data.timestamps  || [];
-    const spot = data.spot        || [];
-    const call = data.call_ltp    || [];
-    const put  = data.put_ltp     || [];
+  // Sample series into 1 per clock-minute-bucket covering the last 10 minutes.
+  // intervalMinutes: 1 (1-min table) or 2 (2-min table)
+  // Timestamps are expected in "HH:MM:SS" or "HH:MM" format.
+  function _sampleSeries(data, intervalMinutes) {
+    const ts   = data.timestamps || [];
+    const spot = data.spot       || [];
+    const call = data.call_ltp   || [];
+    const put  = data.put_ltp    || [];
     if (!ts.length) return [];
 
-    const step     = Math.max(1, Math.round(intervalSec / captureSec)); // points per interval
-    const rowCount = Math.round(600 / intervalSec);                     // 10 min ÷ interval
-    const total    = ts.length;
-
-    const rows = [];
-    // Walk backwards from the newest point, one step at a time
-    for (let i = 0; i < rowCount; i++) {
-      const idx = total - 1 - i * step;
-      if (idx < 0) break;
-      rows.unshift({ time: ts[idx], spot: spot[idx], call: call[idx], put: put[idx] });
+    // Parse every point into { bucketKey, time, spot, call, put }
+    // bucketKey = floor(totalMinutes / intervalMinutes) — same bucket = same row
+    const bucketMap = new Map();
+    for (let i = 0; i < ts.length; i++) {
+      const parts = (ts[i] || '').split(':');
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (isNaN(h) || isNaN(m)) continue;
+      const totalMin  = h * 60 + m;
+      const bucketKey = Math.floor(totalMin / intervalMinutes);
+      // Always overwrite so the LAST (most recent) point in the bucket wins
+      bucketMap.set(bucketKey, { time: ts[i], spot: spot[i], call: call[i], put: put[i] });
     }
-    return rows;
+
+    // Sort buckets chronologically and keep only the last N (= 10 min worth)
+    const rowCount = Math.round(10 / intervalMinutes); // 10 rows for 1-min, 5 rows for 2-min
+    const sorted = Array.from(bucketMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([, p]) => p);
+
+    return sorted.slice(-rowCount);
   }
 
   function _buildDivRows(rows) {
@@ -607,10 +616,9 @@
 
   function renderDivergenceTables(data) {
     _divRawData = data;
-    const CAPTURE_SEC = 3; // INSTRUMENTS_SNAPSHOT_INTERVAL_SECONDS
 
-    const rows1 = _sampleSeries(data, 60,  CAPTURE_SEC);
-    const rows2 = _sampleSeries(data, 120, CAPTURE_SEC);
+    const rows1 = _sampleSeries(data, 1); // 1-minute buckets, last 10 rows
+    const rows2 = _sampleSeries(data, 2); // 2-minute buckets, last 5 rows
 
     const tbody1 = document.getElementById('divBody1');
     const tbody2 = document.getElementById('divBody2');
