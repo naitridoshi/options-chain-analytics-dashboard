@@ -298,6 +298,7 @@
       const result = await res.json();
       if (result.success && result.data) {
         renderChart(result.data);
+        renderDivergenceTables(result.data);
         const meta = document.getElementById("chartMeta");
         const pts = result.data.timestamps.length;
         meta.textContent = `${pts} data points | Updated: ${new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour12: false })} IST`;
@@ -624,14 +625,6 @@
     if (meta2) meta2.textContent = `${rows2.length} rows | Updated ${updated} IST`;
   }
 
-  // Hook into loadChartData so tables refresh whenever chart refreshes
-  const _origLoadChartData = loadChartData;
-  // Patch renderChart to also call divergence renderer
-  const _origRenderChart = renderChart;
-  function renderChart(data) {
-    _origRenderChart(data);
-    renderDivergenceTables(data);
-  }
 
   // Standalone divergence refresh (every 10 minutes)
   async function loadDivergenceData() {
