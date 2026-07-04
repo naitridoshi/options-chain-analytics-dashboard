@@ -152,6 +152,22 @@
     .div-action-call { color: #22c55e; font-weight: 800; }
     .div-action-put  { color: #ef4444; font-weight: 800; }
     .div-no-data { text-align:center; padding: 20px; color: var(--muted); font-size: 11px; }
+    /* Strike info bar */
+    .div-strike-bar {
+      display: flex; align-items: center; gap: 0; justify-content: center;
+      padding: 6px 12px;
+      background: #060d18;
+      border-bottom: 1px solid var(--line);
+      font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+    }
+    .div-strike-item {
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .div-strike-label { color: var(--muted); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+    .div-strike-val   { font-variant-numeric: tabular-nums; }
+    .div-strike-val.call { color: #22c55e; }
+    .div-strike-val.put  { color: #ef4444; }
+    .div-strike-sep   { width: 1px; height: 14px; background: var(--line); margin: 0 12px; }
   </style>
 </head>
 <body>
@@ -205,6 +221,17 @@
                 <span class="div-table-title">1-Min Interval</span>
                 <span class="div-table-subtitle" id="divMeta1">--</span>
               </div>
+              <div class="div-strike-bar" id="divStrike1">
+                <div class="div-strike-item">
+                  <span class="div-strike-label">Call Strike</span>
+                  <span class="div-strike-val call" id="divCallStrike1">--</span>
+                </div>
+                <div class="div-strike-sep"></div>
+                <div class="div-strike-item">
+                  <span class="div-strike-label">Put Strike</span>
+                  <span class="div-strike-val put" id="divPutStrike1">--</span>
+                </div>
+              </div>
               <table class="div-table">
                 <thead><tr>
                   <th>TIME</th><th>SPOT</th><th>CALL LTP</th><th>PUT LTP</th><th>ALERT</th><th>ACTION</th>
@@ -217,6 +244,17 @@
               <div class="div-table-header">
                 <span class="div-table-title">2-Min Interval</span>
                 <span class="div-table-subtitle" id="divMeta2">--</span>
+              </div>
+              <div class="div-strike-bar" id="divStrike2">
+                <div class="div-strike-item">
+                  <span class="div-strike-label">Call Strike</span>
+                  <span class="div-strike-val call" id="divCallStrike2">--</span>
+                </div>
+                <div class="div-strike-sep"></div>
+                <div class="div-strike-item">
+                  <span class="div-strike-label">Put Strike</span>
+                  <span class="div-strike-val put" id="divPutStrike2">--</span>
+                </div>
               </div>
               <table class="div-table">
                 <thead><tr>
@@ -627,6 +665,18 @@
 
     if (tbody1) tbody1.innerHTML = _buildDivRows(rows1);
     if (tbody2) tbody2.innerHTML = _buildDivRows(rows2);
+
+    // Update strike info bars from API response
+    const callStrike = data.call_strike != null ? data.call_strike : '--';
+    const putStrike  = data.put_strike  != null ? data.put_strike  : '--';
+    const _cs1 = document.getElementById('divCallStrike1');
+    const _ps1 = document.getElementById('divPutStrike1');
+    const _cs2 = document.getElementById('divCallStrike2');
+    const _ps2 = document.getElementById('divPutStrike2');
+    if (_cs1) _cs1.textContent = callStrike;
+    if (_ps1) _ps1.textContent = putStrike;
+    if (_cs2) _cs2.textContent = callStrike;
+    if (_ps2) _ps2.textContent = putStrike;
 
     const updated = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
     if (meta1) meta1.textContent = `${rows1.length} rows | Updated ${updated} IST`;
