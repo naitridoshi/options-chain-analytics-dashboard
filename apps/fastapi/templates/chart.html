@@ -239,10 +239,10 @@
                 <tbody id="divBody1"><tr><td colspan="6" class="div-no-data">Loading&hellip;</td></tr></tbody>
               </table>
             </div>
-            <!-- 2-min table -->
+            <!-- 1-min @ :30s table -->
             <div class="div-table-wrap">
               <div class="div-table-header">
-                <span class="div-table-title">2-Min Interval</span>
+                <span class="div-table-title">1-Min &nbsp;<span style="font-size:9px;color:var(--muted);font-weight:600">@ :30s</span></span>
                 <span class="div-table-subtitle" id="divMeta2">--</span>
               </div>
               <div class="div-strike-bar" id="divStrike2">
@@ -570,8 +570,8 @@
   let _divRawData = null;
 
   // Sample series into 1 per clock-minute-bucket covering the last 10 minutes.
-  // intervalMinutes: 1 (1-min table) or 2 (2-min table)
-  // Timestamps are expected in "HH:MM:SS" or "HH:MM" format.
+  // intervalMinutes: 1 (1-min table)
+  // Picks the LAST point in each minute bucket.
   function _sampleSeries(data, intervalMinutes) {
     const ts   = data.timestamps || [];
     const spot = data.spot       || [];
@@ -579,7 +579,6 @@
     const put  = data.put_ltp    || [];
     if (!ts.length) return [];
 
-    // Parse every point into { bucketKey, time, spot, call, put }
     // bucketKey = floor(totalMinutes / intervalMinutes) — same bucket = same row
     const bucketMap = new Map();
     for (let i = 0; i < ts.length; i++) {
@@ -593,13 +592,48 @@
       bucketMap.set(bucketKey, { time: ts[i], spot: spot[i], call: call[i], put: put[i] });
     }
 
-    // Sort buckets chronologically and keep only the last N (= 10 min worth)
-    const rowCount = Math.round(10 / intervalMinutes); // 10 rows for 1-min, 5 rows for 2-min
+    const rowCount = Math.round(10 / intervalMinutes); // 10 rows for 1-min
     const sorted = Array.from(bucketMap.entries())
       .sort((a, b) => a[0] - b[0])
       .map(([, p]) => p);
 
     return sorted.slice(-rowCount);
+  }
+
+  // Variant: for each 1-minute bucket pick the point whose seconds value is
+  // closest to targetSec (default 30). Gives rows like 10:01:30, 10:02:30.
+  function _sampleSeriesAt30s(data, targetSec) {
+    const ts   = data.timestamps || [];
+    const spot = data.spot       || [];
+    const call = data.call_ltp   || [];
+    const put  = data.put_ltp    || [];
+    if (!ts.length) return [];
+
+    targetSec = targetSec !== undefined ? targetSec : 30;
+
+    // Build per-minute-bucket map; keep the candidate closest to targetSec
+    // bucketKey = HH * 60 + MM (one bucket per clock minute)
+    const bucketMap = new Map();
+    for (let i = 0; i < ts.length; i++) {
+      const parts = (ts[i] || '').split(':');
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const s = parseInt(parts[2] || '0', 10);
+      if (isNaN(h) || isNaN(m)) continue;
+      const bucketKey = h * 60 + m;
+      const dist = Math.abs(s - targetSec);
+      const existing = bucketMap.get(bucketKey);
+      if (!existing || dist < existing.dist) {
+        bucketMap.set(bucketKey, { dist, time: ts[i], spot: spot[i], call: call[i], put: put[i] });
+      }
+    }
+
+    // Sort chronologically, strip the helper `dist` field, keep last 10 rows
+    const sorted = Array.from(bucketMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([, p]) => ({ time: p.time, spot: p.spot, call: p.call, put: p.put }));
+
+    return sorted.slice(-10);
   }
 
   function _buildDivRows(rows) {
@@ -655,8 +689,8 @@
   function renderDivergenceTables(data) {
     _divRawData = data;
 
-    const rows1 = _sampleSeries(data, 1); // 1-minute buckets, last 10 rows
-    const rows2 = _sampleSeries(data, 2); // 2-minute buckets, last 5 rows
+    const rows1 = _sampleSeries(data, 1);      // 1-min buckets, last point per minute
+    const rows2 = _sampleSeriesAt30s(data, 30); // 1-min buckets, point closest to :30s
 
     const tbody1 = document.getElementById('divBody1');
     const tbody2 = document.getElementById('divBody2');

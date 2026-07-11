@@ -914,6 +914,15 @@
 
     // Render breakdown table
     const tbody = document.getElementById("breakdownBody");
+    const _compLinks = {
+      "PCR":           "/coi_pcr_live",
+      "A2D F&O":       "/market-breadth",
+      "A2D Broader":   "/heatmap",
+      "Indices":       "/market-breadth",
+      "Sectors":       "/market-breadth",
+      "Price vs VWAP": "/dashboard",
+      "COI Ratio":     "/coi-pcr-live",
+    };
     tbody.innerHTML = components.map((c, i) => {
       const trendCls = c.trend.toLowerCase();
       const net = c.score * (c.trend === "BULLISH" ? overall.bullWeight : overall.bearWeight);
@@ -924,10 +933,15 @@
         return v;
       }).join("&nbsp;&nbsp;|&nbsp;&nbsp;");
 
+      const href = _compLinks[c.name] || null;
+      const nameHtml = href
+        ? `<a href="${href}" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(255,255,255,0.2);" onmouseover="this.style.borderBottomColor='currentColor'" onmouseout="this.style.borderBottomColor='rgba(255,255,255,0.2)'">${c.name}</a>`
+        : c.name;
+
       return `
         <tr>
           <td style="text-align:center"><span class="detail-arrow" onclick="toggleDetail(${i})" id="arrow${i}">&#9654;</span></td>
-          <td class="comp-name">${c.name}</td>
+          <td class="comp-name">${nameHtml}</td>
           <td><span class="trend-badge ${trendCls}">${c.trend}</span></td>
           <td class="score-val">${fmt2(c.score)}<div class="score-bar-mini"><div class="score-bar-fill ${trendCls}" style="width:${Math.round(c.score * 100)}%"></div></div></td>
           <td class="weight-val-cell">${c.trend === "BULLISH" ? fmt2(overall.bullWeight) : fmt2(overall.bearWeight)}</td>
