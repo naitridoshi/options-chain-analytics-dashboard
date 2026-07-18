@@ -420,6 +420,10 @@
             </div>
             <div class="oi-summary-content">
               <div class="oi-row">
+                <span class="oi-label">OI EFF:</span>
+                <span id="scoringOiSummaryOiEff" class="oi-net" style="grid-column: span 3; text-align: center;">-</span>
+              </div>
+              <div class="oi-row">
                 <span class="oi-label">COI:</span>
                 <span id="scoringOiSummaryCoiNet" class="oi-net">-</span>
                 <span id="scoringOiSummaryCoiCallPct" class="oi-call">-</span>
@@ -529,6 +533,41 @@
 
     const latest = dashData.latest;
     const strikes = dashData.strikes || [];
+
+    // Calculate ATM strike
+    const spot = latest ? Number(latest.spot_price) : null;
+    let atmStrike = null;
+    if (spot !== null && strikes.length > 0) {
+      atmStrike = strikes.reduce((acc, row) => {
+        const sp = Number(row.strike_price);
+        if (acc === null) return sp;
+        return Math.abs(sp - spot) < Math.abs(acc - spot) ? sp : acc;
+      }, null);
+    }
+
+    // Calculate OI EFF: Avg COI of ATM ± 6 strikes / Avg Vol of ATM ± 6 strikes × 100
+    if (atmStrike !== null) {
+      const atmIdx = strikes.findIndex(r => Number(r.strike_price) === Number(atmStrike));
+      if (atmIdx >= 0) {
+        const startIdx = Math.max(0, atmIdx - 6);
+        const endIdx = Math.min(strikes.length - 1, atmIdx + 6);
+        const window = strikes.slice(startIdx, endIdx + 1);
+        let coiTotal = 0, volTotal = 0;
+        window.forEach(r => {
+          // call_oi_change / put_oi_change represents COI
+          coiTotal += Math.abs(Number(r.call_oi_change ?? 0)) + Math.abs(Number(r.put_oi_change ?? 0));
+          volTotal += Number(r.call_volume ?? 0) + Number(r.put_volume ?? 0);
+        });
+        const avgCoi = coiTotal / window.length;
+        const avgVol = volTotal / window.length;
+        const oiEff = avgVol > 0 ? (avgCoi / avgVol) * 100 : 0;
+        const oiEffEl = document.getElementById("scoringOiSummaryOiEff");
+        if (oiEffEl) {
+          oiEffEl.textContent = `${oiEff.toFixed(1)}%`;
+          oiEffEl.className = `oi-net ${oiEff >= 50 ? 'positive' : 'negative'}`;
+        }
+      }
+    }
 
     // Calculate OI and COI totals
     let callOiSum = 0, putOiSum = 0, callCoiSum = 0, putCoiSum = 0;
