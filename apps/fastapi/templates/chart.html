@@ -242,7 +242,7 @@
             <!-- 1-min @ :30s table -->
             <div class="div-table-wrap">
               <div class="div-table-header">
-                <span class="div-table-title">1-Min &nbsp;<span style="font-size:9px;color:var(--muted);font-weight:600">@ :30s</span></span>
+                <span class="div-table-title">1-Min &nbsp;<span style="font-size:9px;color:var(--muted);font-weight:600">@ :15s</span></span>
                 <span class="div-table-subtitle" id="divMeta2">--</span>
               </div>
               <div class="div-strike-bar" id="divStrike2">
@@ -609,7 +609,7 @@
     const put  = data.put_ltp    || [];
     if (!ts.length) return [];
 
-    targetSec = targetSec !== undefined ? targetSec : 30;
+    targetSec = targetSec !== undefined ? targetSec : 15;
 
     // Build per-minute-bucket map; keep the candidate closest to targetSec
     // bucketKey = HH * 60 + MM (one bucket per clock minute)
@@ -690,7 +690,7 @@
     _divRawData = data;
 
     const rows1 = _sampleSeries(data, 1);      // 1-min buckets, last point per minute
-    const rows2 = _sampleSeriesAt30s(data, 30); // 1-min buckets, point closest to :30s
+    const rows2 = _sampleSeriesAt30s(data, 15); // 1-min buckets, point closest to :30s
 
     const tbody1 = document.getElementById('divBody1');
     const tbody2 = document.getElementById('divBody2');
