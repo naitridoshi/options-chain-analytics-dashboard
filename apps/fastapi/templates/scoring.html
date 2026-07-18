@@ -421,7 +421,9 @@
             <div class="oi-summary-content">
               <div class="oi-row">
                 <span class="oi-label">OI EFF:</span>
-                <span id="scoringOiSummaryOiEff" class="oi-net" style="grid-column: span 3; text-align: center;">-</span>
+                <span id="scoringOiSummaryOiEffNet" class="oi-net">-</span>
+                <span id="scoringOiSummaryOiEffCall" class="oi-call">-</span>
+                <span id="scoringOiSummaryOiEffPut" class="oi-put">-</span>
               </div>
               <div class="oi-row">
                 <span class="oi-label">COI:</span>
@@ -545,26 +547,46 @@
       }, null);
     }
 
-    // Calculate OI EFF: Avg COI of ATM ± 6 strikes / Avg Vol of ATM ± 6 strikes × 100
+    // Calculate OI EFF: Avg COI of ATM ± 6 strikes / Avg Vol of ATM ± 6 strikes × 100 (separate Call and Put)
     if (atmStrike !== null) {
       const atmIdx = strikes.findIndex(r => Number(r.strike_price) === Number(atmStrike));
       if (atmIdx >= 0) {
         const startIdx = Math.max(0, atmIdx - 6);
         const endIdx = Math.min(strikes.length - 1, atmIdx + 6);
         const window = strikes.slice(startIdx, endIdx + 1);
-        let coiTotal = 0, volTotal = 0;
+        let callCoiTotal = 0, putCoiTotal = 0;
+        let callVolTotal = 0, putVolTotal = 0;
         window.forEach(r => {
           // call_oi_change / put_oi_change represents COI
-          coiTotal += Math.abs(Number(r.call_oi_change ?? 0)) + Math.abs(Number(r.put_oi_change ?? 0));
-          volTotal += Number(r.call_volume ?? 0) + Number(r.put_volume ?? 0);
+          callCoiTotal += Math.abs(Number(r.call_oi_change ?? 0));
+          putCoiTotal += Math.abs(Number(r.put_oi_change ?? 0));
+          callVolTotal += Number(r.call_volume ?? 0);
+          putVolTotal += Number(r.put_volume ?? 0);
         });
-        const avgCoi = coiTotal / window.length;
-        const avgVol = volTotal / window.length;
-        const oiEff = avgVol > 0 ? (avgCoi / avgVol) * 100 : 0;
-        const oiEffEl = document.getElementById("scoringOiSummaryOiEff");
-        if (oiEffEl) {
-          oiEffEl.textContent = `${oiEff.toFixed(1)}%`;
-          oiEffEl.className = `oi-net ${oiEff >= 50 ? 'positive' : 'negative'}`;
+        const avgCallCoi = callCoiTotal / window.length;
+        const avgPutCoi = putCoiTotal / window.length;
+        const avgCallVol = callVolTotal / window.length;
+        const avgPutVol = putVolTotal / window.length;
+
+        const callOiEff = avgCallVol > 0 ? (avgCallCoi / avgCallVol) * 100 : 0;
+        const putOiEff = avgPutVol > 0 ? (avgPutCoi / avgPutVol) * 100 : 0;
+        const netOiEff = putOiEff - callOiEff;
+
+        const netEl = document.getElementById("scoringOiSummaryOiEffNet");
+        const callEl = document.getElementById("scoringOiSummaryOiEffCall");
+        const putEl = document.getElementById("scoringOiSummaryOiEffPut");
+
+        if (netEl) {
+          netEl.textContent = netOiEff >= 0 ? `+${netOiEff.toFixed(1)}%` : `${netOiEff.toFixed(1)}%`;
+          netEl.className = `oi-net ${netOiEff >= 0 ? 'positive' : 'negative'}`;
+        }
+        if (callEl) {
+          callEl.textContent = `${callOiEff.toFixed(1)}%`;
+          callEl.className = "oi-pct-neutral";
+        }
+        if (putEl) {
+          putEl.textContent = `${putOiEff.toFixed(1)}%`;
+          putEl.className = "oi-pct-neutral";
         }
       }
     }
