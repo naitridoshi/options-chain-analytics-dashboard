@@ -181,11 +181,6 @@
           <div class="nav-spot-item"><span class="nav-label">Chg</span><span id="navChange" class="nav-val">-</span></div>
           <div class="nav-sep"></div>
           <div class="nav-spot-item"><span class="nav-label">Chg%</span><span id="navChangePct" class="nav-val">-</span></div>
-          <div class="nav-sep"></div>
-          <div class="streaming-toggle">
-            <span>Streaming</span>
-            <div class="toggle-switch" id="streamingToggle"></div>
-          </div>
         </div>
       </div>
 
@@ -284,15 +279,8 @@
   })();
 
   let chart = null;
-  let isStreaming = false;
+  let isStreaming = true;
   let refreshInterval = null;
-
-  // Streaming toggle
-  document.getElementById("streamingToggle").addEventListener("click", function() {
-    isStreaming = !isStreaming;
-    this.classList.toggle("active", isStreaming);
-    if (isStreaming) startStreaming(); else stopStreaming();
-  });
 
   function startStreaming() { if (!refreshInterval) refreshInterval = setInterval(loadChartData, 15000); }
   function stopStreaming() { if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; } }
@@ -560,7 +548,10 @@
   }
 
   // Initial load
-  loadStrikes().then(() => loadChartData());
+  loadStrikes().then(() => {
+    loadChartData();
+    startStreaming();
+  });
   loadSpotData();
   setInterval(loadSpotData, 30000);
 
