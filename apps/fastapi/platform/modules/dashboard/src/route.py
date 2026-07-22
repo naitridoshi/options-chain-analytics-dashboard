@@ -27,6 +27,7 @@ from libs.utils.common.constants.src.templates import (
     MOST_ACTIVE_TEMPLATE_HTML,
     SCORING_TEMPLATE_HTML,
 )
+from libs.utils.config.src.auth import ADMIN_DISPLAY_NAME
 from libs.utils.db.redis.src import (
     RedisLiveMarketStore,
     RedisOptionChainSnapshotStore,
@@ -38,8 +39,11 @@ dashboard_route = APIRouter(tags=["Dashboard"])
 def _render_login_template(current_user: str | None) -> str:
     display_name = escape(current_user or "")
     is_authenticated = "true" if current_user else "false"
-    return LOGIN_TEMPLATE_HTML.replace("__AUTH_DISPLAY_NAME__", display_name).replace(
-        "__IS_AUTHENTICATED__", is_authenticated
+    return (
+        LOGIN_TEMPLATE_HTML.replace("__AUTH_DISPLAY_NAME__", display_name)
+        .replace("__IS_AUTHENTICATED__", is_authenticated)
+        .replace("__CURRENT_DISPLAY_NAME__", display_name)
+        .replace("__ADMIN_DISPLAY_NAME__", escape(ADMIN_DISPLAY_NAME))
     )
 
 
@@ -176,7 +180,11 @@ async def fyers_login_page(request: Request):
 async def dashboard_page(request: Request):
     if not get_current_user(request):
         return RedirectResponse(url="/login", status_code=303)
-    return HTMLResponse(DASHBOARD_TEMPLATE_HTML)
+    display_name = get_current_display_user(request) or ""
+    html = DASHBOARD_TEMPLATE_HTML.replace(
+        "__CURRENT_DISPLAY_NAME__", escape(display_name)
+    ).replace("__ADMIN_DISPLAY_NAME__", escape(ADMIN_DISPLAY_NAME))
+    return HTMLResponse(html)
 
 
 @dashboard_route.get("/market-breadth", response_class=HTMLResponse)

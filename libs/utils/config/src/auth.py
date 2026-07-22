@@ -3,6 +3,7 @@ from libs.utils.config.src import config
 AUTH_USERNAME = config.get("AUTH_USERNAME", "admin")
 AUTH_PASSWORD = config.get("AUTH_PASSWORD", "supersecretpassword")
 AUTH_DISPLAY_NAME = config.get("AUTH_DISPLAY_NAME", AUTH_USERNAME)
+ADMIN_DISPLAY_NAME = config.get("ADMIN_DISPLAY_NAME", "Raghav Majithiya")
 AUTH_SESSION_SECRET = config.get(
     "AUTH_SESSION_SECRET",
     f"{AUTH_USERNAME}:{AUTH_PASSWORD}:ocad-session-secret",

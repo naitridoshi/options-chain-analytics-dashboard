@@ -2613,6 +2613,20 @@
   </div>
 
   <script>
+    (function checkAdminFyersAccess() {
+      const currentDisplayName = "__CURRENT_DISPLAY_NAME__";
+      const adminDisplayName = "__ADMIN_DISPLAY_NAME__";
+      if (currentDisplayName !== adminDisplayName) {
+        // Find and hide FYERS Login action button
+        const links = document.querySelectorAll(".action-btn");
+        links.forEach(link => {
+          if (link.textContent.trim() === "FYERS Login") {
+            link.style.display = "none";
+          }
+        });
+      }
+    })();
+
     let timerId = null;
     let refreshMs = 5 * 60 * 1000;
     let hasRendered = false;
