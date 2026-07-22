@@ -462,10 +462,6 @@
               <div class="heatmap-title" id="heatmapTitle"> Indices (19)</div>
               <div class="heatmap-meta">
                 <span id="capturedTime">As on -</span>
-                <div class="streaming-toggle">
-                  <span>Streaming</span>
-                  <div class="toggle-switch" id="streamingToggle"></div>
-                </div>
               </div>
             </div>
             <div class="legend">
@@ -553,7 +549,7 @@
 
     let allIndices = [];
     let currentCategory = "BROAD_MARKET";
-    let isStreaming = false;
+    let isStreaming = true;
     let refreshInterval = null;
 
     function getColorClass(changePct) {
@@ -699,19 +695,12 @@
       });
     });
 
-    document.getElementById("streamingToggle").addEventListener("click", function() {
-      isStreaming = !isStreaming;
-      this.classList.toggle("active", isStreaming);
-      if (isStreaming) {
-        startStreaming();
-      } else {
-        stopStreaming();
-      }
-    });
+
 
     // Initial load
     loadData();
     loadBreadthSummary();
+    startStreaming();
 
     function renderBreadthBar(prefix, data) {
       const total = data.total || 0;

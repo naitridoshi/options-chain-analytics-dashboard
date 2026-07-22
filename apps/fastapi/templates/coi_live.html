@@ -538,10 +538,7 @@
             <span class="meta-value" id="dateValue">-</span>
           </div>
         </div>
-        <div class="streaming-toggle">
-          <span>Auto Refresh</span>
-          <div class="toggle-switch active" id="streamingToggle"></div>
-        </div>
+        <!-- Auto Refresh is enabled by default -->
       </div>
 
       <!-- Table Container -->
@@ -717,16 +714,7 @@
       }
     }
 
-    // Event Listeners
-    document.getElementById("streamingToggle").addEventListener("click", function() {
-      isStreaming = !isStreaming;
-      this.classList.toggle("active", isStreaming);
-      if (isStreaming) {
-        startStreaming();
-      } else {
-        stopStreaming();
-      }
-    });
+
 
     // Initial load
     loadData();

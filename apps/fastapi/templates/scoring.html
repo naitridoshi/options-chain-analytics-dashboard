@@ -370,11 +370,6 @@
           <div class="nav-spot-item"><span class="nav-label">Chg</span><span id="navChange" class="nav-val">-</span></div>
           <div class="nav-sep"></div>
           <div class="nav-spot-item"><span class="nav-label">Chg%</span><span id="navChangePct" class="nav-val">-</span></div>
-          <div class="nav-sep"></div>
-          <div class="streaming-toggle">
-            <span>Streaming</span>
-            <div class="toggle-switch" id="streamingToggle"></div>
-          </div>
         </div>
       </div>
 
@@ -489,7 +484,7 @@
     }).join(sep);
   })();
 
-  let isStreaming = false;
+  let isStreaming = true;
   let refreshInterval = null;
 
   function startStreaming() {
@@ -500,12 +495,6 @@
   function stopStreaming() {
     if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
   }
-
-  document.getElementById("streamingToggle").addEventListener("click", function() {
-    isStreaming = !isStreaming;
-    this.classList.toggle("active", isStreaming);
-    if (isStreaming) startStreaming(); else stopStreaming();
-  });
 
   // --- SCORING LOGIC ---
 
@@ -1063,6 +1052,7 @@
   }
 
   loadAllData();
+  startStreaming();
   loadSpotData();
   setInterval(loadSpotData, 30000);
 </script>
