@@ -183,7 +183,7 @@
 
     .form-row {
       display: grid;
-      
+
       gap: 16px;
       margin-bottom: 16px;
     }
@@ -460,6 +460,13 @@
         navDashboard.classList.remove("disabled");
         navBreadth.classList.remove("disabled");
         navHeatmap.classList.remove("disabled");
+
+        // Hide Login with FYERS if not admin
+        const currentDisplayName = "__CURRENT_DISPLAY_NAME__";
+        const adminDisplayName = "__ADMIN_DISPLAY_NAME__";
+        if (currentDisplayName !== adminDisplayName) {
+          fyersBtn.style.display = "none";
+        }
       } else {
         welcomeEl.classList.remove("active");
         fyersBtn.classList.add("disabled");
