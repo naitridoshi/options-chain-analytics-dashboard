@@ -720,7 +720,14 @@
       const lblDec = document.getElementById(prefix + "Dec");
       if (lblAdv) lblAdv.textContent = "Advance: " + adv;
       if (lblUnc) lblUnc.textContent = "Unchanged: " + unc;
-      if (lblDec) lblDec.textContent = "Decline: " + dec + (total > 0 ? " (" + Math.round(decP) + "%)" : "");
+      if (lblDec) {
+        if (total > 0) {
+          const pctColor = adv > dec ? "var(--good)" : (adv < dec ? "var(--bad)" : "inherit");
+          lblDec.innerHTML = `Decline: ${dec} <span style="color: ${pctColor}">(${Math.round(decP)}%)</span>`;
+        } else {
+          lblDec.textContent = "Decline: -";
+        }
+      }
     }
 
     async function loadBreadthSummary() {
