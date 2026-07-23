@@ -28,6 +28,20 @@ async def index_snapshot_status(_: bool = Depends(verify_basic_auth)):
     )
 
 
+@index_snapshot_route.post("/constituents/trigger")
+async def trigger_constituent_snapshot(_: bool = Depends(verify_basic_auth)):
+    result = await ConstituentSnapshotService.capture_for_all_constituents()
+    return JSONResponse(status_code=200, content={"success": True, "data": result})
+
+
+@index_snapshot_route.get("/constituents/status")
+async def constituent_snapshot_status(_: bool = Depends(verify_basic_auth)):
+    return JSONResponse(
+        status_code=200,
+        content={"success": True, "data": ConstituentSnapshotService.status()},
+    )
+
+
 @index_snapshot_route.get("/heatmap")
 async def get_heatmap_data(
     category: str | None = None,
