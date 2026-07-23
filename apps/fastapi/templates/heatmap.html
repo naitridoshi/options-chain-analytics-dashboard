@@ -507,7 +507,6 @@
           </div>
 
           <div class="breadth-section">
-            <div class="breadth-section-title">Script Distribution</div>
             <div class="breadth-legend">
               <span class="legend-advance" id="allScrAdv">Advance: -</span>
               <span class="legend-unchanged" id="allScrUnc">Unchanged: -</span>
@@ -721,7 +720,7 @@
       const lblDec = document.getElementById(prefix + "Dec");
       if (lblAdv) lblAdv.textContent = "Advance: " + adv;
       if (lblUnc) lblUnc.textContent = "Unchanged: " + unc;
-      if (lblDec) lblDec.textContent = "Decline: " + dec;
+      if (lblDec) lblDec.textContent = "Decline: " + dec + (total > 0 ? " (" + Math.round(decP) + "%)" : "");
     }
 
     async function loadBreadthSummary() {

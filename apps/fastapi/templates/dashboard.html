@@ -2253,14 +2253,16 @@
     tfoot .foot-total {
       font-size: 11px;
       font-weight: 700;
-      color: var(--bg) !important;
+      color: #000000 !important;
       text-align: center;
-      border-right:1px solid #334155;
-      border-left:1px solid #334155;
+      border-right: 1px solid #334155;
+      border-left: 1px solid #334155;
       background: #B2BEB5 !important;
     }
-    tfoot .foot-total.pos { color: #22c55e; }
-    tfoot .foot-total.neg { color: #ef4444; }
+    tfoot .foot-total.pos,
+    tfoot .foot-total.neg {
+      color: #000000 !important;
+    }
 
     /* Only Price Change and LTP columns have colors */
     .pos { color: #22c55e; font-weight: 700; }
@@ -2298,25 +2300,14 @@
       position: sticky;
       bottom: 0;
       z-index: 1;
-      background: #000000;
-      border-top: 1px solid #334155;
-      padding: 8px 6px;
-      font-weight: 800;
-      text-align: right;
-      font-size: 12px;
-      color: #f8fafc;
-    }
-
-    tfoot td {
-      position: sticky;
-      bottom: 0;
-      z-index: 1;
-      background: #000000;
+      background: #B2BEB5 !important;
+      color: #000000 !important;
       border-top: 1px solid #33568b;
+      border-right: 1px solid #334155;
       padding: 8px 6px;
       font-weight: 800;
-      text-align: right;
-      font-size: 12px;
+      text-align: center;
+      font-size: 11px;
     }
 
     @media (max-width: 1200px) {
@@ -2587,23 +2578,23 @@
           <tbody></tbody>
           <tfoot>
             <tr>
-              <td></td>
-              <td></td>
+              <td id="footCallRatio" class="foot-total"></td>
+              <td id="footCallCoiPctChng" class="foot-total"></td>
               <td id="footCallOi" class="foot-total"></td>
               <td id="footCallCoi" class="foot-total"></td>
               <td id="footCallChg" class="foot-total"></td>
               <td id="footCallLtp" class="foot-total"></td>
               <td id="footCallVwap" class="foot-total"></td>
               <td id="footCallVol" class="foot-total"></td>
-              <td class="sp-cell"></td>
+              <td class="sp-cell foot-total"></td>
               <td id="footPutVol" class="foot-total"></td>
               <td id="footPutVwap" class="foot-total"></td>
               <td id="footPutLtp" class="foot-total"></td>
               <td id="footPutChg" class="foot-total"></td>
               <td id="footPutCoi" class="foot-total"></td>
               <td id="footPutOi" class="foot-total"></td>
-              <td></td>
-              <td></td>
+              <td id="footPutCoiPctChng" class="foot-total"></td>
+              <td id="footPutRatio" class="foot-total"></td>
             </tr>
           </tfoot>
         </table>
@@ -3720,7 +3711,7 @@
       if (footOiPcrEl) footOiPcrEl.textContent = latest ? `OI PCR ${fmt2(latest.pcr_oi)}` : "-";
       if (footCoiPcrEl) footCoiPcrEl.textContent = latest ? `COI PCR ${fmtPcr(latest.coi_pcr_window)}` : "-";
 
-      // Footer averages for LTP, VWAP, PRICE CHG
+      // Footer averages for LTP, VWAP, PRICE CHG, Ratio, COI % CHNG
       function avgOf(fields) {
         const vals = fields.filter(v => v !== null && v !== undefined && !Number.isNaN(Number(v))).map(Number);
         return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
@@ -3732,12 +3723,42 @@
       const putVwapAvg = avgOf(strikes.map(r => r.put_live_avg_price));
       const putChgAvg = avgOf(strikes.map(r => r.put_ltp_change));
 
+      const callRatioAvg = avgOf(strikes.map(r => {
+        const cCoi = Number(r.call_oi_change ?? 0);
+        const pCoi = Number(r.put_oi_change ?? 0);
+        const totalCoi = cCoi + pCoi;
+        return safeDivPct(cCoi, totalCoi);
+      }));
+      const callCoiPctChngAvg = avgOf(strikes.map(r => {
+        const cCoi = Number(r.call_oi_change ?? 0);
+        const cOi = Number(r.call_oi ?? 0);
+        return safeDivPct(cCoi, cOi - cCoi);
+      }));
+      const putCoiPctChngAvg = avgOf(strikes.map(r => {
+        const pCoi = Number(r.put_oi_change ?? 0);
+        const pOi = Number(r.put_oi ?? 0);
+        return safeDivPct(pCoi, pOi - pCoi);
+      }));
+      const putRatioAvg = avgOf(strikes.map(r => {
+        const cCoi = Number(r.call_oi_change ?? 0);
+        const pCoi = Number(r.put_oi_change ?? 0);
+        const totalCoi = cCoi + pCoi;
+        return safeDivPct(pCoi, totalCoi);
+      }));
+
+      const footCallRatioEl = document.getElementById("footCallRatio");
+      const footCallCoiPctChngEl = document.getElementById("footCallCoiPctChng");
       const footCallLtpEl = document.getElementById("footCallLtp");
       const footCallVwapEl = document.getElementById("footCallVwap");
       const footCallChgEl = document.getElementById("footCallChg");
       const footPutLtpEl = document.getElementById("footPutLtp");
       const footPutVwapEl = document.getElementById("footPutVwap");
       const footPutChgEl = document.getElementById("footPutChg");
+      const footPutCoiPctChngEl = document.getElementById("footPutCoiPctChng");
+      const footPutRatioEl = document.getElementById("footPutRatio");
+
+      if (footCallRatioEl) footCallRatioEl.textContent = callRatioAvg !== null ? `${Math.round(callRatioAvg)}%` : "-";
+      if (footCallCoiPctChngEl) footCallCoiPctChngEl.textContent = callCoiPctChngAvg !== null ? `${Math.round(callCoiPctChngAvg)}%` : "-";
 
       if (footCallChgEl) {
         footCallChgEl.textContent = callChgAvg !== null ? fmt2(callChgAvg) : "-";
@@ -3758,6 +3779,8 @@
         footPutChgEl.textContent = putChgAvg !== null ? fmt2(putChgAvg) : "-";
         footPutChgEl.className = "foot-total";
       }
+      if (footPutCoiPctChngEl) footPutCoiPctChngEl.textContent = putCoiPctChngAvg !== null ? `${Math.round(putCoiPctChngAvg)}%` : "-";
+      if (footPutRatioEl) footPutRatioEl.textContent = putRatioAvg !== null ? `${Math.round(putRatioAvg)}%` : "-";
 
       // Update OI Summary table
       const totalCoi = (callCoiSum || 0) + (putCoiSum || 0);
