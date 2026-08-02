@@ -167,6 +167,16 @@ class RuntimeConstituentService:
             )
             if latest_snapshot:
                 return latest_snapshot
+
+            # Fallback to most recent available trade date's snapshot if today has no snapshot yet
+            trade_dates = await RedisConstituentSnapshotStore.list_trade_dates()
+            previous_dates = [d for d in trade_dates if d < trade_date]
+            if previous_dates:
+                prev_snapshot = await RedisConstituentSnapshotStore.get_latest_snapshot(
+                    trade_date=previous_dates[-1]
+                )
+                if prev_snapshot:
+                    return prev_snapshot
         except Exception as e:
             logger.warning(f"Failed to get latest constituent snapshot: {e}")
 
