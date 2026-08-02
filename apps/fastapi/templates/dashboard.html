@@ -2259,9 +2259,11 @@
       border-left: 1px solid #334155;
       background: #B2BEB5 !important;
     }
-    tfoot .foot-total.pos,
+    tfoot .foot-total.pos {
+      color: #22c55e !important;
+    }
     tfoot .foot-total.neg {
-      color: #000000 !important;
+      color: #ef4444 !important;
     }
 
     /* Only Price Change and LTP columns have colors */
@@ -3762,22 +3764,22 @@
 
       if (footCallChgEl) {
         footCallChgEl.textContent = callChgAvg !== null ? fmt2(callChgAvg) : "-";
-        footCallChgEl.className = "foot-total";
+        footCallChgEl.className = `foot-total ${signedClass(callChgAvg)}`;
       }
       if (footCallLtpEl) {
         footCallLtpEl.textContent = callLtpAvg !== null ? fmt2(callLtpAvg) : "-";
-        footCallLtpEl.className = `foot-total ${getLtpVwapClass(callLtpAvg, callVwapAvg)}`;
+        footCallLtpEl.className = `foot-total ${signedClass(callLtpAvg)}`;
       }
       if (footCallVwapEl) footCallVwapEl.textContent = callVwapAvg !== null ? fmt2(callVwapAvg) : "-";
 
       if (footPutVwapEl) footPutVwapEl.textContent = putVwapAvg !== null ? fmt2(putVwapAvg) : "-";
       if (footPutLtpEl) {
         footPutLtpEl.textContent = putLtpAvg !== null ? fmt2(putLtpAvg) : "-";
-        footPutLtpEl.className = `foot-total ${getLtpVwapClass(putLtpAvg, putVwapAvg)}`;
+        footPutLtpEl.className = `foot-total ${signedClass(putLtpAvg)}`;
       }
       if (footPutChgEl) {
         footPutChgEl.textContent = putChgAvg !== null ? fmt2(putChgAvg) : "-";
-        footPutChgEl.className = "foot-total";
+        footPutChgEl.className = `foot-total ${signedClass(putChgAvg)}`;
       }
       if (footPutCoiPctChngEl) footPutCoiPctChngEl.textContent = putCoiPctChngAvg !== null ? `${Math.round(putCoiPctChngAvg)}%` : "-";
       if (footPutRatioEl) footPutRatioEl.textContent = putRatioAvg !== null ? `${Math.round(putRatioAvg)}%` : "-";

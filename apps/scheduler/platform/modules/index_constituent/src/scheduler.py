@@ -117,8 +117,7 @@ class ConstituentSnapshotScheduler:
         if candidate_start_ist > now_ist:
             start_date_ist = candidate_start_ist
         else:
-            if latest_captured_at is not None:
-                run_immediately_on_startup = True
+            run_immediately_on_startup = True
             start_date_ist = now_ist
 
         job = self.scheduler.add_job(

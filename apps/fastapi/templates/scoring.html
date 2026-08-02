@@ -279,6 +279,19 @@
     .market-signal-note.biased-up        { color: #fbbf24; border-color: rgba(251,191,36,0.5);  background: rgba(251,191,36,0.06); }
     .market-signal-note.biased-down      { color: #fbbf24; border-color: rgba(251,191,36,0.5);  background: rgba(251,191,36,0.06); }
     .market-signal-note.wait             { color: #94a3b8; border-color: rgba(148,163,184,0.4); background: rgba(148,163,184,0.06); }
+    .strategy-reversal-note {
+      margin-top: 8px;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      color: #FF0000;
+      display: none;
+    }
 
     /* Breakdown Table */
     .breakdown-section { margin-bottom: 16px; }
@@ -403,6 +416,7 @@
 <!--              </div>-->
 <!--            </div>-->
             <div class="market-signal-note" id="marketSignalNote"></div>
+            <div class="strategy-reversal-note" id="strategyReversalNoteScoring"></div>
           </div>
           <!-- OI Summary Card -->
           <div class="oi-summary-card-scoring">
@@ -857,18 +871,14 @@
     const bearComps = components.filter(c => c.trend === "BEARISH");
     const bullCount = bullComps.length;
     const bearCount = bearComps.length;
-    const total = components.length;
 
-    const bullWeight = total > 0 ? bullCount / total : 0;
-    const bearWeight = total > 0 ? bearCount / total : 0;
+    const bullWeight = bullComps.reduce((s, c) => s + c.weight, 0);
+    const bearWeight = bearComps.reduce((s, c) => s + c.weight, 0);
 
-    const avgBull = bullCount > 0 ? bullComps.reduce((s, c) => s + c.score, 0) / bullCount : 0;
-    const avgBear = bearCount > 0 ? bearComps.reduce((s, c) => s + c.score, 0) / bearCount : 0;
+    const overall = components.reduce((s, c) => s + (c.score * c.weight), 0);
+    const trend = bullWeight > bearWeight ? "BULLISH" : bearWeight > bullWeight ? "BEARISH" : "NEUTRAL";
 
-    const overall = avgBull * bullWeight + avgBear * bearWeight;
-    const trend = bullCount > bearCount ? "BULLISH" : bearCount > bullCount ? "BEARISH" : "NEUTRAL";
-
-    return { overall, trend, bullWeight, bearWeight, bullCount, bearCount, avgBull, avgBear };
+    return { overall, trend, bullWeight, bearWeight, bullCount, bearCount };
   }
 
   // --- RENDERING ---
@@ -886,7 +896,8 @@
       updateOiSummary(dash);
     }
 
-    // Compute all 7
+    // Compute all 7 components with weights matching matrix:
+    // PCR (15%), A2D F&O (10%), A2D Broader (15%), Indices (20%), Sector (20%), Price vs VWAP (5%), COI Ratio (15%)
     const pcr = computePCR(latest);
     const a2dFO = computeA2D(a2d ? a2d.advance_count : 0, a2d ? a2d.decline_count : 0);
     const bmScr = breadth ? breadth.broad_market.scripts : {};
@@ -902,13 +913,13 @@
     const coiRatio = computeCOIRatio(strikes);
 
     const components = [
-      { name: "PCR", ...pcr },
-      { name: "A2D F&O", ...a2dFO },
-      { name: "A2D Broader", ...a2dBroader },
-      { name: "Indices", ...indices },
-      { name: "Sectors", ...sectors },
-      { name: "Price vs VWAP", ...pvwap },
-      { name: "COI Ratio", ...coiRatio },
+      { name: "PCR", weight: 0.15, ...pcr },
+      { name: "A2D F&O", weight: 0.10, ...a2dFO },
+      { name: "A2D Broader", weight: 0.15, ...a2dBroader },
+      { name: "Indices", weight: 0.20, ...indices },
+      { name: "Sectors", weight: 0.20, ...sectors },
+      { name: "Price vs VWAP", weight: 0.05, ...pvwap },
+      { name: "COI Ratio", weight: 0.15, ...coiRatio },
     ];
 
     const overall = computeOverall(components);
@@ -929,14 +940,40 @@
     if (_bullCEl) _bullCEl.textContent = overall.bullCount;
     const _bearCEl = document.getElementById("bearCount");
     if (_bearCEl) _bearCEl.textContent = overall.bearCount;
-    // --- Compute Trading Strategy from PCR values (same logic as dashboard) ---
+
+    // --- Compute Trading Strategy & Reversal Note (same logic as dashboard) ---
     const _coiPcr = latest && latest.coi_pcr_window !== null ? Number(latest.coi_pcr_window) : null;
     const _atmPcr = latest && latest.atm_pcr !== null ? Number(latest.atm_pcr) : null;
     const _strPcr = latest && latest.strength_pcr !== null ? Number(latest.strength_pcr) : null;
-    let tradingStrategyBias = "NEUTRAL";
+    let tradingStrategyText = "NEUTRAL";
     if (_coiPcr !== null && _atmPcr !== null && _strPcr !== null) {
-      if (_coiPcr > 1.25 && _atmPcr > 1.25 && _strPcr > 1.25) tradingStrategyBias = "BULLISH";
-      else if (_coiPcr < 0.70 && _atmPcr < 0.70 && _strPcr < 0.70) tradingStrategyBias = "BEARISH";
+      if (_coiPcr > 1.25 && _atmPcr > 1.25 && _strPcr > 1.25) tradingStrategyText = "BUY ON DIPS";
+      else if (_coiPcr < 0.70 && _atmPcr < 0.70 && _strPcr < 0.70) tradingStrategyText = "SELL ON RISE";
+    }
+
+    const tradingStrategyBias = tradingStrategyText === "BUY ON DIPS" ? "BULLISH" : (tradingStrategyText === "SELL ON RISE" ? "BEARISH" : "NEUTRAL");
+
+    let callOiSum = 0, putOiSum = 0;
+    strikes.forEach((r) => {
+      callOiSum += Number(r.call_oi ?? 0);
+      putOiSum += Number(r.put_oi ?? 0);
+    });
+
+    let reversalNoteText = "";
+    if (tradingStrategyText === "BUY ON DIPS" && callOiSum > putOiSum) {
+      reversalNoteText = "May Reverse From Resistance";
+    } else if (tradingStrategyText === "SELL ON RISE" && putOiSum > callOiSum) {
+      reversalNoteText = "May Reverse From Support";
+    }
+
+    const reversalNoteEl = document.getElementById("strategyReversalNoteScoring");
+    if (reversalNoteEl) {
+      if (reversalNoteText) {
+        reversalNoteEl.textContent = reversalNoteText;
+        reversalNoteEl.style.display = "block";
+      } else {
+        reversalNoteEl.style.display = "none";
+      }
     }
 
     // --- Derive and render the contextual market signal note ---
@@ -975,7 +1012,7 @@
     };
     tbody.innerHTML = components.map((c, i) => {
       const trendCls = c.trend.toLowerCase();
-      const net = c.score * (c.trend === "BULLISH" ? overall.bullWeight : overall.bearWeight);
+      const net = c.score * c.weight;
       const detailHtml = c.details.map(d => {
         let v = `<span class="detail-label">${d.name}:</span>`;
         v += `<span class="detail-value">${typeof d.value === 'number' ? d.value : d.value}</span>`;
@@ -994,7 +1031,7 @@
           <td class="comp-name">${nameHtml}</td>
           <td><span class="trend-badge ${trendCls}">${c.trend}</span></td>
           <td class="score-val">${fmt2(c.score)}<div class="score-bar-mini"><div class="score-bar-fill ${trendCls}" style="width:${Math.round(c.score * 100)}%"></div></div></td>
-          <td class="weight-val-cell">${c.trend === "BULLISH" ? fmt2(overall.bullWeight) : fmt2(overall.bearWeight)}</td>
+          <td class="weight-val-cell">${Math.round(c.weight * 100)}%</td>
           <td class="net-val ${trendCls}">${fmt2(net)}</td>
         </tr>
         <tr class="detail-row"><td colspan="6"><div class="detail-content" id="detail${i}">${detailHtml}</div></td></tr>

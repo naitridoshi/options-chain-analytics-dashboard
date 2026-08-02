@@ -723,7 +723,7 @@
       if (lblDec) {
         if (total > 0) {
           const pctColor = adv > dec ? "var(--good)" : (adv < dec ? "var(--bad)" : "inherit");
-          lblDec.innerHTML = `Decline: ${dec} <span style="color: ${pctColor}">(${Math.round(decP)}%)</span>`;
+          lblDec.innerHTML = `Decline: ${dec} <span style="color: ${pctColor}">(${Math.round(advP)}%)</span>`;
         } else {
           lblDec.textContent = "Decline: -";
         }
