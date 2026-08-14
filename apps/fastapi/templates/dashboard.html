@@ -2267,8 +2267,12 @@
     }
 
     /* Only Price Change and LTP columns have colors */
-    .pos { color: #22c55e; font-weight: 700; }
-    .neg { color: #ef4444; font-weight: 700; }
+    .pos { color: #22c55e !important; font-weight: 700; }
+    .neg { color: #ef4444 !important; font-weight: 700; }
+    .call-col.call-ltp.pos, .put-col.put-ltp.pos { color: #22c55e !important; font-weight: 700; }
+    .call-col.call-ltp.neg, .put-col.put-ltp.neg { color: #ef4444 !important; font-weight: 700; }
+    .atm-row td.call-ltp.pos, .atm-row td.put-ltp.pos { color: #22c55e !important; font-weight: 700; }
+    .atm-row td.call-ltp.neg, .atm-row td.put-ltp.neg { color: #ef4444 !important; font-weight: 700; }
 
     /* OI Bar Cell Styles */
     .oi-cell {
@@ -2925,10 +2929,10 @@
     }
 
     function getLtpVwapClass(ltp, vwap) {
-      if (ltp === null || ltp === undefined || vwap === null || vwap === undefined) return "";
+      if (ltp === null || ltp === undefined || ltp === "" || ltp === "-" || vwap === null || vwap === undefined || vwap === "" || vwap === "-") return "";
       const ltpNum = Number(ltp);
       const vwapNum = Number(vwap);
-      if (ltpNum === vwapNum) return "";
+      if (isNaN(ltpNum) || isNaN(vwapNum) || ltpNum === vwapNum) return "";
       return ltpNum > vwapNum ? "pos" : "neg";
     }
 
@@ -3306,6 +3310,17 @@
           liveState.avg = pendingState.avg;
         }
 
+        // Dynamically update LTP font color (green if > VWAP, red if < VWAP)
+        if (ltpCell) {
+          const effectiveLtp = liveState.ltp !== undefined && liveState.ltp !== "-" ? liveState.ltp : ltpCell.textContent;
+          const effectiveAvg = liveState.avg !== undefined && liveState.avg !== "-" ? liveState.avg : (avgCell ? avgCell.textContent : null);
+          const vwapClass = getLtpVwapClass(effectiveLtp, effectiveAvg);
+          ltpCell.classList.remove("pos", "neg");
+          if (vwapClass) {
+            ltpCell.classList.add(vwapClass);
+          }
+        }
+
         // Track the applied timestamp for staleness comparison
         if (pendingState._receivedAt) {
           liveState._receivedAt = pendingState._receivedAt;
@@ -3530,6 +3545,14 @@
           ? fmt2(row.put_live_avg_price)
           : (preservedPutLive.avg || "-");
 
+        const callEffectiveLtp = row.call_live_ltp ?? (preservedCallLive.ltp !== undefined && preservedCallLive.ltp !== "-" ? preservedCallLive.ltp : row.call_ltp);
+        const callEffectiveAvg = row.call_live_avg_price ?? (preservedCallLive.avg !== undefined && preservedCallLive.avg !== "-" ? preservedCallLive.avg : null);
+        const callLtpClass = getLtpVwapClass(callEffectiveLtp, callEffectiveAvg);
+
+        const putEffectiveLtp = row.put_live_ltp ?? (preservedPutLive.ltp !== undefined && preservedPutLive.ltp !== "-" ? preservedPutLive.ltp : row.put_ltp);
+        const putEffectiveAvg = row.put_live_avg_price ?? (preservedPutLive.avg !== undefined && preservedPutLive.avg !== "-" ? preservedPutLive.avg : null);
+        const putLtpClass = getLtpVwapClass(putEffectiveLtp, putEffectiveAvg);
+
         const totalCoi = Number(callCoi) + Number(putCoi);
         const callRatio = safeDivPct(callCoi, totalCoi);
         const putRatio = safeDivPct(putCoi, totalCoi);
@@ -3580,13 +3603,13 @@
             <td class="call-col oi-cell"><div class="oi-bar-bg" style="width:${callOiBarWidth}%"></div><span class="oi-value">${fmtLots(callOi)}</span></td>
             <td class="call-col ${callCoiHighlight}">${fmtLots(callCoi)}</td>
             <td class="call-col ${signedClass(row.call_ltp_change)}">${fmt2Signed(row.call_ltp_change)}</td>
-            <td class="call-col call-ltp ${getLtpVwapClass(row.call_live_ltp, row.call_live_avg_price)}">${callLiveLtp}</td>
+            <td class="call-col call-ltp ${callLtpClass}">${callLiveLtp}</td>
             <td class="call-col call-avg">${callLiveAvg}</td>
             <td class="call-col ${callVolHighlight}">${fmtLots(callVol)}</td>
             <td class="sp-cell ${isAtm ? 'atm' : ''}">${fmt2(row.strike_price)}</td>
             <td class="put-col ${putVolHighlight}">${fmtLots(putVol)}</td>
             <td class="put-col put-avg">${putLiveAvg}</td>
-            <td class="put-col put-ltp ${getLtpVwapClass(row.put_live_ltp, row.put_live_avg_price)}">${putLiveLtp}</td>
+            <td class="put-col put-ltp ${putLtpClass}">${putLiveLtp}</td>
             <td class="put-col ${signedClass(row.put_ltp_change)}">${fmt2Signed(row.put_ltp_change)}</td>
             <td class="put-col ${putCoiHighlight}">${fmtLots(putCoi)}</td>
             <td class="put-col oi-cell"><div class="oi-bar-bg" style="width:${putOiBarWidth}%"></div><span class="oi-value">${fmtLots(putOi)}</span></td>

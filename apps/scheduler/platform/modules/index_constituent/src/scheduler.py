@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta
 from time import perf_counter
 
@@ -147,8 +148,8 @@ class ConstituentSnapshotScheduler:
             extra={"logType": LogType.STARTUP.value},
         )
         if run_immediately_on_startup:
-            logger.info("Running immediate startup constituent snapshot.")
-            await self.tick()
+            logger.info("Running immediate startup constituent snapshot in background.")
+            asyncio.create_task(self.tick())
 
     def stop(self):
         if not self._started:

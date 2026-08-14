@@ -33,15 +33,10 @@ async def run_scheduler() -> None:
         loop.add_signal_handler(signal.SIGINT, _handle_stop)
         loop.add_signal_handler(signal.SIGTERM, _handle_stop)
 
-    for name, scheduler in [
-        ("OptionChainSnapshot", snapshot_scheduler),
-        ("ScriptSnapshot", script_snapshot_scheduler),
-        ("IndexSnapshot", index_snapshot_scheduler),
-        ("ConstituentSnapshot", constituent_snapshot_scheduler),
-    ]:
+    async def _start_single(name, sched):
         for attempt in range(1, 4):
             try:
-                await scheduler.start()
+                await sched.start()
                 break
             except Exception as e:
                 if attempt == 3:
@@ -55,6 +50,14 @@ async def run_scheduler() -> None:
                         f"error: {e} - retrying in 10s..."
                     )
                     await asyncio.sleep(10)
+
+    schedulers = [
+        ("OptionChainSnapshot", snapshot_scheduler),
+        ("ScriptSnapshot", script_snapshot_scheduler),
+        ("IndexSnapshot", index_snapshot_scheduler),
+        ("ConstituentSnapshot", constituent_snapshot_scheduler),
+    ]
+    await asyncio.gather(*[_start_single(name, sched) for name, sched in schedulers])
     try:
         await stop_event.wait()
     finally:

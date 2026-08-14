@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -38,7 +39,7 @@ class ConstituentSnapshotService:
     def status(cls) -> dict:
         return asdict(cls._status)
 
-    BATCH_SIZE = 20
+    BATCH_SIZE = 50
 
     @classmethod
     async def capture_for_all_constituents(cls) -> dict:
@@ -59,20 +60,30 @@ class ConstituentSnapshotService:
                 for i in range(0, len(fyers_symbols), cls.BATCH_SIZE)
             ]
             failed = 0
-            for batch in batches:
-                try:
-                    batch_quotes = await async_retry(
-                        FyersClientService.fetch_quotes_batch_with_prev_close,
-                        symbols=batch,
-                        max_retries=SNAPSHOT_MAX_RETRIES,
-                        base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
-                    )
-                    quotes_map.update(batch_quotes)
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to fetch batch of {len(batch)} symbols: {e}"
-                    )
-                    failed += len(batch)
+            sem = asyncio.Semaphore(3)
+
+            async def _fetch_batch(
+                batch: list[str],
+            ) -> tuple[dict[str, dict[str, Decimal | None]], int]:
+                async with sem:
+                    try:
+                        batch_quotes = await async_retry(
+                            FyersClientService.fetch_quotes_batch_with_prev_close,
+                            symbols=batch,
+                            max_retries=SNAPSHOT_MAX_RETRIES,
+                            base_delay=SNAPSHOT_RETRY_BASE_DELAY_SECONDS,
+                        )
+                        return batch_quotes, 0
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to fetch batch of {len(batch)} symbols: {e}"
+                        )
+                        return {}, len(batch)
+
+            results = await asyncio.gather(*[_fetch_batch(b) for b in batches])
+            for batch_quotes, failed_count in results:
+                quotes_map.update(batch_quotes)
+                failed += failed_count
 
             # Fallback: Redis snapshots for any symbols missing API prev_close
             needs_fallback = any(
