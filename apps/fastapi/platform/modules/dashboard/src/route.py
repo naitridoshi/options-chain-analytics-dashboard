@@ -21,6 +21,7 @@ from libs.utils.common.constants.src.templates import (
     COI_PCR_LIVE_TEMPLATE_HTML,
     DASHBOARD_TEMPLATE_HTML,
     HEATMAP_TEMPLATE_HTML,
+    HISTORICAL_SCORING_TEMPLATE_HTML,
     INDEX_SCRIPTS_TEMPLATE_HTML,
     LOGIN_TEMPLATE_HTML,
     MARKET_BREADTH_TEMPLATE_HTML,
@@ -281,6 +282,39 @@ async def scoring_page(request: Request):
     if not get_current_user(request):
         return RedirectResponse(url="/login", status_code=303)
     return HTMLResponse(SCORING_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/historical-scoring", response_class=HTMLResponse)
+async def historical_scoring_page(request: Request):
+    if not get_current_user(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(HISTORICAL_SCORING_TEMPLATE_HTML)
+
+
+@dashboard_route.get("/api/v1/historical-scoring/data")
+async def historical_scoring_data(
+    symbol: str | None = Query(default=None),
+    _: str = Depends(verify_basic_auth),
+):
+    from apps.fastapi.platform.modules.historical_scoring.src.service import (
+        HistoricalScoringService,
+    )
+
+    try:
+        data = await HistoricalScoringService.get_historical_scoring_data(symbol=symbol)
+        return JSONResponse(status_code=200, content={"success": True, "data": data})
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            },
+        )
 
 
 @dashboard_route.get("/api/v1/most-active/data")
