@@ -180,7 +180,7 @@
     function toIST(iso) { if(!iso) return "-"; const d=new Date(iso); return d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false,timeZone:"Asia/Kolkata"}); }
 
     function renderNavbar() {
-      const pages = [{href:"/scoring",label:"Scoring"},{href:"/dashboard",label:"Dashboard"},{href:"/coi-live",label:"COI Live"},{href:"/heatmap",label:"Heatmap"},{href:"/coi-pcr-live",label:"Ratio"},{href:"/market-breadth",label:"A2D"},{href:"/most-active",label:"Most Active"},{href:"/chart",label:"Chart"}];
+      const pages = [{href:"/historical-scoring",label:"Hist Scoring"},{href:"/scoring",label:"Scoring"},{href:"/dashboard",label:"Dashboard"},{href:"/coi-live",label:"COI Live"},{href:"/heatmap",label:"Heatmap"},{href:"/coi-pcr-live",label:"Ratio"},{href:"/market-breadth",label:"A2D"},{href:"/most-active",label:"Most Active"},{href:"/chart",label:"Chart"}];
       const nav = document.getElementById("navbar");
       nav.innerHTML = pages.map(p => {
         const active = window.location.pathname === p.href ? " active" : "";

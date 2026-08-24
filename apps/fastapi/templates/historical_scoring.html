@@ -1,0 +1,905 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Historical Scoring - Options Chain Analytics</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #0a0a0a;
+      --panel-2: #111111;
+      --line: #1e3a5f;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --warn: #fbbf24;
+      --orange-header: #ea580c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      min-height: 100%;
+      background: #000000;
+    }
+
+    body {
+      font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
+      background: #000000;
+      min-height: 100vh;
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .page { max-width: 1440px; margin: 8px auto; padding: 0 8px; }
+
+    .card {
+      background: #000000;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: #0a0a0a;
+      border-bottom: 1px solid var(--line);
+      border-radius: 6px 6px 0 0;
+      flex-wrap: wrap;
+    }
+
+    .nav-spot-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .nav-spot-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .nav-label {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .nav-val {
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+
+    .nav-val.pos { color: var(--good); }
+    .nav-val.neg { color: var(--bad); }
+
+    .nav-sep {
+      width: 1px;
+      height: 16px;
+      background: var(--line);
+    }
+
+    /* Streaming toggle */
+    .streaming-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 12px;
+    }
+
+    .streaming-toggle span {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .toggle-switch {
+      width: 34px;
+      height: 18px;
+      border-radius: 9px;
+      background: #1e293b;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #475569;
+      transition: all 0.2s;
+    }
+
+    .toggle-switch.active { background: rgba(56, 189, 248, 0.3); }
+    .toggle-switch.active::after { left: 18px; background: var(--accent); }
+
+    /* Main Content */
+    .main-content { padding: 16px; }
+
+    /* Top Section Hero */
+    .top-hero {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 16px;
+      align-items: center;
+      background: linear-gradient(135deg, #0a0f1a 0%, #000 100%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+
+    /* Gauge */
+    .gauge-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-gauge {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border: 3px solid var(--line);
+      position: relative;
+      background: #000000;
+      transition: all 0.3s ease;
+    }
+
+    .score-gauge-value {
+      font-size: 28px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .score-gauge-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .score-gauge.bullish {
+      border-color: rgba(34, 197, 94, 0.7);
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.2);
+    }
+    .score-gauge.bullish .score-gauge-value { color: var(--good); }
+
+    .score-gauge.bearish {
+      border-color: rgba(239, 68, 68, 0.7);
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
+    }
+    .score-gauge.bearish .score-gauge-value { color: var(--bad); }
+
+    .score-gauge.neutral {
+      border-color: rgba(251, 191, 36, 0.7);
+      box-shadow: 0 0 25px rgba(251, 191, 36, 0.2);
+    }
+    .score-gauge.neutral .score-gauge-value { color: var(--warn); }
+
+    /* Trend Info Block */
+    .trend-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 0 8px;
+    }
+
+    .trend-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .trend-item-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text);
+      text-transform: uppercase;
+      text-decoration: underline;
+      letter-spacing: 0.5px;
+    }
+
+    .trend-item-val {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .trend-item-val.bullish, .trend-item-val.positive { color: var(--good); }
+    .trend-item-val.bearish, .trend-item-val.negative { color: var(--bad); }
+    .trend-item-val.neutral { color: var(--warn); }
+
+    /* Top Tables (Money Flow, Supports, Resistance) */
+    .mini-table-box {
+      background: #000000;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .mini-table {
+      border-collapse: collapse;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .mini-table th, .mini-table td {
+      padding: 4px 8px;
+      text-align: center;
+      border: 1px solid rgba(30, 58, 95, 0.4);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mini-table th {
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--text);
+      background: #0f172a;
+      font-size: 10px;
+    }
+
+    .mini-table .table-main-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-decoration: underline;
+      text-align: center;
+      background: #0a0f1a;
+      color: #38bdf8;
+      padding: 5px 8px;
+    }
+
+    .mini-table .row-label {
+      font-weight: 700;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    .mini-table .val-call {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    .mini-table .val-put {
+      color: #f87171;
+      font-weight: 700;
+    }
+
+    .mini-table .val-money {
+      color: #f8fafc;
+      font-weight: 700;
+    }
+
+    .mini-table .level-badge {
+      font-weight: 700;
+      color: #fbbf24;
+    }
+
+    .sr-tables-container {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Historical Table Section */
+    .table-section {
+      margin-top: 10px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      max-height: calc(100vh - 270px);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #000000;
+    }
+
+    .hist-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .hist-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .hist-table th {
+      background: var(--orange-header) !important;
+      color: #000000 !important;
+      font-weight: 900;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 9px 10px;
+      border-right: 1px solid #c2410c;
+      border-bottom: 2px solid #9a3412;
+    }
+
+    .hist-table th:last-child {
+      border-right: none;
+    }
+
+    .hist-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid rgba(30, 58, 95, 0.35);
+      border-right: 1px solid rgba(30, 58, 95, 0.35);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    .hist-table td:last-child {
+      border-right: none;
+    }
+
+    .hist-table tbody tr:hover td {
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .hist-table tbody tr:nth-child(even) td {
+      background: rgba(10, 15, 26, 0.3);
+    }
+
+    .time-cell {
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .trend-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .trend-badge.bullish {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--good);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .trend-badge.bearish {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--bad);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .trend-badge.neutral {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--warn);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .note-cell {
+      text-align: left;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.2px;
+      padding-left: 12px !important;
+    }
+
+    .note-cell.bullish { color: var(--good); }
+    .note-cell.bearish { color: var(--bad); }
+    .note-cell.neutral { color: var(--warn); }
+
+    .score-cell {
+      font-weight: 800;
+    }
+    .score-cell.bullish { color: var(--good); }
+    .score-cell.bearish { color: var(--bad); }
+    .score-cell.neutral { color: var(--warn); }
+
+    .comp-cell {
+      font-weight: 700;
+    }
+    .comp-cell.bullish { color: var(--good); }
+    .comp-cell.bearish { color: var(--bad); }
+    .comp-cell.neutral { color: var(--warn); }
+
+    /* Loading state */
+    .loading-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--line);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 1200px) {
+      .top-hero {
+        grid-template-columns: 1fr 1fr;
+      }
+      .sr-tables-container {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .top-hero {
+        grid-template-columns: 1fr;
+      }
+      .sr-tables-container {
+        grid-column: span 1;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <!-- Navbar -->
+      <div class="navbar">
+        <div id="navLinks" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+        <div class="nav-spot-wrap">
+          <div class="nav-spot-item"><span class="nav-label">Spot</span><span id="navSpot" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg</span><span id="navChange" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="nav-spot-item"><span class="nav-label">Chg%</span><span id="navChangePct" class="nav-val">-</span></div>
+          <div class="nav-sep"></div>
+          <div class="streaming-toggle">
+            <span>Stream</span>
+            <div class="toggle-switch active" id="streamToggle" onclick="toggleStreaming()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Top Hero Section -->
+        <div class="top-hero">
+          <!-- Score Gauge -->
+          <div class="gauge-wrap">
+            <div class="score-gauge neutral" id="scoreGauge">
+              <div class="score-gauge-value" id="overallScoreVal">--</div>
+              <div class="score-gauge-label">SCORE</div>
+            </div>
+          </div>
+
+          <!-- Trend & Strategy Labels -->
+          <div class="trend-block">
+            <div class="trend-item">
+              <div class="trend-item-title">MARKET TREND</div>
+              <div class="trend-item-val neutral" id="marketTrendVal">--</div>
+            </div>
+            <div class="trend-item">
+              <div class="trend-item-title">DATA TREND</div>
+              <div class="trend-item-val neutral" id="dataTrendVal">--</div>
+            </div>
+            <div class="trend-item">
+              <div class="trend-item-title">TRADING STRATEGY</div>
+              <div class="trend-item-val neutral" id="tradingStrategyVal">--</div>
+            </div>
+          </div>
+
+          <!-- Money Flow Table -->
+          <div class="mini-table-box">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th colspan="3" class="table-main-title">MONEY FLOW</th>
+                </tr>
+                <tr>
+                  <th></th>
+                  <th>CALL</th>
+                  <th>PUT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="row-label">OVERALL</td>
+                  <td class="val-call" id="mfOverallCall" title="-">-</td>
+                  <td class="val-put" id="mfOverallPut" title="-">-</td>
+                </tr>
+                <tr>
+                  <td class="row-label">INTRADAY</td>
+                  <td class="val-call" id="mfIntradayCall" title="-">-</td>
+                  <td class="val-put" id="mfIntradayPut" title="-">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Support & Resistance Tables -->
+          <div class="sr-tables-container">
+            <!-- Supports -->
+            <div class="mini-table-box">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th colspan="3" class="table-main-title" style="color:#22c55e;">SUPPORTS</th>
+                  </tr>
+                  <tr>
+                    <th>LEVELS</th>
+                    <th>OVERALL MONEY FLOW</th>
+                    <th>TODAY'S MONEY FLOW</th>
+                  </tr>
+                </thead>
+                <tbody id="supportsBody">
+                  <tr><td colspan="3" style="color:var(--muted);">-</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Resistance -->
+            <div class="mini-table-box">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th colspan="3" class="table-main-title" style="color:#ef4444;">RESISTANCE</th>
+                  </tr>
+                  <tr>
+                    <th>LEVELS</th>
+                    <th>OVERALL MONEY FLOW</th>
+                    <th>TODAY'S MONEY FLOW</th>
+                  </tr>
+                </thead>
+                <tbody id="resistanceBody">
+                  <tr><td colspan="3" style="color:var(--muted);">-</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historical Scoring Snapshots Table -->
+        <div class="table-section">
+          <div class="table-container">
+            <table class="hist-table">
+              <thead>
+                <tr>
+                  <th style="width:70px;">TIME</th>
+                  <th style="width:100px;">TREND</th>
+                  <th style="text-align:left;padding-left:14px;min-width:240px;">NOTE</th>
+                  <th style="width:110px;">OVERALL SCORING</th>
+                  <th style="width:85px;">PCR</th>
+                  <th style="width:95px;">A2D BROAD</th>
+                  <th style="width:85px;">INDICES</th>
+                  <th style="width:85px;">SECTORS</th>
+                  <th style="width:110px;">PRICE VS VWAP</th>
+                  <th style="width:95px;">COI RATIO</th>
+                </tr>
+              </thead>
+              <tbody id="histTableBody">
+                <tr>
+                  <td colspan="10">
+                    <div class="loading-wrap">
+                      <div class="spinner"></div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Navbar rendering
+  (function renderNavbar() {
+    const pages = [
+      { href: "/historical-scoring", label: "Hist Scoring" },
+      { href: "/scoring", label: "Scoring" },
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/coi-live", label: "COI Live" },
+      { href: "/heatmap", label: "Heatmap" },
+      { href: "/coi-pcr-live", label: "Ratio" },
+      { href: "/market-breadth", label: "A2D" },
+      { href: "/most-active", label: "Most Active" },
+      { href: "/chart", label: "Chart" }
+    ];
+    const nav = document.getElementById("navLinks");
+    if (!nav) return;
+    const css = "display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid transparent;color:var(--muted);border-radius:4px;height:28px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s ease;white-space:nowrap;";
+    const activeCss = "background:rgba(56,189,248,0.1);color:var(--accent);border-color:rgba(56,189,248,0.3);";
+    const sep = "<div style='width:1px;height:20px;background:var(--line);margin:0 4px;flex-shrink:0;'></div>";
+    nav.innerHTML = pages.map(p => {
+      const isActive = window.location.pathname === p.href;
+      return `<a href="${p.href}" style="${css}${isActive ? activeCss : ''}">${p.label}</a>`;
+    }).join(sep);
+  })();
+
+  let isStreaming = true;
+  let refreshInterval = null;
+
+  function toggleStreaming() {
+    isStreaming = !isStreaming;
+    const toggleEl = document.getElementById("streamToggle");
+    if (toggleEl) toggleEl.classList.toggle("active", isStreaming);
+    if (isStreaming) {
+      startStreaming();
+      loadData();
+    } else {
+      stopStreaming();
+    }
+  }
+
+  function startStreaming() {
+    if (refreshInterval) return;
+    refreshInterval = setInterval(loadData, 10000);
+  }
+
+  function stopStreaming() {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+      refreshInterval = null;
+    }
+  }
+
+  // Format numbers in Indian numbering system: 1,00,00,000 with tooltip support
+  function formatIndian(num) {
+    if (num === null || num === undefined || Number.isNaN(Number(num))) return "-";
+    const n = Number(num);
+    const isNeg = n < 0;
+    const absVal = Math.floor(Math.abs(n));
+    const numStr = absVal.toString();
+    if (numStr.length <= 3) return (isNeg ? "-" : "") + numStr;
+
+    const lastThree = numStr.slice(-3);
+    const remaining = numStr.slice(0, -3);
+    const withCommas = remaining.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + lastThree;
+    return (isNeg ? "-" : "") + withCommas;
+  }
+
+  function formatCrTooltip(num) {
+    if (num === null || num === undefined || Number.isNaN(Number(num))) return "";
+    const n = Number(num);
+    const cr = n / 10000000;
+    const lakh = n / 100000;
+    if (Math.abs(cr) >= 1) {
+      return `₹ ${formatIndian(num)} (${cr.toFixed(2)} Cr)`;
+    } else if (Math.abs(lakh) >= 1) {
+      return `₹ ${formatIndian(num)} (${lakh.toFixed(2)} L)`;
+    }
+    return `₹ ${formatIndian(num)}`;
+  }
+
+  function fmtPct(v) {
+    if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+    return (Number(v) * 100).toFixed(1) + "%";
+  }
+
+  function getToneClass(trend) {
+    if (!trend) return "neutral";
+    const t = String(trend).toUpperCase();
+    if (t === "BULLISH" || t === "POSITIVE" || t === "BUY ON DIPS") return "bullish";
+    if (t === "BEARISH" || t === "NEGATIVE" || t === "SELL ON RISE") return "bearish";
+    return "neutral";
+  }
+
+  // Render Top KPIs
+  function renderTopKPIs(kpis) {
+    if (!kpis) return;
+
+    // 1. Score Gauge
+    const scoreGauge = document.getElementById("scoreGauge");
+    const scoreValEl = document.getElementById("overallScoreVal");
+    const scoreTrend = kpis.market_trend || "NEUTRAL";
+    const toneCls = getToneClass(scoreTrend);
+
+    if (scoreGauge) {
+      scoreGauge.className = "score-gauge " + toneCls;
+    }
+    if (scoreValEl) {
+      scoreValEl.textContent = fmtPct(kpis.overall_score);
+    }
+
+    // 2. Trend items
+    const marketTrendEl = document.getElementById("marketTrendVal");
+    if (marketTrendEl) {
+      marketTrendEl.textContent = kpis.market_trend || "--";
+      marketTrendEl.className = "trend-item-val " + getToneClass(kpis.market_trend);
+    }
+
+    const dataTrendEl = document.getElementById("dataTrendVal");
+    if (dataTrendEl) {
+      dataTrendEl.textContent = kpis.data_trend || "--";
+      dataTrendEl.className = "trend-item-val " + getToneClass(kpis.data_trend);
+    }
+
+    const strategyEl = document.getElementById("tradingStrategyVal");
+    if (strategyEl) {
+      strategyEl.textContent = kpis.trading_strategy || "--";
+      strategyEl.className = "trend-item-val " + getToneClass(kpis.trading_strategy);
+    }
+
+    // 3. Money Flow Table
+    const mf = kpis.money_flow || {};
+    const mfOverall = mf.overall || {};
+    const mfIntraday = mf.intraday || {};
+
+    const ocEl = document.getElementById("mfOverallCall");
+    const opEl = document.getElementById("mfOverallPut");
+    const icEl = document.getElementById("mfIntradayCall");
+    const ipEl = document.getElementById("mfIntradayPut");
+
+    if (ocEl) {
+      ocEl.textContent = formatIndian(mfOverall.call);
+      ocEl.title = formatCrTooltip(mfOverall.call);
+    }
+    if (opEl) {
+      opEl.textContent = formatIndian(mfOverall.put);
+      opEl.title = formatCrTooltip(mfOverall.put);
+    }
+    if (icEl) {
+      icEl.textContent = formatIndian(mfIntraday.call);
+      icEl.title = formatCrTooltip(mfIntraday.call);
+    }
+    if (ipEl) {
+      ipEl.textContent = formatIndian(mfIntraday.put);
+      ipEl.title = formatCrTooltip(mfIntraday.put);
+    }
+
+    // 4. Supports Table
+    const supports = kpis.supports || [];
+    const supBody = document.getElementById("supportsBody");
+    if (supBody) {
+      if (supports.length === 0) {
+        supBody.innerHTML = `<tr><td colspan="3" style="color:var(--muted);">-</td></tr>`;
+      } else {
+        supBody.innerHTML = supports.map(s => `
+          <tr>
+            <td class="level-badge">${s.level}</td>
+            <td class="val-money" title="${formatCrTooltip(s.overall_money_flow)}">${formatIndian(s.overall_money_flow)}</td>
+            <td class="val-money" title="${formatCrTooltip(s.today_money_flow)}">${formatIndian(s.today_money_flow)}</td>
+          </tr>
+        `).join("");
+      }
+    }
+
+    // 5. Resistance Table
+    const resistances = kpis.resistances || [];
+    const resBody = document.getElementById("resistanceBody");
+    if (resBody) {
+      if (resistances.length === 0) {
+        resBody.innerHTML = `<tr><td colspan="3" style="color:var(--muted);">-</td></tr>`;
+      } else {
+        resBody.innerHTML = resistances.map(r => `
+          <tr>
+            <td class="level-badge">${r.level}</td>
+            <td class="val-money" title="${formatCrTooltip(r.overall_money_flow)}">${formatIndian(r.overall_money_flow)}</td>
+            <td class="val-money" title="${formatCrTooltip(r.today_money_flow)}">${formatIndian(r.today_money_flow)}</td>
+          </tr>
+        `).join("");
+      }
+    }
+  }
+
+  // Render Historical Snapshots Table
+  function renderHistoricalTable(rows) {
+    const tbody = document.getElementById("histTableBody");
+    if (!tbody) return;
+
+    if (!rows || rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" style="padding:24px;color:var(--muted);">No snapshot data available for today yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => {
+      const trendTone = getToneClass(r.trend);
+      const noteTone = getToneClass(r.trend);
+
+      const pcrTone = getToneClass(r.pcr ? r.pcr.trend : null);
+      const a2dTone = getToneClass(r.a2d_broad ? r.a2d_broad.trend : null);
+      const idxTone = getToneClass(r.indices ? r.indices.trend : null);
+      const secTone = getToneClass(r.sectors ? r.sectors.trend : null);
+      const pvwapTone = getToneClass(r.price_vs_vwap ? r.price_vs_vwap.trend : null);
+      const coiTone = getToneClass(r.coi_ratio ? r.coi_ratio.trend : null);
+
+      return `
+        <tr>
+          <td class="time-cell">${r.time}</td>
+          <td><span class="trend-badge ${trendTone}">${r.trend}</span></td>
+          <td class="note-cell ${noteTone}">${r.note || "-"}</td>
+          <td class="score-cell ${trendTone}">${fmtPct(r.overall_scoring)}</td>
+          <td class="comp-cell ${pcrTone}">${r.pcr ? fmtPct(r.pcr.score) : "-"}</td>
+          <td class="comp-cell ${a2dTone}">${r.a2d_broad ? fmtPct(r.a2d_broad.score) : "-"}</td>
+          <td class="comp-cell ${idxTone}">${r.indices ? fmtPct(r.indices.score) : "-"}</td>
+          <td class="comp-cell ${secTone}">${r.sectors ? fmtPct(r.sectors.score) : "-"}</td>
+          <td class="comp-cell ${pvwapTone}">${r.price_vs_vwap ? fmtPct(r.price_vs_vwap.score) : "-"}</td>
+          <td class="comp-cell ${coiTone}">${r.coi_ratio ? fmtPct(r.coi_ratio.score) : "-"}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  // Load Data API
+  async function loadData() {
+    try {
+      const res = await fetch("/api/v1/historical-scoring/data?symbol=NIFTY", { credentials: "include" });
+      const json = await res.json();
+      if (json.success && json.data) {
+        renderTopKPIs(json.data.kpis);
+        renderHistoricalTable(json.data.rows);
+      }
+    } catch (e) {
+      console.error("Failed to load historical scoring data:", e);
+    }
+  }
+
+  // Load Spot Data
+  async function loadSpotData() {
+    try {
+      const res = await fetch("/api/v1/spot-data", { credentials: "include" });
+      const result = await res.json();
+      if (result.success && result.data) {
+        const d = result.data;
+        const spot = d.spot_price;
+        const chg = d.change_from_prev_close;
+        const chgPct = d.change_pct_from_prev_close;
+        const navSpot = document.getElementById("navSpot");
+        if (navSpot) navSpot.textContent = spot != null ? Number(spot).toLocaleString("en-IN", { maximumFractionDigits: 2 }) : "-";
+        if (chg != null) {
+          const el = document.getElementById("navChange");
+          if (el) {
+            el.textContent = (chg >= 0 ? "+" : "") + Number(chg).toFixed(2);
+            el.className = "nav-val " + (chg >= 0 ? "pos" : "neg");
+          }
+        }
+        if (chgPct != null) {
+          const el = document.getElementById("navChangePct");
+          if (el) {
+            el.textContent = (chgPct >= 0 ? "+" : "") + Number(chgPct).toFixed(2) + "%";
+            el.className = "nav-val " + (chgPct >= 0 ? "pos" : "neg");
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch spot data:", e);
+    }
+  }
+
+  // Initialization
+  loadData();
+  startStreaming();
+  loadSpotData();
+  setInterval(loadSpotData, 30000);
+</script>
+</body>
+</html>
