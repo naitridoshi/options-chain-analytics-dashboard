@@ -196,8 +196,10 @@ class RuntimeSnapshotService:
                     "put_volume": item["put_volume"],
                     "call_ltp": _as_number(item["call_ltp"]),
                     "call_ltp_change": _as_number(item["call_ltp_change"]),
+                    "call_avg_price": _as_number(item.get("call_avg_price")),
                     "put_ltp": _as_number(item["put_ltp"]),
                     "put_ltp_change": _as_number(item["put_ltp_change"]),
+                    "put_avg_price": _as_number(item.get("put_avg_price")),
                 }
             )
         normalized = normalize_interval_boundary(captured_at)
