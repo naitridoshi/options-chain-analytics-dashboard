@@ -254,7 +254,9 @@ def _pvwap_score(pct: float) -> float:
     return 1.0
 
 
-def _compute_price_vwap(strikes: list[dict]) -> dict[str, Any]:
+def _compute_price_vwap(
+    strikes: list[dict], live_market_map: dict[str, dict] | None = None
+) -> dict[str, Any]:
     if not strikes:
         return {"trend": "NEUTRAL", "score": 0.0}
     call_sum = 0.0
@@ -262,6 +264,11 @@ def _compute_price_vwap(strikes: list[dict]) -> dict[str, Any]:
     put_sum = 0.0
     put_n = 0
     for s in strikes:
+        cs = s.get("call_trading_symbol")
+        ps = s.get("put_trading_symbol")
+        call_live = live_market_map.get(cs) if (live_market_map and cs) else None
+        put_live = live_market_map.get(ps) if (live_market_map and ps) else None
+
         call_ltp = (
             s.get("call_live_ltp")
             if s.get("call_live_ltp") is not None
@@ -275,19 +282,21 @@ def _compute_price_vwap(strikes: list[dict]) -> dict[str, Any]:
         call_vwap = (
             s.get("call_live_avg_price")
             if s.get("call_live_avg_price") is not None
-            else s.get("call_avg_price")
+            else (
+                s.get("call_avg_price")
+                if s.get("call_avg_price") is not None
+                else (call_live.get("avg_price") if call_live else None)
+            )
         )
         put_vwap = (
             s.get("put_live_avg_price")
             if s.get("put_live_avg_price") is not None
-            else s.get("put_avg_price")
+            else (
+                s.get("put_avg_price")
+                if s.get("put_avg_price") is not None
+                else (put_live.get("avg_price") if put_live else None)
+            )
         )
-
-        # Fallback to LTP if VWAP is missing
-        if call_vwap is None and call_ltp is not None:
-            call_vwap = call_ltp
-        if put_vwap is None and put_ltp is not None:
-            put_vwap = put_ltp
 
         if call_ltp is not None and call_vwap is not None:
             try:
@@ -691,7 +700,28 @@ class HistoricalScoringService:
             except Exception:
                 continue
 
-        # 4. Generate table rows for each time slot (from 09:15 to 15:30)
+        # 4. Batch query live market quotes for option symbols once for VWAP fallback lookup
+        trading_symbols: list[str] = []
+        for s in dash_data.get("strikes") or []:
+            cs = s.get("call_trading_symbol")
+            ps = s.get("put_trading_symbol")
+            if cs:
+                trading_symbols.append(cs)
+            if ps:
+                trading_symbols.append(ps)
+
+        live_market_map: dict[str, dict] = {}
+        if trading_symbols:
+            try:
+                live_market_map = await RedisLiveMarketStore.get_live_symbols(
+                    trading_symbols
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to fetch live market symbols for VWAP fallback: {e}"
+                )
+
+        # 5. Generate table rows for each time slot (from 09:15 to 15:30)
         table_rows: list[dict[str, Any]] = []
 
         for slot_key in time_slot_keys:
@@ -734,9 +764,9 @@ class HistoricalScoringService:
                 a2d_broad_comp = default_a2d_broad
                 a2d_fo_comp = default_a2d_fo
 
-            # Compute all 7 matrix components using historical raw_strikes
+            # Compute all 7 matrix components using historical raw_strikes & live VWAP fallback
             pcr_comp = _compute_pcr(latest_data)
-            pvwap_comp = _compute_price_vwap(raw_strikes)
+            pvwap_comp = _compute_price_vwap(raw_strikes, live_market_map)
             coi_ratio_comp = _compute_coi_ratio(raw_strikes)
 
             components = [
