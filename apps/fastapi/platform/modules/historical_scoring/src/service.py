@@ -701,7 +701,6 @@ class HistoricalScoringService:
 
             latest_data = snap.get("latest", {})
             raw_strikes = snap.get("strikes", [])
-            merged_strikes = await cls._merge_live_market_fields(raw_strikes)
 
             # Compute slot-specific Index & Sector breadth
             idx_snap_for_slot = index_snapshot_by_slot.get(slot_key)
@@ -735,10 +734,10 @@ class HistoricalScoringService:
                 a2d_broad_comp = default_a2d_broad
                 a2d_fo_comp = default_a2d_fo
 
-            # Compute all 7 matrix components
+            # Compute all 7 matrix components using historical raw_strikes
             pcr_comp = _compute_pcr(latest_data)
-            pvwap_comp = _compute_price_vwap(merged_strikes)
-            coi_ratio_comp = _compute_coi_ratio(merged_strikes)
+            pvwap_comp = _compute_price_vwap(raw_strikes)
+            coi_ratio_comp = _compute_coi_ratio(raw_strikes)
 
             components = [
                 {"name": "PCR", "weight": 0.15, **pcr_comp},
@@ -752,15 +751,11 @@ class HistoricalScoringService:
 
             overall_res = _compute_overall(components)
             strategy_res = _compute_strategy_and_notes(
-                latest_data, merged_strikes, overall_res["trend"]
+                latest_data, raw_strikes, overall_res["trend"]
             )
 
-            call_coi_sum = sum(
-                float(s.get("call_oi_change") or 0) for s in merged_strikes
-            )
-            put_coi_sum = sum(
-                float(s.get("put_oi_change") or 0) for s in merged_strikes
-            )
+            call_coi_sum = sum(float(s.get("call_oi_change") or 0) for s in raw_strikes)
+            put_coi_sum = sum(float(s.get("put_oi_change") or 0) for s in raw_strikes)
             total_coi = call_coi_sum + put_coi_sum
             call_pct = (call_coi_sum / total_coi * 100.0) if total_coi > 0 else 50.0
             put_pct = (put_coi_sum / total_coi * 100.0) if total_coi > 0 else 50.0
