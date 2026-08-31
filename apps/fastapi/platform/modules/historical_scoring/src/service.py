@@ -1,17 +1,19 @@
 """Historical Scoring Service - Calculates live and 5-minute historical scoring snapshots,
-
-money flow metrics, and support & resistance rankings for Options Chain
-Analytics.
+money flow metrics, and support & resistance rankings for Options Chain Analytics.
 """
 
 from __future__ import annotations
 
+import math
 from datetime import date, datetime, time, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from libs.utils.common.custom_logger.src import CustomLogger
 from libs.utils.common.instrument_catalog.src import InstrumentCatalogService
+from libs.utils.common.runtime_store.src.dashboard_service import (
+    RuntimeDashboardService,
+)
 from libs.utils.common.runtime_store.src.index_breadth_service import (
     RuntimeIndexSnapshotService,
 )
@@ -26,6 +28,7 @@ from libs.utils.config.src.fyers import (
     MARKET_CLOSE_MINUTE,
 )
 from libs.utils.db.redis.src import (
+    RedisLiveMarketStore,
     RedisOptionChainSnapshotStore,
 )
 
@@ -256,26 +259,54 @@ def _compute_price_vwap(strikes: list[dict]) -> dict[str, Any]:
     put_sum = 0.0
     put_n = 0
     for s in strikes:
-        call_ltp = s.get("call_live_ltp") or s.get("call_ltp")
-        put_ltp = s.get("put_live_ltp") or s.get("put_ltp")
-        call_vwap = s.get("call_live_avg_price") or s.get("call_avg_price")
-        put_vwap = s.get("put_live_avg_price") or s.get("put_avg_price")
+        call_ltp = (
+            s.get("call_live_ltp")
+            if s.get("call_live_ltp") is not None
+            else s.get("call_ltp")
+        )
+        put_ltp = (
+            s.get("put_live_ltp")
+            if s.get("put_live_ltp") is not None
+            else s.get("put_ltp")
+        )
+        call_vwap = (
+            s.get("call_live_avg_price")
+            if s.get("call_live_avg_price") is not None
+            else s.get("call_avg_price")
+        )
+        put_vwap = (
+            s.get("put_live_avg_price")
+            if s.get("put_live_avg_price") is not None
+            else s.get("put_avg_price")
+        )
+
+        # Fallback to LTP if VWAP is missing
+        if call_vwap is None and call_ltp is not None:
+            call_vwap = call_ltp
+        if put_vwap is None and put_ltp is not None:
+            put_vwap = put_ltp
+
         if call_ltp is not None and call_vwap is not None:
             try:
                 cv = float(call_vwap)
+                cl = float(call_ltp)
                 if cv > 0:
-                    p = (float(call_ltp) - cv) / cv
-                    call_sum += p
-                    call_n += 1
+                    p = (cl - cv) / cv
+                    if math.isfinite(p):
+                        call_sum += p
+                        call_n += 1
             except (ValueError, TypeError):
                 pass
+
         if put_ltp is not None and put_vwap is not None:
             try:
                 pv = float(put_vwap)
+                pl = float(put_ltp)
                 if pv > 0:
-                    p = (float(put_ltp) - pv) / pv
-                    put_sum += p
-                    put_n += 1
+                    p = (pl - pv) / pv
+                    if math.isfinite(p):
+                        put_sum += p
+                        put_n += 1
             except (ValueError, TypeError):
                 pass
 
@@ -464,6 +495,45 @@ class HistoricalScoringService:
             current += timedelta(minutes=COI_LIVE_INTERVAL_MINUTES)
         return slots
 
+    @staticmethod
+    async def _merge_live_market_fields(strikes: list[dict]) -> list[dict]:
+        if not strikes:
+            return []
+        trading_symbols: list[str] = []
+        for strike in strikes:
+            cs = strike.get("call_trading_symbol")
+            ps = strike.get("put_trading_symbol")
+            if cs:
+                trading_symbols.append(cs)
+            if ps:
+                trading_symbols.append(ps)
+
+        if not trading_symbols:
+            return strikes
+
+        live_payloads = await RedisLiveMarketStore.get_live_symbols(trading_symbols)
+
+        merged_rows: list[dict] = []
+        for strike in strikes:
+            row = dict(strike)
+            cs = row.get("call_trading_symbol")
+            ps = row.get("put_trading_symbol")
+            call_live = live_payloads.get(cs or "")
+            put_live = live_payloads.get(ps or "")
+
+            row["call_live_ltp"] = (
+                call_live.get("ltp") if call_live else row.get("call_ltp")
+            )
+            row["call_live_avg_price"] = (
+                call_live.get("avg_price") if call_live else None
+            )
+            row["put_live_ltp"] = (
+                put_live.get("ltp") if put_live else row.get("put_ltp")
+            )
+            row["put_live_avg_price"] = put_live.get("avg_price") if put_live else None
+            merged_rows.append(row)
+        return merged_rows
+
     @classmethod
     async def get_historical_scoring_data(
         cls, symbol: str | None = None
@@ -490,7 +560,72 @@ class HistoricalScoringService:
         time_slots = cls._get_time_slots(trade_date)
         time_slot_keys = [slot.strftime("%H:%M") for slot in time_slots]
 
-        # 1. Fetch Option Chain timeline snapshots (deduplicated by 5-minute slot)
+        # 1. Fetch live Dashboard Data (contains merged live market fields for top KPIs)
+        dash_data = await RuntimeDashboardService.get_dashboard_data(
+            symbol=instrument.symbol
+        )
+
+        # 2. Fetch A2D F&O + Index/Script Breadth Summary
+        a2d_fo_data: dict[str, Any] = {}
+        try:
+            a2d_fo_data = (
+                await RuntimeScriptSnapshotService.get_latest_advance_decline()
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get A2D F&O data: {e}")
+
+        a2d_fo_comp = _compute_a2d(
+            a2d_fo_data.get("advance_count", 0),
+            a2d_fo_data.get("decline_count", 0),
+        )
+
+        breadth_data: dict[str, Any] = {}
+        try:
+            index_snapshot = await RuntimeIndexSnapshotService.get_latest_snapshot()
+            index_breadth = await RuntimeIndexSnapshotService.get_breadth_by_category(
+                snapshot=index_snapshot
+            )
+            script_breadth = (
+                await RuntimeScriptSnapshotService.get_breadth_by_category()
+            )
+            breadth_data = {
+                "broad_market": {
+                    "indices": index_breadth.get(
+                        "BROAD_MARKET",
+                        {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
+                    ),
+                    "scripts": script_breadth.get(
+                        "BROAD_MARKET",
+                        {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
+                    ),
+                },
+                "sectoral": {
+                    "indices": index_breadth.get(
+                        "SECTORAL",
+                        {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
+                    ),
+                    "scripts": script_breadth.get(
+                        "SECTORAL",
+                        {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
+                    ),
+                },
+            }
+        except Exception as e:
+            logger.warning(f"Failed to get breadth data: {e}")
+
+        # Compute static/current breadth components
+        bm_scr = breadth_data.get("broad_market", {}).get("scripts", {})
+        sl_scr = breadth_data.get("sectoral", {}).get("scripts", {})
+        total_scr_adv = (bm_scr.get("advance") or 0) + (sl_scr.get("advance") or 0)
+        total_scr_dec = (bm_scr.get("decline") or 0) + (sl_scr.get("decline") or 0)
+        a2d_broad_comp = _compute_a2d(total_scr_adv, total_scr_dec)
+
+        bm_idx = breadth_data.get("broad_market", {}).get("indices", {})
+        sl_idx = breadth_data.get("sectoral", {}).get("indices", {})
+        indices_comp = _compute_indices(bm_idx)
+        sectors_comp = _compute_indices(sl_idx)
+
+        # 3. Fetch Option Chain timeline snapshots for 5-minute table rows
         timeline: list[dict[str, Any]] = []
         try:
             interval_ids = (
@@ -512,74 +647,7 @@ class HistoricalScoringService:
         except Exception as e:
             logger.warning(f"Failed to get option chain timeline from Redis: {e}")
 
-        # 2. Fetch Latest Index & Script Breadth Summary
-        breadth_data: dict[str, Any] = {}
-        try:
-            index_snapshot = await RuntimeIndexSnapshotService.get_latest_snapshot()
-            index_breadth = await RuntimeIndexSnapshotService.get_breadth_by_category(
-                snapshot=index_snapshot
-            )
-            script_breadth = (
-                await RuntimeScriptSnapshotService.get_breadth_by_category()
-            )
-            breadth_data = {
-                "broad_market": {
-                    "indices": index_breadth.get(
-                        "BROAD_MARKET",
-                        {
-                            "advance": 0,
-                            "decline": 0,
-                            "unchanged": 0,
-                            "total": 0,
-                        },
-                    ),
-                    "scripts": script_breadth.get(
-                        "BROAD_MARKET",
-                        {
-                            "advance": 0,
-                            "decline": 0,
-                            "unchanged": 0,
-                            "total": 0,
-                        },
-                    ),
-                },
-                "sectoral": {
-                    "indices": index_breadth.get(
-                        "SECTORAL",
-                        {
-                            "advance": 0,
-                            "decline": 0,
-                            "unchanged": 0,
-                            "total": 0,
-                        },
-                    ),
-                    "scripts": script_breadth.get(
-                        "SECTORAL",
-                        {
-                            "advance": 0,
-                            "decline": 0,
-                            "unchanged": 0,
-                            "total": 0,
-                        },
-                    ),
-                },
-            }
-        except Exception as e:
-            logger.warning(f"Failed to get breadth data: {e}")
-
-        # Compute static/current breadth components (used across snapshots)
-        bm_scr = breadth_data.get("broad_market", {}).get("scripts", {})
-        sl_scr = breadth_data.get("sectoral", {}).get("scripts", {})
-        total_scr_adv = (bm_scr.get("advance") or 0) + (sl_scr.get("advance") or 0)
-        total_scr_dec = (bm_scr.get("decline") or 0) + (sl_scr.get("decline") or 0)
-        a2d_broad_comp = _compute_a2d(total_scr_adv, total_scr_dec)
-
-        bm_idx = breadth_data.get("broad_market", {}).get("indices", {})
-        sl_idx = breadth_data.get("sectoral", {}).get("indices", {})
-        indices_comp = _compute_indices(bm_idx)
-        sectors_comp = _compute_indices(sl_idx)
-
-        # 3. Map snapshots by 5-minute time slot (e.g. "09:15")
+        # Map snapshots by 5-minute time slot (e.g. "09:15")
         snapshot_by_slot: dict[str, dict[str, Any]] = {}
         for snap in timeline:
             captured_at = snap.get("latest", {}).get("captured_at")
@@ -599,9 +667,6 @@ class HistoricalScoringService:
 
         # 4. Generate table rows for each time slot (from 09:15 to 15:30)
         table_rows: list[dict[str, Any]] = []
-        latest_snapshot_for_kpis: dict[str, Any] | None = (
-            timeline[0] if timeline else None
-        )
 
         for slot_key in time_slot_keys:
             snap = snapshot_by_slot.get(slot_key)
@@ -609,15 +674,17 @@ class HistoricalScoringService:
                 continue
 
             latest_data = snap.get("latest", {})
-            strikes = snap.get("strikes", [])
+            raw_strikes = snap.get("strikes", [])
+            merged_strikes = await cls._merge_live_market_fields(raw_strikes)
 
-            # Compute components
+            # Compute all 7 matrix components (matching scoring.html 100%)
             pcr_comp = _compute_pcr(latest_data)
-            pvwap_comp = _compute_price_vwap(strikes)
-            coi_ratio_comp = _compute_coi_ratio(strikes)
+            pvwap_comp = _compute_price_vwap(merged_strikes)
+            coi_ratio_comp = _compute_coi_ratio(merged_strikes)
 
             components = [
                 {"name": "PCR", "weight": 0.15, **pcr_comp},
+                {"name": "A2D F&O", "weight": 0.10, **a2d_fo_comp},
                 {"name": "A2D Broader", "weight": 0.15, **a2d_broad_comp},
                 {"name": "Indices", "weight": 0.20, **indices_comp},
                 {"name": "Sectors", "weight": 0.20, **sectors_comp},
@@ -627,7 +694,7 @@ class HistoricalScoringService:
 
             overall_res = _compute_overall(components)
             strategy_res = _compute_strategy_and_notes(
-                latest_data, strikes, overall_res["trend"]
+                latest_data, merged_strikes, overall_res["trend"]
             )
 
             table_rows.append(
@@ -664,19 +731,19 @@ class HistoricalScoringService:
                 }
             )
 
-        # 5. Compute Top KPIs (Gauge, Trends, Strategy, Money Flow, Supports, Resistance)
+        # 5. Compute Top KPIs using live merged dashboard data
         kpis_data = None
-        if latest_snapshot_for_kpis:
-            kpi_latest = latest_snapshot_for_kpis.get("latest", {})
-            kpi_strikes = latest_snapshot_for_kpis.get("strikes", [])
+        kpi_latest = dash_data.get("latest") or {}
+        kpi_strikes = dash_data.get("strikes") or []
 
-            # Components for latest overall score
+        if kpi_strikes or kpi_latest:
             kpi_pcr = _compute_pcr(kpi_latest)
             kpi_pvwap = _compute_price_vwap(kpi_strikes)
             kpi_coi_ratio = _compute_coi_ratio(kpi_strikes)
 
             kpi_components = [
                 {"name": "PCR", "weight": 0.15, **kpi_pcr},
+                {"name": "A2D F&O", "weight": 0.10, **a2d_fo_comp},
                 {"name": "A2D Broader", "weight": 0.15, **a2d_broad_comp},
                 {"name": "Indices", "weight": 0.20, **indices_comp},
                 {"name": "Sectors", "weight": 0.20, **sectors_comp},
@@ -689,21 +756,34 @@ class HistoricalScoringService:
             )
 
             # Money Flow Calculations:
-            # - Average VWAP across strikes (matching dashboard footer avgOf)
             call_vwaps = [
-                float(s.get("call_live_avg_price") or s.get("call_avg_price"))
+                float(
+                    s.get("call_live_avg_price")
+                    or s.get("call_avg_price")
+                    or s.get("call_live_ltp")
+                    or s.get("call_ltp")
+                )
                 for s in kpi_strikes
                 if (
                     s.get("call_live_avg_price") is not None
                     or s.get("call_avg_price") is not None
+                    or s.get("call_live_ltp") is not None
+                    or s.get("call_ltp") is not None
                 )
             ]
             put_vwaps = [
-                float(s.get("put_live_avg_price") or s.get("put_avg_price"))
+                float(
+                    s.get("put_live_avg_price")
+                    or s.get("put_avg_price")
+                    or s.get("put_live_ltp")
+                    or s.get("put_ltp")
+                )
                 for s in kpi_strikes
                 if (
                     s.get("put_live_avg_price") is not None
                     or s.get("put_avg_price") is not None
+                    or s.get("put_live_ltp") is not None
+                    or s.get("put_ltp") is not None
                 )
             ]
 
@@ -736,7 +816,11 @@ class HistoricalScoringService:
                 call_oi = float(s.get("call_oi") or 0)
                 call_coi = float(s.get("call_oi_change") or 0)
                 call_vwap = float(
-                    s.get("call_live_avg_price") or s.get("call_avg_price") or 0.0
+                    s.get("call_live_avg_price")
+                    or s.get("call_avg_price")
+                    or s.get("call_live_ltp")
+                    or s.get("call_ltp")
+                    or 0.0
                 )
                 resistances.append(
                     {
@@ -760,7 +844,11 @@ class HistoricalScoringService:
                 put_oi = float(s.get("put_oi") or 0)
                 put_coi = float(s.get("put_oi_change") or 0)
                 put_vwap = float(
-                    s.get("put_live_avg_price") or s.get("put_avg_price") or 0.0
+                    s.get("put_live_avg_price")
+                    or s.get("put_avg_price")
+                    or s.get("put_live_ltp")
+                    or s.get("put_ltp")
+                    or 0.0
                 )
                 supports.append(
                     {
