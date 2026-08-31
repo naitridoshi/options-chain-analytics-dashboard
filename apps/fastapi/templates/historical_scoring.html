@@ -480,11 +480,6 @@
           <div class="nav-spot-item"><span class="nav-label">Chg</span><span id="navChange" class="nav-val">-</span></div>
           <div class="nav-sep"></div>
           <div class="nav-spot-item"><span class="nav-label">Chg%</span><span id="navChangePct" class="nav-val">-</span></div>
-          <div class="nav-sep"></div>
-          <div class="streaming-toggle">
-            <span>Stream</span>
-            <div class="toggle-switch active" id="streamToggle" onclick="toggleStreaming()"></div>
-          </div>
         </div>
       </div>
 
@@ -602,11 +597,14 @@
                   <th style="width:85px;">SECTORS</th>
                   <th style="width:110px;">PRICE VS VWAP</th>
                   <th style="width:95px;">COI RATIO</th>
+                  <th style="width:90px;">COI CALL %</th>
+                  <th style="width:90px;">COI PUT %</th>
+                  <th style="width:85px;">COI PCR</th>
                 </tr>
               </thead>
               <tbody id="histTableBody">
                 <tr>
-                  <td colspan="10">
+                  <td colspan="13">
                     <div class="loading-wrap">
                       <div class="spinner"></div>
                     </div>
@@ -687,17 +685,27 @@
     return (isNeg ? "-" : "") + withCommas;
   }
 
-  function formatCrTooltip(num) {
-    if (num === null || num === undefined || Number.isNaN(Number(num))) return "";
-    const n = Number(num);
-    const cr = n / 10000000;
-    const lakh = n / 100000;
-    if (Math.abs(cr) >= 1) {
-      return `₹ ${formatIndian(num)} (${cr.toFixed(2)} Cr)`;
-    } else if (Math.abs(lakh) >= 1) {
-      return `₹ ${formatIndian(num)} (${lakh.toFixed(2)} L)`;
-    }
-    return `₹ ${formatIndian(num)}`;
+  function fmtCr(valCr) {
+    if (valCr === null || valCr === undefined || Number.isNaN(Number(valCr))) return "-";
+    const n = Number(valCr);
+    return n.toFixed(2) + " Cr";
+  }
+
+  function formatRupeeTooltip(valCr) {
+    if (valCr === null || valCr === undefined || Number.isNaN(Number(valCr))) return "";
+    const fullRupees = Math.round(Number(valCr) * 10000000);
+    return `₹ ${formatIndian(fullRupees)}`;
+  }
+
+  function fmtPcrVal(v) {
+    if (v === null || v === undefined || v === "INF" || v === "-INF") return v || "-";
+    if (Number.isNaN(Number(v))) return "-";
+    return Number(v).toFixed(2);
+  }
+
+  function fmtPctRaw(v) {
+    if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+    return Number(v).toFixed(0) + "%";
   }
 
   function fmtPct(v) {
@@ -760,20 +768,20 @@
     const ipEl = document.getElementById("mfIntradayPut");
 
     if (ocEl) {
-      ocEl.textContent = formatIndian(mfOverall.call);
-      ocEl.title = formatCrTooltip(mfOverall.call);
+      ocEl.textContent = fmtCr(mfOverall.call);
+      ocEl.title = formatRupeeTooltip(mfOverall.call);
     }
     if (opEl) {
-      opEl.textContent = formatIndian(mfOverall.put);
-      opEl.title = formatCrTooltip(mfOverall.put);
+      opEl.textContent = fmtCr(mfOverall.put);
+      opEl.title = formatRupeeTooltip(mfOverall.put);
     }
     if (icEl) {
-      icEl.textContent = formatIndian(mfIntraday.call);
-      icEl.title = formatCrTooltip(mfIntraday.call);
+      icEl.textContent = fmtCr(mfIntraday.call);
+      icEl.title = formatRupeeTooltip(mfIntraday.call);
     }
     if (ipEl) {
-      ipEl.textContent = formatIndian(mfIntraday.put);
-      ipEl.title = formatCrTooltip(mfIntraday.put);
+      ipEl.textContent = fmtCr(mfIntraday.put);
+      ipEl.title = formatRupeeTooltip(mfIntraday.put);
     }
 
     // 4. Supports Table
@@ -786,8 +794,8 @@
         supBody.innerHTML = supports.map(s => `
           <tr>
             <td class="level-badge">${s.level}</td>
-            <td class="val-money" title="${formatCrTooltip(s.overall_money_flow)}">${formatIndian(s.overall_money_flow)}</td>
-            <td class="val-money" title="${formatCrTooltip(s.today_money_flow)}">${formatIndian(s.today_money_flow)}</td>
+            <td class="val-money" title="${formatRupeeTooltip(s.overall_money_flow)}">${fmtCr(s.overall_money_flow)}</td>
+            <td class="val-money" title="${formatRupeeTooltip(s.today_money_flow)}">${fmtCr(s.today_money_flow)}</td>
           </tr>
         `).join("");
       }
@@ -803,8 +811,8 @@
         resBody.innerHTML = resistances.map(r => `
           <tr>
             <td class="level-badge">${r.level}</td>
-            <td class="val-money" title="${formatCrTooltip(r.overall_money_flow)}">${formatIndian(r.overall_money_flow)}</td>
-            <td class="val-money" title="${formatCrTooltip(r.today_money_flow)}">${formatIndian(r.today_money_flow)}</td>
+            <td class="val-money" title="${formatRupeeTooltip(r.overall_money_flow)}">${fmtCr(r.overall_money_flow)}</td>
+            <td class="val-money" title="${formatRupeeTooltip(r.today_money_flow)}">${fmtCr(r.today_money_flow)}</td>
           </tr>
         `).join("");
       }
@@ -817,7 +825,7 @@
     if (!tbody) return;
 
     if (!rows || rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="10" style="padding:24px;color:var(--muted);">No snapshot data available for today yet.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="13" style="padding:24px;color:var(--muted);">No snapshot data available for today yet.</td></tr>`;
       return;
     }
 
@@ -832,6 +840,14 @@
       const pvwapTone = getToneClass(r.price_vs_vwap ? r.price_vs_vwap.trend : null);
       const coiTone = getToneClass(r.coi_ratio ? r.coi_ratio.trend : null);
 
+      const coiPcrLive = r.coi_pcr_live || {};
+      const coiCallPct = coiPcrLive.call_pct;
+      const coiPutPct = coiPcrLive.put_pct;
+      const coiPcrVal = coiPcrLive.coi_pcr;
+
+      const callPctTone = coiCallPct != null ? (coiCallPct > 50 ? "bearish" : "bullish") : "neutral";
+      const putPctTone = coiPutPct != null ? (coiPutPct > 50 ? "bullish" : "bearish") : "neutral";
+
       return `
         <tr>
           <td class="time-cell">${r.time}</td>
@@ -844,6 +860,9 @@
           <td class="comp-cell ${secTone}">${r.sectors ? fmtPct(r.sectors.score) : "-"}</td>
           <td class="comp-cell ${pvwapTone}">${r.price_vs_vwap ? fmtPct(r.price_vs_vwap.score) : "-"}</td>
           <td class="comp-cell ${coiTone}">${r.coi_ratio ? fmtPct(r.coi_ratio.score) : "-"}</td>
+          <td class="comp-cell ${callPctTone}">${fmtPctRaw(coiCallPct)}</td>
+          <td class="comp-cell ${putPctTone}">${fmtPctRaw(coiPutPct)}</td>
+          <td class="comp-cell">${fmtPcrVal(coiPcrVal)}</td>
         </tr>
       `;
     }).join("");

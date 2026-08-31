@@ -657,6 +657,23 @@ class RedisIndexSnapshotStore:
         trade_dates = await client.smembers(index_intraday_trade_dates_key())
         return sorted(trade_dates)
 
+    @staticmethod
+    async def get_timeline(
+        *, trade_date: str, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        client = await redis_client_manager.get_client()
+        timeline_key = index_intraday_timeline_key(trade_date)
+        interval_ids = await client.zrevrange(timeline_key, 0, max(0, limit - 1))
+        if not interval_ids:
+            return []
+
+        snapshot_keys = [
+            index_intraday_snapshot_key(trade_date, interval_id)
+            for interval_id in interval_ids
+        ]
+        values = await client.mget(snapshot_keys)
+        return [json.loads(value) for value in values if value]
+
 
 class RedisConstituentSnapshotStore:
     @staticmethod

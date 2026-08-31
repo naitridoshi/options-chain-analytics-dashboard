@@ -28,11 +28,14 @@ from libs.utils.config.src.fyers import (
     MARKET_CLOSE_MINUTE,
 )
 from libs.utils.db.redis.src import (
+    RedisIndexSnapshotStore,
     RedisLiveMarketStore,
     RedisOptionChainSnapshotStore,
+    RedisScriptSnapshotStore,
 )
 
 IST = ZoneInfo("Asia/Kolkata")
+CR = 10_000_000.0  # 1 Crore = 10,000,000
 log = CustomLogger("HistoricalScoringService")
 logger, listener = log.get_logger()
 listener.start()
@@ -565,65 +568,88 @@ class HistoricalScoringService:
             symbol=instrument.symbol
         )
 
-        # 2. Fetch A2D F&O + Index/Script Breadth Summary
-        a2d_fo_data: dict[str, Any] = {}
+        # 2. Fetch A2D F&O + Index/Script Breadth Timeline Snapshots for today
+        latest_a2d_fo: dict[str, Any] = {}
         try:
-            a2d_fo_data = (
+            latest_a2d_fo = (
                 await RuntimeScriptSnapshotService.get_latest_advance_decline()
             )
         except Exception as e:
-            logger.warning(f"Failed to get A2D F&O data: {e}")
+            logger.warning(f"Failed to get latest A2D F&O data: {e}")
 
-        a2d_fo_comp = _compute_a2d(
-            a2d_fo_data.get("advance_count", 0),
-            a2d_fo_data.get("decline_count", 0),
+        default_a2d_fo = _compute_a2d(
+            latest_a2d_fo.get("advance_count", 0),
+            latest_a2d_fo.get("decline_count", 0),
         )
 
-        breadth_data: dict[str, Any] = {}
+        # Fetch Index & Script timelines for 5-minute row slot mapping
+        index_snapshot_by_slot: dict[str, dict[str, Any]] = {}
         try:
-            index_snapshot = await RuntimeIndexSnapshotService.get_latest_snapshot()
-            index_breadth = await RuntimeIndexSnapshotService.get_breadth_by_category(
-                snapshot=index_snapshot
+            raw_index_timeline = await RedisIndexSnapshotStore.get_timeline(
+                trade_date=trade_date.isoformat(), limit=200
             )
-            script_breadth = (
-                await RuntimeScriptSnapshotService.get_breadth_by_category()
-            )
-            breadth_data = {
-                "broad_market": {
-                    "indices": index_breadth.get(
-                        "BROAD_MARKET",
-                        {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
-                    ),
-                    "scripts": script_breadth.get(
-                        "BROAD_MARKET",
-                        {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
-                    ),
-                },
-                "sectoral": {
-                    "indices": index_breadth.get(
-                        "SECTORAL",
-                        {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
-                    ),
-                    "scripts": script_breadth.get(
-                        "SECTORAL",
-                        {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
-                    ),
-                },
-            }
+            for idx_snap in raw_index_timeline:
+                captured_at = idx_snap.get("captured_at")
+                if not captured_at:
+                    continue
+                try:
+                    dt = datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
+                    ist = dt.astimezone(IST)
+                    slot_key = _round_to_interval(
+                        ist, COI_LIVE_INTERVAL_MINUTES
+                    ).strftime("%H:%M")
+                    if slot_key not in index_snapshot_by_slot:
+                        index_snapshot_by_slot[slot_key] = idx_snap
+                except Exception:
+                    continue
         except Exception as e:
-            logger.warning(f"Failed to get breadth data: {e}")
+            logger.warning(f"Failed to get index timeline snapshots: {e}")
 
-        # Compute static/current breadth components
-        bm_scr = breadth_data.get("broad_market", {}).get("scripts", {})
-        sl_scr = breadth_data.get("sectoral", {}).get("scripts", {})
+        script_snapshot_by_slot: dict[str, dict[str, Any]] = {}
+        try:
+            raw_script_timeline = await RedisScriptSnapshotStore.get_timeline(
+                trade_date=trade_date.isoformat(), limit=200
+            )
+            for scr_snap in raw_script_timeline:
+                captured_at = scr_snap.get("captured_at")
+                if not captured_at:
+                    continue
+                try:
+                    dt = datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
+                    ist = dt.astimezone(IST)
+                    slot_key = _round_to_interval(
+                        ist, COI_LIVE_INTERVAL_MINUTES
+                    ).strftime("%H:%M")
+                    if slot_key not in script_snapshot_by_slot:
+                        script_snapshot_by_slot[slot_key] = scr_snap
+                except Exception:
+                    continue
+        except Exception as e:
+            logger.warning(f"Failed to get script timeline snapshots: {e}")
+
+        # Compute default latest breadth components
+        latest_index_snap = await RuntimeIndexSnapshotService.get_latest_snapshot()
+        latest_idx_breadth = await RuntimeIndexSnapshotService.get_breadth_by_category(
+            snapshot=latest_index_snap
+        )
+        latest_scr_breadth = (
+            await RuntimeScriptSnapshotService.get_breadth_by_category()
+        )
+
+        bm_scr = latest_scr_breadth.get("BROAD_MARKET", {"advance": 0, "decline": 0})
+        sl_scr = latest_scr_breadth.get("SECTORAL", {"advance": 0, "decline": 0})
         total_scr_adv = (bm_scr.get("advance") or 0) + (sl_scr.get("advance") or 0)
         total_scr_dec = (bm_scr.get("decline") or 0) + (sl_scr.get("decline") or 0)
-        a2d_broad_comp = _compute_a2d(total_scr_adv, total_scr_dec)
+        default_a2d_broad = _compute_a2d(total_scr_adv, total_scr_dec)
 
-        bm_idx = breadth_data.get("broad_market", {}).get("indices", {})
-        sl_idx = breadth_data.get("sectoral", {}).get("indices", {})
-        indices_comp = _compute_indices(bm_idx)
-        sectors_comp = _compute_indices(sl_idx)
+        bm_idx = latest_idx_breadth.get(
+            "BROAD_MARKET", {"advance": 0, "decline": 0, "unchanged": 0, "total": 0}
+        )
+        sl_idx = latest_idx_breadth.get(
+            "SECTORAL", {"advance": 0, "decline": 0, "unchanged": 0, "total": 0}
+        )
+        default_indices = _compute_indices(bm_idx)
+        default_sectors = _compute_indices(sl_idx)
 
         # 3. Fetch Option Chain timeline snapshots for 5-minute table rows
         timeline: list[dict[str, Any]] = []
@@ -677,7 +703,39 @@ class HistoricalScoringService:
             raw_strikes = snap.get("strikes", [])
             merged_strikes = await cls._merge_live_market_fields(raw_strikes)
 
-            # Compute all 7 matrix components (matching scoring.html 100%)
+            # Compute slot-specific Index & Sector breadth
+            idx_snap_for_slot = index_snapshot_by_slot.get(slot_key)
+            if idx_snap_for_slot:
+                idx_breadth_slot = (
+                    await RuntimeIndexSnapshotService.get_breadth_by_category(
+                        snapshot=idx_snap_for_slot
+                    )
+                )
+                bm_idx_slot = idx_breadth_slot.get(
+                    "BROAD_MARKET",
+                    {"advance": 0, "decline": 0, "unchanged": 0, "total": 0},
+                )
+                sl_idx_slot = idx_breadth_slot.get(
+                    "SECTORAL", {"advance": 0, "decline": 0, "unchanged": 0, "total": 0}
+                )
+                indices_comp = _compute_indices(bm_idx_slot)
+                sectors_comp = _compute_indices(sl_idx_slot)
+            else:
+                indices_comp = default_indices
+                sectors_comp = default_sectors
+
+            # Compute slot-specific Script breadth
+            scr_snap_for_slot = script_snapshot_by_slot.get(slot_key)
+            if scr_snap_for_slot:
+                scr_adv = scr_snap_for_slot.get("advance_count") or 0
+                scr_dec = scr_snap_for_slot.get("decline_count") or 0
+                a2d_broad_comp = _compute_a2d(scr_adv, scr_dec)
+                a2d_fo_comp = _compute_a2d(scr_adv, scr_dec)
+            else:
+                a2d_broad_comp = default_a2d_broad
+                a2d_fo_comp = default_a2d_fo
+
+            # Compute all 7 matrix components
             pcr_comp = _compute_pcr(latest_data)
             pvwap_comp = _compute_price_vwap(merged_strikes)
             coi_ratio_comp = _compute_coi_ratio(merged_strikes)
@@ -696,6 +754,20 @@ class HistoricalScoringService:
             strategy_res = _compute_strategy_and_notes(
                 latest_data, merged_strikes, overall_res["trend"]
             )
+
+            call_coi_sum = sum(
+                float(s.get("call_oi_change") or 0) for s in merged_strikes
+            )
+            put_coi_sum = sum(
+                float(s.get("put_oi_change") or 0) for s in merged_strikes
+            )
+            total_coi = call_coi_sum + put_coi_sum
+            call_pct = (call_coi_sum / total_coi * 100.0) if total_coi > 0 else 50.0
+            put_pct = (put_coi_sum / total_coi * 100.0) if total_coi > 0 else 50.0
+            if call_coi_sum == 0:
+                pcr_val = "INF" if put_coi_sum > 0 else "-"
+            else:
+                pcr_val = round(put_coi_sum / call_coi_sum, 2)
 
             table_rows.append(
                 {
@@ -728,10 +800,15 @@ class HistoricalScoringService:
                         "score": coi_ratio_comp["score"],
                         "trend": coi_ratio_comp["trend"],
                     },
+                    "coi_pcr_live": {
+                        "call_pct": call_pct,
+                        "put_pct": put_pct,
+                        "coi_pcr": pcr_val,
+                    },
                 }
             )
 
-        # 5. Compute Top KPIs using live merged dashboard data
+        # 5. Compute Top KPIs using live merged dashboard data (Values in Crores - Cr)
         kpis_data = None
         kpi_latest = dash_data.get("latest") or {}
         kpi_strikes = dash_data.get("strikes") or []
@@ -743,10 +820,10 @@ class HistoricalScoringService:
 
             kpi_components = [
                 {"name": "PCR", "weight": 0.15, **kpi_pcr},
-                {"name": "A2D F&O", "weight": 0.10, **a2d_fo_comp},
-                {"name": "A2D Broader", "weight": 0.15, **a2d_broad_comp},
-                {"name": "Indices", "weight": 0.20, **indices_comp},
-                {"name": "Sectors", "weight": 0.20, **sectors_comp},
+                {"name": "A2D F&O", "weight": 0.10, **default_a2d_fo},
+                {"name": "A2D Broader", "weight": 0.15, **default_a2d_broad},
+                {"name": "Indices", "weight": 0.20, **default_indices},
+                {"name": "Sectors", "weight": 0.20, **default_sectors},
                 {"name": "Price vs VWAP", "weight": 0.05, **kpi_pvwap},
                 {"name": "COI Ratio", "weight": 0.15, **kpi_coi_ratio},
             ]
@@ -755,7 +832,7 @@ class HistoricalScoringService:
                 kpi_latest, kpi_strikes, kpi_overall["trend"]
             )
 
-            # Money Flow Calculations:
+            # Money Flow Calculations (Divided by 1 Cr):
             call_vwaps = [
                 float(
                     s.get("call_live_avg_price")
@@ -797,12 +874,12 @@ class HistoricalScoringService:
             )
             total_put_coi = sum(float(s.get("put_oi_change") or 0) for s in kpi_strikes)
 
-            money_flow_overall_call = total_call_oi * avg_call_vwap
-            money_flow_overall_put = total_put_oi * avg_put_vwap
-            money_flow_intraday_call = total_call_coi * avg_call_vwap
-            money_flow_intraday_put = total_put_coi * avg_put_vwap
+            money_flow_overall_call_cr = (total_call_oi * avg_call_vwap) / CR
+            money_flow_overall_put_cr = (total_put_oi * avg_put_vwap) / CR
+            money_flow_intraday_call_cr = (total_call_coi * avg_call_vwap) / CR
+            money_flow_intraday_put_cr = (total_put_coi * avg_put_vwap) / CR
 
-            # Support & Resistance rankings:
+            # Support & Resistance rankings (Values in Cr):
             # - Resistance = Call side (Top 5 strikes by Call OI descending)
             sorted_call_strikes = sorted(
                 kpi_strikes,
@@ -826,8 +903,8 @@ class HistoricalScoringService:
                     {
                         "level": f"R{idx + 1} - {int(strike_price) if strike_price is not None else '-'}",
                         "strike_price": strike_price,
-                        "overall_money_flow": call_oi * call_vwap,
-                        "today_money_flow": call_coi * call_vwap,
+                        "overall_money_flow": (call_oi * call_vwap) / CR,
+                        "today_money_flow": (call_coi * call_vwap) / CR,
                     }
                 )
 
@@ -854,8 +931,8 @@ class HistoricalScoringService:
                     {
                         "level": f"S{idx + 1} - {int(strike_price) if strike_price is not None else '-'}",
                         "strike_price": strike_price,
-                        "overall_money_flow": put_oi * put_vwap,
-                        "today_money_flow": put_coi * put_vwap,
+                        "overall_money_flow": (put_oi * put_vwap) / CR,
+                        "today_money_flow": (put_coi * put_vwap) / CR,
                     }
                 )
 
@@ -866,12 +943,12 @@ class HistoricalScoringService:
                 "trading_strategy": kpi_strategy["trading_strategy"],
                 "money_flow": {
                     "overall": {
-                        "call": money_flow_overall_call,
-                        "put": money_flow_overall_put,
+                        "call": money_flow_overall_call_cr,
+                        "put": money_flow_overall_put_cr,
                     },
                     "intraday": {
-                        "call": money_flow_intraday_call,
-                        "put": money_flow_intraday_put,
+                        "call": money_flow_intraday_call_cr,
+                        "put": money_flow_intraday_put_cr,
                     },
                 },
                 "supports": supports,
