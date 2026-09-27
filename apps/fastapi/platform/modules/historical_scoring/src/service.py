@@ -797,6 +797,7 @@ class HistoricalScoringService:
             table_rows.append(
                 {
                     "time": slot_key,
+                    "spot_price": latest_data.get("spot_price"),
                     "trend": overall_res["trend"],
                     "note": strategy_res["final_note"],
                     "overall_scoring": overall_res["overall"],
