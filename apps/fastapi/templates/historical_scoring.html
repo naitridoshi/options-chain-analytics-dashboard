@@ -616,37 +616,9 @@
             </div>
           </div>
 
-          <!-- Money Flow Table -->
-          <div class="mini-table-box">
-            <table class="mini-table">
-              <thead>
-                <tr>
-                  <th colspan="3" class="table-main-title">MONEY FLOW</th>
-                </tr>
-                <tr>
-                  <th></th>
-                  <th>CALL</th>
-                  <th>PUT</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="row-label">OVERALL</td>
-                  <td class="val-call" id="mfOverallCall" title="-">-</td>
-                  <td class="val-put" id="mfOverallPut" title="-">-</td>
-                </tr>
-                <tr>
-                  <td class="row-label">INTRADAY</td>
-                  <td class="val-call" id="mfIntradayCall" title="-">-</td>
-                  <td class="val-put" id="mfIntradayPut" title="-">-</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Money Flow Bar Graph Card -->
+          <!-- Intraday Money Flow Bar Graph Card -->
           <div class="mf-graph-card">
-            <div class="card-title">MONEY FLOW GRAPH</div>
+            <div class="card-title">INTRADAY MONEY FLOW</div>
             <div class="graph-container">
               <div class="graph-yaxis" id="mfGraphYAxis">
                 <span>100Cr</span>
@@ -891,36 +863,12 @@
       strategyEl.className = "trend-item-val " + getToneClass(kpis.trading_strategy);
     }
 
-    // 3. Money Flow Table & Bar Graph
+    // 3. Intraday Money Flow Bar Graph
     const mf = kpis.money_flow || {};
-    const mfOverall = mf.overall || {};
     const mfIntraday = mf.intraday || {};
 
-    const ocEl = document.getElementById("mfOverallCall");
-    const opEl = document.getElementById("mfOverallPut");
-    const icEl = document.getElementById("mfIntradayCall");
-    const ipEl = document.getElementById("mfIntradayPut");
-
-    if (ocEl) {
-      ocEl.textContent = fmtCr(mfOverall.call);
-      ocEl.title = formatRupeeTooltip(mfOverall.call);
-    }
-    if (opEl) {
-      opEl.textContent = fmtCr(mfOverall.put);
-      opEl.title = formatRupeeTooltip(mfOverall.put);
-    }
-    if (icEl) {
-      icEl.textContent = fmtCr(mfIntraday.call);
-      icEl.title = formatRupeeTooltip(mfIntraday.call);
-    }
-    if (ipEl) {
-      ipEl.textContent = fmtCr(mfIntraday.put);
-      ipEl.title = formatRupeeTooltip(mfIntraday.put);
-    }
-
-    // Update Money Flow Bar Graph (CALL vs PUT Overall Money Flow in Cr)
-    const callVal = Math.abs(Number(mfOverall.call) || 0);
-    const putVal = Math.abs(Number(mfOverall.put) || 0);
+    const callVal = Math.abs(Number(mfIntraday.call) || 0);
+    const putVal = Math.abs(Number(mfIntraday.put) || 0);
 
     const callBarEl = document.getElementById("mfGraphBarCall");
     const putBarEl = document.getElementById("mfGraphBarPut");
