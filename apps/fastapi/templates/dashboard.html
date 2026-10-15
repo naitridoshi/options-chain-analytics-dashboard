@@ -2259,11 +2259,17 @@
       border-left: 1px solid #334155;
       background: #919090 !important;
     }
-    tfoot .foot-total.pos {
-      color: #018530 !important;
+    tfoot .foot-total.pos,
+    tfoot td.foot-total.pos,
+    #footCallChg.pos,
+    #footPutChg.pos {
+      color: #22c55e !important;
     }
-    tfoot .foot-total.neg {
-      color: #A62E2E !important;
+    tfoot .foot-total.neg,
+    tfoot td.foot-total.neg,
+    #footCallChg.neg,
+    #footPutChg.neg {
+      color: #ef4444 !important;
     }
 
     /* Only Price Change and LTP columns have colors */
@@ -3792,14 +3798,14 @@
       }
       if (footCallLtpEl) {
         footCallLtpEl.textContent = callLtpAvg !== null ? fmt2(callLtpAvg) : "-";
-        footCallLtpEl.className = `foot-total ${signedClass(callLtpAvg)}`;
+        footCallLtpEl.className = "foot-total";
       }
       if (footCallVwapEl) footCallVwapEl.textContent = callVwapAvg !== null ? fmt2(callVwapAvg) : "-";
 
       if (footPutVwapEl) footPutVwapEl.textContent = putVwapAvg !== null ? fmt2(putVwapAvg) : "-";
       if (footPutLtpEl) {
         footPutLtpEl.textContent = putLtpAvg !== null ? fmt2(putLtpAvg) : "-";
-        footPutLtpEl.className = `foot-total ${signedClass(putLtpAvg)}`;
+        footPutLtpEl.className = "foot-total";
       }
       if (footPutChgEl) {
         footPutChgEl.textContent = putChgAvg !== null ? fmt2(putChgAvg) : "-";
