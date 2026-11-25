@@ -392,6 +392,84 @@ def _compute_coi_ratio(strikes: list[dict]) -> dict[str, Any]:
     return {"trend": trend, "score": final_score}
 
 
+def _compute_money_flow(
+    strikes: list[dict],
+    live_market_map: dict[str, dict] | None = None,
+) -> dict[str, Any]:
+    if not strikes:
+        return {"trend": "NEUTRAL", "score": 0.0, "call_mf_cr": 0.0, "put_mf_cr": 0.0}
+
+    call_vwaps: list[float] = []
+    put_vwaps: list[float] = []
+    total_call_oi = 0.0
+    total_put_oi = 0.0
+
+    for s in strikes:
+        cs = s.get("call_trading_symbol")
+        ps = s.get("put_trading_symbol")
+        call_live = live_market_map.get(cs) if (live_market_map and cs) else None
+        put_live = live_market_map.get(ps) if (live_market_map and ps) else None
+
+        call_vwap = (
+            s.get("call_live_avg_price")
+            or (call_live.get("avg_price") if call_live else None)
+            or s.get("call_avg_price")
+            or s.get("call_live_ltp")
+            or (call_live.get("ltp") if call_live else None)
+            or s.get("call_ltp")
+        )
+        put_vwap = (
+            s.get("put_live_avg_price")
+            or (put_live.get("avg_price") if put_live else None)
+            or s.get("put_avg_price")
+            or s.get("put_live_ltp")
+            or (put_live.get("ltp") if put_live else None)
+            or s.get("put_ltp")
+        )
+
+        if call_vwap is not None:
+            try:
+                cv = float(call_vwap)
+                if cv > 0:
+                    call_vwaps.append(cv)
+            except (ValueError, TypeError):
+                pass
+        if put_vwap is not None:
+            try:
+                pv = float(put_vwap)
+                if pv > 0:
+                    put_vwaps.append(pv)
+            except (ValueError, TypeError):
+                pass
+
+        try:
+            total_call_oi += float(s.get("call_oi") or 0)
+            total_put_oi += float(s.get("put_oi") or 0)
+        except (ValueError, TypeError):
+            pass
+
+    avg_call_vwap = sum(call_vwaps) / len(call_vwaps) if call_vwaps else 0.0
+    avg_put_vwap = sum(put_vwaps) / len(put_vwaps) if put_vwaps else 0.0
+
+    call_mf_cr = (total_call_oi * avg_call_vwap) / CR
+    put_mf_cr = (total_put_oi * avg_put_vwap) / CR
+
+    total_mf = call_mf_cr + put_mf_cr
+    if total_mf <= 0:
+        return {"trend": "NEUTRAL", "score": 0.0, "call_mf_cr": 0.0, "put_mf_cr": 0.0}
+
+    is_bullish = put_mf_cr > call_mf_cr
+    trend = "BULLISH" if is_bullish else "BEARISH"
+    score = (put_mf_cr / total_mf) if is_bullish else (call_mf_cr / total_mf)
+
+    return {
+        "trend": trend,
+        "score": score,
+        "call_mf_cr": call_mf_cr,
+        "put_mf_cr": put_mf_cr,
+    }
+
+
 def _compute_overall(components: list[dict]) -> dict[str, Any]:
     bull_comps = [c for c in components if c.get("trend") == "BULLISH"]
     bear_comps = [c for c in components if c.get("trend") == "BEARISH"]
@@ -764,19 +842,21 @@ class HistoricalScoringService:
                 a2d_broad_comp = default_a2d_broad
                 a2d_fo_comp = default_a2d_fo
 
-            # Compute all 7 matrix components using historical raw_strikes & live VWAP fallback
+            # Compute all 8 matrix components using historical raw_strikes & live VWAP fallback
             pcr_comp = _compute_pcr(latest_data)
             pvwap_comp = _compute_price_vwap(raw_strikes, live_market_map)
             coi_ratio_comp = _compute_coi_ratio(raw_strikes)
+            money_flow_comp = _compute_money_flow(raw_strikes, live_market_map)
 
             components = [
-                {"name": "PCR", "weight": 0.15, **pcr_comp},
+                {"name": "PCR", "weight": 0.10, **pcr_comp},
                 {"name": "A2D F&O", "weight": 0.10, **a2d_fo_comp},
                 {"name": "A2D Broader", "weight": 0.15, **a2d_broad_comp},
                 {"name": "Indices", "weight": 0.20, **indices_comp},
-                {"name": "Sectors", "weight": 0.20, **sectors_comp},
+                {"name": "Sectors", "weight": 0.15, **sectors_comp},
                 {"name": "Price vs VWAP", "weight": 0.05, **pvwap_comp},
-                {"name": "COI Ratio", "weight": 0.15, **coi_ratio_comp},
+                {"name": "COI Ratio", "weight": 0.10, **coi_ratio_comp},
+                {"name": "Money Flow", "weight": 0.15, **money_flow_comp},
             ]
 
             overall_res = _compute_overall(components)
@@ -826,6 +906,10 @@ class HistoricalScoringService:
                         "score": coi_ratio_comp["score"],
                         "trend": coi_ratio_comp["trend"],
                     },
+                    "money_flow": {
+                        "score": money_flow_comp["score"],
+                        "trend": money_flow_comp["trend"],
+                    },
                     "coi_pcr_live": {
                         "call_pct": call_pct,
                         "put_pct": put_pct,
@@ -843,15 +927,17 @@ class HistoricalScoringService:
             kpi_pcr = _compute_pcr(kpi_latest)
             kpi_pvwap = _compute_price_vwap(kpi_strikes)
             kpi_coi_ratio = _compute_coi_ratio(kpi_strikes)
+            kpi_money_flow = _compute_money_flow(kpi_strikes)
 
             kpi_components = [
-                {"name": "PCR", "weight": 0.15, **kpi_pcr},
+                {"name": "PCR", "weight": 0.10, **kpi_pcr},
                 {"name": "A2D F&O", "weight": 0.10, **default_a2d_fo},
                 {"name": "A2D Broader", "weight": 0.15, **default_a2d_broad},
                 {"name": "Indices", "weight": 0.20, **default_indices},
-                {"name": "Sectors", "weight": 0.20, **default_sectors},
+                {"name": "Sectors", "weight": 0.15, **default_sectors},
                 {"name": "Price vs VWAP", "weight": 0.05, **kpi_pvwap},
-                {"name": "COI Ratio", "weight": 0.15, **kpi_coi_ratio},
+                {"name": "COI Ratio", "weight": 0.10, **kpi_coi_ratio},
+                {"name": "Money Flow", "weight": 0.15, **kpi_money_flow},
             ]
             kpi_overall = _compute_overall(kpi_components)
             kpi_strategy = _compute_strategy_and_notes(
@@ -925,11 +1011,21 @@ class HistoricalScoringService:
                     or s.get("call_ltp")
                     or 0.0
                 )
+                put_coi = float(s.get("put_oi_change") or 0)
+                put_vwap = float(
+                    s.get("put_live_avg_price")
+                    or s.get("put_avg_price")
+                    or s.get("put_live_ltp")
+                    or s.get("put_ltp")
+                    or 0.0
+                )
                 resistances.append(
                     {
                         "level": f"R{idx + 1} - {int(strike_price) if strike_price is not None else '-'}",
                         "strike_price": strike_price,
                         "overall_money_flow": (call_oi * call_vwap) / CR,
+                        "call_money_flow": (call_coi * call_vwap) / CR,
+                        "put_money_flow": (put_coi * put_vwap) / CR,
                         "today_money_flow": (call_coi * call_vwap) / CR,
                     }
                 )
@@ -953,11 +1049,21 @@ class HistoricalScoringService:
                     or s.get("put_ltp")
                     or 0.0
                 )
+                call_coi = float(s.get("call_oi_change") or 0)
+                call_vwap = float(
+                    s.get("call_live_avg_price")
+                    or s.get("call_avg_price")
+                    or s.get("call_live_ltp")
+                    or s.get("call_ltp")
+                    or 0.0
+                )
                 supports.append(
                     {
                         "level": f"S{idx + 1} - {int(strike_price) if strike_price is not None else '-'}",
                         "strike_price": strike_price,
                         "overall_money_flow": (put_oi * put_vwap) / CR,
+                        "put_money_flow": (put_coi * put_vwap) / CR,
+                        "call_money_flow": (call_coi * call_vwap) / CR,
                         "today_money_flow": (put_coi * put_vwap) / CR,
                     }
                 )
