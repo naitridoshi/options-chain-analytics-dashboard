@@ -655,8 +655,8 @@
                   </tr>
                   <tr>
                     <th>LEVELS</th>
-                    <th>OVERALL MONEY FLOW</th>
-                    <th>TODAY'S MONEY FLOW</th>
+                    <th>PUT MONEY FLOW</th>
+                    <th>CALL MONEY FLOW</th>
                   </tr>
                 </thead>
                 <tbody id="supportsBody">
@@ -674,8 +674,8 @@
                   </tr>
                   <tr>
                     <th>LEVELS</th>
-                    <th>OVERALL MONEY FLOW</th>
-                    <th>TODAY'S MONEY FLOW</th>
+                    <th>CALL MONEY FLOW</th>
+                    <th>PUT MONEY FLOW</th>
                   </tr>
                 </thead>
                 <tbody id="resistanceBody">
@@ -703,6 +703,7 @@
                   <th style="width:85px;">SECTORS</th>
                   <th style="width:110px;">PRICE VS VWAP</th>
                   <th style="width:95px;">COI RATIO</th>
+                  <th style="width:95px;">MONEY FLOW</th>
                   <th style="width:90px;">COI CALL %</th>
                   <th style="width:90px;">COI PUT %</th>
                   <th style="width:85px;">COI PCR</th>
@@ -710,7 +711,7 @@
               </thead>
               <tbody id="histTableBody">
                 <tr>
-                  <td colspan="14">
+                  <td colspan="15">
                     <div class="loading-wrap">
                       <div class="spinner"></div>
                     </div>
@@ -908,13 +909,17 @@
       if (supports.length === 0) {
         supBody.innerHTML = `<tr><td colspan="3" style="color:var(--muted);">-</td></tr>`;
       } else {
-        supBody.innerHTML = supports.map(s => `
-          <tr>
-            <td class="level-badge">${s.level}</td>
-            <td class="val-money" title="${formatRupeeTooltip(s.overall_money_flow)}">${fmtCr(s.overall_money_flow)}</td>
-            <td class="val-money" title="${formatRupeeTooltip(s.today_money_flow)}">${fmtCr(s.today_money_flow)}</td>
-          </tr>
-        `).join("");
+        supBody.innerHTML = supports.map(s => {
+          const putMf = s.put_money_flow ?? s.today_money_flow;
+          const callMf = s.call_money_flow ?? 0;
+          return `
+            <tr>
+              <td class="level-badge">${s.level}</td>
+              <td class="val-put" title="${formatRupeeTooltip(putMf)}">${fmtCr(putMf)}</td>
+              <td class="val-call" title="${formatRupeeTooltip(callMf)}">${fmtCr(callMf)}</td>
+            </tr>
+          `;
+        }).join("");
       }
     }
 
@@ -925,13 +930,17 @@
       if (resistances.length === 0) {
         resBody.innerHTML = `<tr><td colspan="3" style="color:var(--muted);">-</td></tr>`;
       } else {
-        resBody.innerHTML = resistances.map(r => `
-          <tr>
-            <td class="level-badge">${r.level}</td>
-            <td class="val-money" title="${formatRupeeTooltip(r.overall_money_flow)}">${fmtCr(r.overall_money_flow)}</td>
-            <td class="val-money" title="${formatRupeeTooltip(r.today_money_flow)}">${fmtCr(r.today_money_flow)}</td>
-          </tr>
-        `).join("");
+        resBody.innerHTML = resistances.map(r => {
+          const callMf = r.call_money_flow ?? r.today_money_flow;
+          const putMf = r.put_money_flow ?? 0;
+          return `
+            <tr>
+              <td class="level-badge">${r.level}</td>
+              <td class="val-call" title="${formatRupeeTooltip(callMf)}">${fmtCr(callMf)}</td>
+              <td class="val-put" title="${formatRupeeTooltip(putMf)}">${fmtCr(putMf)}</td>
+            </tr>
+          `;
+        }).join("");
       }
     }
   }
@@ -942,7 +951,7 @@
     if (!tbody) return;
 
     if (!rows || rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="14" style="padding:24px;color:var(--muted);">No snapshot data available for today yet.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="15" style="padding:24px;color:var(--muted);">No snapshot data available for today yet.</td></tr>`;
       return;
     }
 
@@ -956,6 +965,7 @@
       const secTone = getToneClass(r.sectors ? r.sectors.trend : null);
       const pvwapTone = getToneClass(r.price_vs_vwap ? r.price_vs_vwap.trend : null);
       const coiTone = getToneClass(r.coi_ratio ? r.coi_ratio.trend : null);
+      const mfTone = getToneClass(r.money_flow ? r.money_flow.trend : null);
 
       const coiPcrLive = r.coi_pcr_live || {};
       const coiCallPct = coiPcrLive.call_pct;
@@ -980,6 +990,7 @@
           <td class="comp-cell ${secTone}">${r.sectors ? fmtPct(r.sectors.score) : "-"}</td>
           <td class="comp-cell ${pvwapTone}">${r.price_vs_vwap ? fmtPct(r.price_vs_vwap.score) : "-"}</td>
           <td class="comp-cell ${coiTone}">${r.coi_ratio ? fmtPct(r.coi_ratio.score) : "-"}</td>
+          <td class="comp-cell ${mfTone}">${r.money_flow ? fmtPct(r.money_flow.score) : "-"}</td>
           <td class="comp-cell ${callPctTone}">${fmtPctRaw(coiCallPct)}</td>
           <td class="comp-cell ${putPctTone}">${fmtPctRaw(coiPutPct)}</td>
           <td class="comp-cell">${fmtPcrVal(coiPcrVal)}</td>

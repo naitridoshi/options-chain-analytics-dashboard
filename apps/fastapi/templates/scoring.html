@@ -865,6 +865,56 @@
     };
   }
 
+  // Money Flow scoring (based on overall money flow: OI * VWAP)
+  function computeMoneyFlow(strikes) {
+    if (!strikes || strikes.length === 0) return { trend: "NEUTRAL", score: 0, details: [] };
+
+    let callVwaps = [];
+    let putVwaps = [];
+    let totalCallOi = 0;
+    let totalPutOi = 0;
+
+    for (const s of strikes) {
+      const cVwap = s.call_live_avg_price ?? s.call_avg_price ?? s.call_live_ltp ?? s.call_ltp;
+      const pVwap = s.put_live_avg_price ?? s.put_avg_price ?? s.put_live_ltp ?? s.put_ltp;
+      if (cVwap != null && !isNaN(Number(cVwap))) {
+        const v = Number(cVwap);
+        if (v > 0) callVwaps.push(v);
+      }
+      if (pVwap != null && !isNaN(Number(pVwap))) {
+        const v = Number(pVwap);
+        if (v > 0) putVwaps.push(v);
+      }
+
+      totalCallOi += Number(s.call_oi || 0);
+      totalPutOi += Number(s.put_oi || 0);
+    }
+
+    const avgCallVwap = callVwaps.length > 0 ? callVwaps.reduce((a, b) => a + b, 0) / callVwaps.length : 0;
+    const avgPutVwap = putVwaps.length > 0 ? putVwaps.reduce((a, b) => a + b, 0) / putVwaps.length : 0;
+
+    const callMfCr = (totalCallOi * avgCallVwap) / 10000000;
+    const putMfCr = (totalPutOi * avgPutVwap) / 10000000;
+
+    const totalMf = callMfCr + putMfCr;
+    if (totalMf <= 0) return { trend: "NEUTRAL", score: 0, details: [] };
+
+    const isBullish = putMfCr > callMfCr;
+    const trend = isBullish ? "BULLISH" : "BEARISH";
+    const score = isBullish ? (putMfCr / totalMf) : (callMfCr / totalMf);
+
+    return {
+      trend,
+      score,
+      details: [
+        { name: "Put Money Flow", value: putMfCr.toFixed(2) + " Cr" },
+        { name: "Call Money Flow", value: callMfCr.toFixed(2) + " Cr" },
+        { name: "Put MF %", value: (putMfCr / totalMf * 100).toFixed(1) + "%" },
+        { name: "Call MF %", value: (callMfCr / totalMf * 100).toFixed(1) + "%" },
+      ],
+    };
+  }
+
   // Overall score
   function computeOverall(components) {
     const bullComps = components.filter(c => c.trend === "BULLISH");
@@ -896,8 +946,8 @@
       updateOiSummary(dash);
     }
 
-    // Compute all 7 components with weights matching matrix:
-    // PCR (15%), A2D F&O (10%), A2D Broader (15%), Indices (20%), Sector (20%), Price vs VWAP (5%), COI Ratio (15%)
+    // Compute all 8 components with revised weights:
+    // PCR (10%), A2D F&O (10%), A2D Broader (15%), Indices (20%), Sector (15%), Price vs VWAP (5%), COI Ratio (10%), Money Flow (15%)
     const pcr = computePCR(latest);
     const a2dFO = computeA2D(a2d ? a2d.advance_count : 0, a2d ? a2d.decline_count : 0);
     const bmScr = breadth ? breadth.broad_market.scripts : {};
@@ -911,15 +961,17 @@
     const sectors = computeIndices(slIdx);
     const pvwap = computePriceVWAP(strikes);
     const coiRatio = computeCOIRatio(strikes);
+    const moneyFlow = computeMoneyFlow(strikes);
 
     const components = [
-      { name: "PCR", weight: 0.15, ...pcr },
+      { name: "PCR", weight: 0.10, ...pcr },
       { name: "A2D F&O", weight: 0.10, ...a2dFO },
       { name: "A2D Broader", weight: 0.15, ...a2dBroader },
       { name: "Indices", weight: 0.20, ...indices },
-      { name: "Sectors", weight: 0.20, ...sectors },
+      { name: "Sectors", weight: 0.15, ...sectors },
       { name: "Price vs VWAP", weight: 0.05, ...pvwap },
-      { name: "COI Ratio", weight: 0.15, ...coiRatio },
+      { name: "COI Ratio", weight: 0.10, ...coiRatio },
+      { name: "Money Flow", weight: 0.15, ...moneyFlow },
     ];
 
     const overall = computeOverall(components);
@@ -1009,6 +1061,7 @@
       "Sectors":       "/heatmap",
       "Price vs VWAP": "/dashboard",
       "COI Ratio":     "/coi-pcr-live",
+      "Money Flow":    "/historical-scoring",
     };
     tbody.innerHTML = components.map((c, i) => {
       const trendCls = c.trend.toLowerCase();

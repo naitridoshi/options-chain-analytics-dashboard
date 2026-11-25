@@ -3336,6 +3336,46 @@
         lastLiveByOptionSymbol[optionSymbol] = liveState;
         delete pendingLiveByOptionSymbol[optionSymbol];
       });
+      updateFooterLtpAverages();
+    }
+
+    function updateFooterLtpAverages() {
+      const footCallLtpEl = document.getElementById("footCallLtp");
+      const footCallVwapEl = document.getElementById("footCallVwap");
+      const footPutVwapEl = document.getElementById("footPutVwap");
+      const footPutLtpEl = document.getElementById("footPutLtp");
+
+      const callLtpCells = Array.from(document.querySelectorAll("#gridTable tbody .call-ltp"));
+      const callAvgCells = Array.from(document.querySelectorAll("#gridTable tbody .call-avg"));
+      const putLtpCells = Array.from(document.querySelectorAll("#gridTable tbody .put-ltp"));
+      const putAvgCells = Array.from(document.querySelectorAll("#gridTable tbody .put-avg"));
+
+      function avgOfCells(cells) {
+        const vals = cells.map(c => Number(c.textContent.replace(/,/g, ""))).filter(v => !isNaN(v) && v > 0);
+        return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+      }
+
+      const callLtpAvg = avgOfCells(callLtpCells);
+      const callVwapAvg = avgOfCells(callAvgCells);
+      const putLtpAvg = avgOfCells(putLtpCells);
+      const putVwapAvg = avgOfCells(putAvgCells);
+
+      if (footCallLtpEl && callLtpAvg !== null) {
+        footCallLtpEl.textContent = fmt2(callLtpAvg);
+        const callClass = (callVwapAvg !== null) ? (callLtpAvg > callVwapAvg ? "pos" : "neg") : "";
+        footCallLtpEl.className = `foot-total ${callClass}`.trim();
+      }
+      if (footCallVwapEl && callVwapAvg !== null) {
+        footCallVwapEl.textContent = fmt2(callVwapAvg);
+      }
+      if (footPutVwapEl && putVwapAvg !== null) {
+        footPutVwapEl.textContent = fmt2(putVwapAvg);
+      }
+      if (footPutLtpEl && putLtpAvg !== null) {
+        footPutLtpEl.textContent = fmt2(putLtpAvg);
+        const putClass = (putVwapAvg !== null) ? (putLtpAvg > putVwapAvg ? "pos" : "neg") : "";
+        footPutLtpEl.className = `foot-total ${putClass}`.trim();
+      }
     }
 
     function showLoadingState() {
@@ -3798,14 +3838,16 @@
       }
       if (footCallLtpEl) {
         footCallLtpEl.textContent = callLtpAvg !== null ? fmt2(callLtpAvg) : "-";
-        footCallLtpEl.className = "foot-total";
+        const callLtpClass = (callLtpAvg !== null && callVwapAvg !== null) ? (callLtpAvg > callVwapAvg ? "pos" : "neg") : "";
+        footCallLtpEl.className = `foot-total ${callLtpClass}`.trim();
       }
       if (footCallVwapEl) footCallVwapEl.textContent = callVwapAvg !== null ? fmt2(callVwapAvg) : "-";
 
       if (footPutVwapEl) footPutVwapEl.textContent = putVwapAvg !== null ? fmt2(putVwapAvg) : "-";
       if (footPutLtpEl) {
         footPutLtpEl.textContent = putLtpAvg !== null ? fmt2(putLtpAvg) : "-";
-        footPutLtpEl.className = "foot-total";
+        const putLtpClass = (putLtpAvg !== null && putVwapAvg !== null) ? (putLtpAvg > putVwapAvg ? "pos" : "neg") : "";
+        footPutLtpEl.className = `foot-total ${putLtpClass}`.trim();
       }
       if (footPutChgEl) {
         footPutChgEl.textContent = putChgAvg !== null ? fmt2(putChgAvg) : "-";
